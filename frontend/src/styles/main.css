@@ -1,0 +1,409 @@
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;
+
+
+
+:root {
+
+  --brand: #5034ff;
+
+  --brand-hover: #4328e6;
+
+  --brand-active: #3a22d4;
+
+  --brand-soft: #f0ecff;
+
+  --brand-gradient: linear-gradient(135deg, #5034ff 0%, #7b61ff 42%, #ff6b6b 100%);
+
+
+
+  --surface: #ffffff;
+
+  --surface-muted: #f5f6f8;
+
+  --surface-elevated: #ffffff;
+
+  --border: #e6e9ef;
+
+  --border-strong: #d8dce6;
+
+  --text: #1f2329;
+
+  --text-secondary: #646a73;
+
+  --text-tertiary: #9699a6;
+
+
+
+  /* —— 企业审批标准密度（方案 A）—— */
+
+  --app-font-base: 16px;
+
+  --app-font-sm: 14px;
+
+  --app-font-xs: 13px;
+
+  --app-line-height: 1.5;
+
+  --app-control-h: 36px;
+
+  --app-space-form-item: 12px;
+
+  --app-space-section: 16px;
+
+  --app-space-card: 16px 20px;
+
+  --app-nav-item-h: 44px;
+
+  --app-nav-font: 15px;
+
+  --app-nav-icon: 18px;
+
+
+
+  --radius-sm: 6px;
+
+  --radius-md: 10px;
+
+  --radius-lg: 12px;
+
+  --radius-xl: 16px;
+
+
+
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+
+  --shadow-sm: 0 2px 8px rgba(16, 24, 40, 0.05);
+
+  --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.07);
+
+  --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.09);
+
+
+
+  --header-h: 56px;
+
+  --sider-w: 252px;
+
+  --mobile-tab-bar-height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+
+  --task-footer-height: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+
+
+
+  /* Arco 主色对齐品牌 */
+
+  --color-primary: #5034ff;
+
+  --primary-6: 80, 52, 255;
+
+}
+
+
+
+html,
+
+body,
+
+#app {
+
+  min-height: 100%;
+
+}
+
+
+
+body {
+
+  margin: 0;
+
+  font-family:
+
+    'Segoe UI',
+
+    'PingFang SC',
+
+    'Microsoft YaHei',
+
+    'Noto Sans SC',
+
+    'Ubuntu',
+
+    system-ui,
+
+    sans-serif;
+
+  font-size: var(--app-font-base);
+
+  line-height: var(--app-line-height);
+
+  color: var(--text);
+
+  background: var(--surface-muted);
+
+  -webkit-font-smoothing: antialiased;
+
+  -moz-osx-font-smoothing: grayscale;
+
+}
+
+
+
+/* —— Arco 品牌覆盖 —— */
+
+.arco-btn-primary:not(.arco-btn-disabled) {
+
+  background-color: var(--brand) !important;
+
+  border-color: var(--brand) !important;
+
+}
+
+.arco-btn-primary:not(.arco-btn-disabled):hover {
+
+  background-color: var(--brand-hover) !important;
+
+  border-color: var(--brand-hover) !important;
+
+}
+
+.arco-link,
+
+.arco-menu-selected,
+
+.arco-tabs-tab-active,
+
+.arco-radio-checked .arco-radio-icon {
+
+  color: var(--brand) !important;
+
+}
+
+.arco-input-focus,
+
+.arco-select-view-focus,
+
+.arco-textarea-focus {
+
+  border-color: var(--brand) !important;
+
+  box-shadow: 0 0 0 2px rgba(80, 52, 255, 0.12) !important;
+
+}
+
+.arco-checkbox-checked .arco-checkbox-icon,
+
+.arco-switch-checked {
+
+  background-color: var(--brand) !important;
+
+}
+
+
+
+/* —— 侧栏导航密度 —— */
+
+.app-sider .arco-menu-item,
+
+.app-sider .arco-menu-inline-header,
+
+.app-sider .arco-menu-pop-header,
+
+.app-nav-drawer .arco-menu-item,
+
+.app-nav-drawer .arco-menu-inline-header {
+
+  height: var(--app-nav-item-h) !important;
+
+  line-height: var(--app-nav-item-h) !important;
+
+  font-size: var(--app-nav-font) !important;
+
+  font-weight: 500;
+
+  margin-bottom: 2px;
+
+  border-radius: var(--radius-sm);
+
+}
+
+
+
+.app-sider .arco-menu-item .arco-menu-icon,
+
+.app-nav-drawer .arco-menu-item .arco-menu-icon {
+
+  font-size: var(--app-nav-icon) !important;
+
+  margin-right: 10px !important;
+
+}
+
+
+
+.app-sider .arco-menu-inline-header .arco-icon,
+
+.app-nav-drawer .arco-menu-inline-header .arco-icon {
+
+  font-size: var(--app-nav-icon) !important;
+
+}
+
+
+
+.app-sider .arco-menu-inner,
+
+.app-nav-drawer .arco-menu-inner {
+
+  padding: 0 0.5rem;
+
+}
+
+
+
+/* —— 表格 / 列表页密度 —— */
+
+.arco-table-th,
+
+.arco-table-td {
+
+  font-size: var(--app-font-sm);
+
+}
+
+
+
+.arco-table-th {
+
+  font-weight: 600;
+
+  color: var(--text-secondary);
+
+}
+
+
+
+.page-shell {
+
+  width: 100%;
+
+  min-width: 0;
+
+}
+
+
+
+@layer components {
+
+  .app-card {
+
+    background: var(--surface);
+
+    border: 1px solid var(--border-strong);
+
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-xs);
+
+  }
+
+
+
+  .app-card-hover {
+
+    transition:
+
+      box-shadow 0.2s ease,
+
+      border-color 0.2s ease,
+
+      transform 0.2s ease;
+
+  }
+
+  .app-card-hover:hover {
+
+    box-shadow: var(--shadow-sm);
+
+    border-color: var(--border-strong);
+
+  }
+
+
+
+  .stat-card {
+
+    background: var(--surface);
+
+    border: 1px solid var(--border-strong);
+
+    border-radius: var(--radius-lg);
+
+    padding: 1rem 1.25rem;
+
+    box-shadow: var(--shadow-xs);
+
+  }
+
+
+
+  .stat-card-accent {
+
+    background: linear-gradient(145deg, #ffffff 0%, #f8f6ff 100%);
+
+    border-color: #e8e4ff;
+
+  }
+
+}
+
+
+
+.safe-bottom {
+
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  * {
+
+    animation-duration: 0.01ms !important;
+
+    transition-duration: 0.01ms !important;
+
+  }
+
+}
+
+
+
+/* 桌面客户端嵌入：强制隐藏 Web 壳导航（防止路由丢参后露馅） */
+html.tpc-embed-desktop .app-header,
+html.tpc-embed-desktop .app-sider,
+html.tpc-embed-desktop .sider-collapse-trigger,
+html.tpc-embed-desktop .app-nav-drawer,
+html.tpc-embed-desktop .mobile-tab-bar {
+  display: none !important;
+}
+
+html.tpc-embed-desktop .app-shell {
+  height: 100vh;
+  min-height: 100vh;
+}
+
+html.tpc-embed-desktop .app-body {
+  margin-left: 0 !important;
+}
+
+html.tpc-embed-desktop .app-content-inner {
+  padding: 0.75rem 1rem 1rem;
+}
+
+

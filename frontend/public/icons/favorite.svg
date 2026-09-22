@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="favorite-grad" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6B4EFF"/>
+      <stop offset="1" stop-color="#8B6CFF"/>
+    </linearGradient>
+  </defs>
+  <path
+    fill="url(#favorite-grad)"
+    d="M12 2.4l2.45 4.96 5.48.8-3.97 3.87.94 5.47L12 15.9l-4.9 2.6.94-5.47-3.97-3.87 5.48-.8L12 2.4z"
+  />
+</svg>

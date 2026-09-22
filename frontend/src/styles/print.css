@@ -1,0 +1,202 @@
+/* 屏幕：打印稿置于视口外，不占据页面布局 */
+.wf-print-offscreen {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 210mm;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 本页打印预览 */
+.page-shell.is-print-view .screen-only {
+  display: none !important;
+}
+
+body.wf-print-view .app-header,
+body.wf-print-view .app-sider,
+body.wf-print-view .app-nav-drawer,
+body.wf-print-view .mobile-tab-bar,
+body.wf-print-view .app-password-alert {
+  display: none !important;
+}
+
+body.wf-print-view .app-content-inner {
+  padding-top: 12px !important;
+  padding-bottom: 24px !important;
+}
+
+.page-shell.is-print-view .wf-print-mount,
+.page-shell.is-print-view .wf-print-onscreen {
+  position: static;
+  left: auto;
+  top: auto;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
+  margin: 0 auto;
+  max-width: 210mm;
+  padding-bottom: 72px;
+}
+
+.print-view-toolbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid #e5e6eb;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.wfp-toolbar-btn {
+  min-width: 96px;
+  height: 36px;
+  padding: 0 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  cursor: pointer;
+  border: 1px solid #c9cdd4;
+  background: #fff;
+  color: #1d2129;
+}
+
+.wfp-toolbar-btn:hover:not(:disabled) {
+  border-color: #86909c;
+  background: #f7f8fa;
+}
+
+.wfp-toolbar-btn-primary {
+  border-color: #165dff;
+  background: #165dff;
+  color: #fff;
+}
+
+.wfp-toolbar-btn-primary:hover:not(:disabled) {
+  border-color: #4080ff;
+  background: #4080ff;
+}
+
+.wfp-toolbar-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.wf-print-active .app-header,
+  body.wf-print-active .app-sider,
+  body.wf-print-active .app-nav-drawer,
+  body.wf-print-active .mobile-tab-bar,
+  body.wf-print-active .app-password-alert,
+  body.wf-print-active .screen-only,
+  body.wf-print-active .no-print,
+  body.wf-print-active .print-view-toolbar,
+  body.wf-print-active .arco-spin,
+  body.wf-print-active .arco-spin-loading,
+  body.wf-print-active .arco-spin-mask,
+  body.wf-print-active .arco-spin-children::after,
+  body.wf-print-active .arco-message-wrapper,
+  body.wf-print-active .arco-message-list,
+  body.wf-print-active .arco-message,
+  body.wf-print-active .arco-notification-wrapper {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* 只打印预览稿，隐藏主应用页面（避免露出申请表单按钮） */
+  body.wf-print-active #app {
+    display: none !important;
+  }
+
+  body.wf-print-active .wf-print-preview-overlay {
+    position: static !important;
+    display: block !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    background: #fff !important;
+    z-index: auto !important;
+  }
+
+  body.wf-print-active .wf-print-preview-scroll {
+    overflow: visible !important;
+    padding: 0 !important;
+    flex: none !important;
+    height: auto !important;
+  }
+
+  body.wf-print-active .wf-print-document {
+    display: block !important;
+  }
+
+  body.wf-print-active .app-shell,
+  body.wf-print-active .app-layout,
+  body.wf-print-active .app-body,
+  body.wf-print-active .app-content,
+  body.wf-print-active .app-content-inner,
+  body.wf-print-active .page-shell {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-width: none !important;
+    width: 100% !important;
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  body.wf-print-active .wf-print-mount {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: auto !important;
+    pointer-events: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+.wf-print-related-block {
+  page-break-before: always;
+  break-before: page;
+}

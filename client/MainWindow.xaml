@@ -1,0 +1,189 @@
+﻿<Window x:Class="TPCWorkflow.Client.MainWindow"
+
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+
+        Title="TPC 工作台"
+
+        Width="1180" Height="820"
+
+        MinWidth="900" MinHeight="600"
+
+        WindowStartupLocation="CenterScreen"
+
+        WindowStyle="None"
+
+        ResizeMode="CanResize"
+
+        Background="{StaticResource WinContentBgBrush}"
+
+        FontFamily="Microsoft YaHei UI, Segoe UI, Ubuntu, sans-serif">
+
+  <shell:WindowChrome.WindowChrome>
+
+    <shell:WindowChrome CaptionHeight="0"
+
+                        CornerRadius="0"
+
+                        GlassFrameThickness="0"
+
+                        ResizeBorderThickness="6"
+
+                        UseAeroCaptionButtons="False" />
+
+  </shell:WindowChrome.WindowChrome>
+
+
+
+  <Grid>
+
+    <Grid.ColumnDefinitions>
+
+      <ColumnDefinition Width="208" />
+
+      <ColumnDefinition Width="*" />
+
+    </Grid.ColumnDefinitions>
+
+
+
+    <!-- 左侧导航 -->
+
+    <Border Grid.Column="0" Background="{StaticResource WinNavPaneBrush}"
+
+            BorderBrush="{StaticResource WinNavBorderBrush}" BorderThickness="0,0,1,0">
+
+      <DockPanel LastChildFill="True">
+
+        <Border DockPanel.Dock="Top" Padding="16,20,16,14"
+
+                BorderBrush="{StaticResource WinNavBorderBrush}" BorderThickness="0,0,0,1"
+
+                Background="Transparent" Cursor="SizeAll"
+
+                MouseLeftButtonDown="BrandHeader_MouseLeftButtonDown">
+
+          <StackPanel Orientation="Horizontal">
+
+            <Border Width="32" Height="32" CornerRadius="0" ClipToBounds="True"
+                    SnapsToDevicePixels="True" Margin="0,0,10,0">
+              <Image Source="/Assets/app-icon.png" Stretch="UniformToFill"
+                     RenderOptions.BitmapScalingMode="HighQuality" />
+            </Border>
+
+            <StackPanel VerticalAlignment="Center">
+
+              <TextBlock x:Name="AppTitleText" Text="工作台" FontSize="15" FontWeight="SemiBold"
+
+                         Foreground="{StaticResource TextPrimaryBrush}" />
+
+              <TextBlock x:Name="UserNameText" Margin="0,4,0,0" Foreground="{StaticResource TextMutedBrush}"
+
+                         FontSize="12" TextTrimming="CharacterEllipsis" />
+
+            </StackPanel>
+
+          </StackPanel>
+
+        </Border>
+
+
+
+        <Border DockPanel.Dock="Bottom" Padding="8,10,8,12"
+
+                BorderBrush="{StaticResource WinNavBorderBrush}" BorderThickness="0,1,0,0">
+
+          <StackPanel>
+
+            <Button Content="设置" Style="{StaticResource WinFooterButton}" Click="SettingsButton_Click" />
+
+            <Button Content="退出登录" Style="{StaticResource WinFooterButton}" Click="LogoutButton_Click" />
+
+          </StackPanel>
+
+        </Border>
+
+
+
+        <ListBox x:Name="NavList" Style="{StaticResource WinNavListBox}"
+
+                 ItemContainerStyle="{StaticResource WinNavListBoxItem}"
+
+                 SelectionChanged="NavList_SelectionChanged" Margin="0,6,0,0" />
+
+      </DockPanel>
+
+    </Border>
+
+
+
+    <!-- 主内容区（自绘窗口控制钮，避免系统标题栏重复显示名称） -->
+
+    <Grid Grid.Column="1" Background="{StaticResource WinContentBgBrush}">
+
+      <Grid.RowDefinitions>
+
+        <RowDefinition Height="32" />
+
+        <RowDefinition Height="*" />
+
+      </Grid.RowDefinitions>
+
+
+
+      <Grid Grid.Row="0" Background="{StaticResource WinContentBgBrush}"
+
+            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+
+          <Button x:Name="MinimizeButton" Style="{StaticResource WinCaptionButton}" Content="&#xE921;"
+
+                  FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="MinimizeButton_Click"
+
+                  ToolTip="最小化" />
+
+          <Button x:Name="MaximizeButton" Style="{StaticResource WinCaptionButton}" Content="&#xE922;"
+
+                  FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="MaximizeButton_Click"
+
+                  ToolTip="最大化" />
+
+          <Button Style="{StaticResource WinCaptionCloseButton}" Content="&#xE8BB;"
+
+                  FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Click="CloseButton_Click"
+
+                  ToolTip="关闭" />
+
+        </StackPanel>
+
+      </Grid>
+
+
+
+      <Grid Grid.Row="1">
+
+        <wv2:WebView2 x:Name="DetailWebView" Visibility="Collapsed" />
+
+        <StackPanel x:Name="EmptyHint" VerticalAlignment="Center" HorizontalAlignment="Center">
+
+          <TextBlock Text="选择左侧功能开始使用" HorizontalAlignment="Center"
+
+                     Foreground="{StaticResource TextMutedBrush}" FontSize="14" />
+
+        </StackPanel>
+
+      </Grid>
+
+    </Grid>
+
+  </Grid>
+
+</Window>
+
+

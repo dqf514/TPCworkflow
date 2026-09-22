@@ -1,0 +1,8 @@
+2026/07/09-14:39:06.785 3258 Creating DB D:\AI\TPCWorkflow\client\bin\Release\net10.0-windows\TPCWorkflow.Client.exe.WebView2\EBWebView\Default\Session Storage since it was missing.
+2026/07/09-14:39:06.798 3258 Reusing MANIFEST D:\AI\TPCWorkflow\client\bin\Release\net10.0-windows\TPCWorkflow.Client.exe.WebView2\EBWebView\Default\Session Storage/MANIFEST-000001
+2026/07/09-14:42:28.164 81a8 Level-0 table #5: started
+2026/07/09-14:42:28.170 81a8 Level-0 table #5: 30894 bytes OK
+2026/07/09-14:42:28.174 81a8 Delete type=0 #3
+2026/07/09-14:48:59.825 81a8 Level-0 table #7: started
+2026/07/09-14:48:59.832 81a8 Level-0 table #7: 30875 bytes OK
+2026/07/09-14:48:59.838 81a8 Delete type=0 #4
