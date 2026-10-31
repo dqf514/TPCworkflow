@@ -3,17 +3,32 @@
     <a-layout class="app-shell" :class="{ 'app-shell--embed': isEmbedDesktop }">
       <a-layout-header v-if="!isEmbedDesktop" class="app-header">
         <div class="app-header-left">
-          <a-button
+          <button
             v-if="isMobile"
-            type="text"
-            class="app-header-menu-btn"
+            type="button"
+            class="app-icon-btn"
+            aria-label="打开导航"
             @click="drawerVisible = true"
           >
             <icon-menu />
-          </a-button>
+          </button>
+          <button
+            v-else-if="isDesktop"
+            type="button"
+            class="app-icon-btn app-sider-toggle"
+            :aria-label="sidebarCollapsed ? '展开导航' : '收起导航'"
+            :title="sidebarCollapsed ? '展开导航' : '收起导航'"
+            @click="toggleSidebar"
+          >
+            <icon-right v-if="sidebarCollapsed" />
+            <icon-left v-else />
+          </button>
           <div class="app-header-brand">
             <BrandLogo size="sm" />
             <span class="app-header-title">{{ branding.headerTitle() }}</span>
+            <span v-if="branding.appName && branding.appName !== branding.headerTitle()" class="app-header-app">
+              {{ branding.appName }}
+            </span>
           </div>
         </div>
         <div class="app-header-right">
@@ -26,10 +41,12 @@
             @update:model-value="onLocaleChange"
           />
           <a-dropdown v-if="auth.user" trigger="click">
-            <button type="button" class="app-avatar-btn" aria-label="用户菜单">
-              <a-avatar :size="36" :image-url="auth.user.avatar_url || undefined">
+            <button type="button" class="app-user-chip" aria-label="用户菜单">
+              <a-avatar :size="30" :image-url="auth.user.avatar_url || undefined">
                 {{ auth.user.display_name?.[0] || 'U' }}
               </a-avatar>
+              <span class="app-user-name">{{ auth.user.display_name }}</span>
+              <icon-down class="app-user-caret" />
             </button>
             <template #content>
               <a-doption @click="openProfile('profile')">{{ t('auth.profile') }}</a-doption>
@@ -46,7 +63,7 @@
       <a-layout class="app-body">
         <a-layout-sider
           v-if="!isMobile && !isEmbedDesktop"
-          :width="252"
+          :width="244"
           :collapsed-width="72"
           :collapsed="sidebarCollapsed"
           class="app-sider"
@@ -56,19 +73,6 @@
         >
           <SideMenu :collapsed="sidebarCollapsed" />
         </a-layout-sider>
-
-        <button
-          v-if="isDesktop && !isEmbedDesktop"
-          type="button"
-          class="sider-collapse-trigger"
-          :class="{ 'sider-collapse-trigger--collapsed': sidebarCollapsed }"
-          :title="sidebarCollapsed ? '展开导航' : '收起导航'"
-          :aria-label="sidebarCollapsed ? '展开导航' : '收起导航'"
-          @click="toggleSidebar"
-        >
-          <icon-right v-if="sidebarCollapsed" />
-          <icon-left v-else />
-        </button>
 
         <a-layout-content class="app-content" :class="{ 'has-mobile-tab': isMobile && !isEmbedDesktop, 'app-content--embed': isEmbedDesktop }">
           <a-alert
@@ -158,7 +162,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
-import { IconMenu, IconLeft, IconRight } from '@arco-design/web-vue/es/icon'
+import { IconMenu, IconLeft, IconRight, IconDown } from '@arco-design/web-vue/es/icon'
 import { arcoLocaleMap, loadLocaleMessages } from '@/plugins/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkflowBadgesStore } from '@/stores/workflowBadges'
@@ -374,10 +378,10 @@ branding.load()
   align-items: center;
   justify-content: space-between;
   height: var(--header-h) !important;
-  padding: 0 1rem 0 1.25rem !important;
+  padding: 0 1.25rem !important;
   background: var(--surface) !important;
   border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
   flex-shrink: 0;
 }
 
@@ -389,39 +393,96 @@ branding.load()
   min-width: 0;
 }
 
-.app-header-menu-btn {
-  min-width: 44px !important;
-  min-height: 44px !important;
+.app-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.app-icon-btn:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.app-sider-toggle {
+  margin-right: 0.15rem;
 }
 
 .app-header-brand {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
   min-width: 0;
 }
 
 .app-header-title {
-  font-size: 1.0625rem;
-  font-weight: 700;
+  font-size: 0.9375rem;
+  font-weight: 650;
   color: var(--text);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.app-locale-select {
-  width: 6.5rem;
+.app-header-app {
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
 }
 
-.app-avatar-btn {
-  border: none;
+.app-locale-select {
+  width: 6.25rem;
+}
+
+.app-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 36px;
+  padding: 0 0.5rem 0 0.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
   background: transparent;
-  padding: 0;
+  color: var(--text);
   cursor: pointer;
-  border-radius: 50%;
-  line-height: 0;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.app-user-chip:hover {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+.app-user-name {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.app-user-caret {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 
 .app-body {
@@ -448,50 +509,10 @@ branding.load()
 .app-sider :deep(.arco-layout-sider-children) {
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 0.75rem 0;
+  padding: 0.5rem 0;
   height: 100%;
   max-height: 100%;
   overscroll-behavior: contain;
-}
-
-/* 侧栏与内容区分界线上的折叠钮（贴边圆钮，固定在顶部） */
-.sider-collapse-trigger {
-  position: absolute;
-  top: 0.75rem;
-  left: calc(252px - 13px);
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 1px solid var(--border-strong);
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--text-secondary);
-  cursor: pointer;
-  box-shadow: var(--shadow-xs);
-  transition:
-    left 0.2s cubic-bezier(0.34, 0.69, 0.1, 1),
-    color 0.15s ease,
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-
-.sider-collapse-trigger--collapsed {
-  left: calc(72px - 13px);
-}
-
-.sider-collapse-trigger:hover {
-  color: var(--brand);
-  border-color: var(--brand);
-  background: var(--brand-soft);
-}
-
-.sider-collapse-trigger:focus-visible {
-  outline: 2px solid rgba(80, 52, 255, 0.35);
-  outline-offset: 2px;
 }
 
 .app-content {
@@ -500,7 +521,7 @@ branding.load()
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  background: var(--surface-muted);
+  background: var(--bg);
   padding: 0 !important;
   overscroll-behavior: contain;
 }
@@ -514,6 +535,25 @@ branding.load()
 @media (min-width: 1024px) {
   .app-content-inner {
     padding: 1rem 1.5rem 1.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-header {
+    padding: 0 0.75rem !important;
+  }
+
+  .app-user-name,
+  .app-user-caret {
+    display: none;
+  }
+
+  .app-user-chip {
+    padding: 0;
+  }
+
+  .app-header-app {
+    display: none;
   }
 }
 

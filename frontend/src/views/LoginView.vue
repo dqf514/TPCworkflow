@@ -1,36 +1,82 @@
 <template>
   <a-config-provider :locale="arcoLocale">
     <div class="login-page">
+      <aside class="login-visual" aria-hidden="true">
+        <div class="login-visual-grid" />
+        <div class="login-visual-glow" />
+        <div class="login-visual-inner">
+          <div class="visual-brand">
+            <BrandLogo size="md" />
+            <span class="visual-brand-name">{{ branding.headerTitle() }}</span>
+          </div>
+
+          <div class="visual-copy">
+            <span class="visual-eyebrow">{{ t('login.visual_tag') }}</span>
+            <h2 class="visual-title">
+              {{ t('login.visual_title_1') }}<br />{{ t('login.visual_title_2') }}
+            </h2>
+            <p class="visual-desc">{{ t('login.visual_desc') }}</p>
+          </div>
+
+          <ul class="visual-points">
+            <li class="visual-point">
+              <span class="visual-point-num">01</span>
+              <div class="visual-point-body">
+                <span class="visual-point-label">{{ t('login.card1_label') }}</span>
+                <strong>{{ t('login.card1_strong') }}</strong>
+              </div>
+            </li>
+            <li class="visual-point">
+              <span class="visual-point-num">02</span>
+              <div class="visual-point-body">
+                <span class="visual-point-label">{{ t('login.card2_label') }}</span>
+                <strong>{{ t('login.card2_strong') }}</strong>
+              </div>
+            </li>
+            <li class="visual-point">
+              <span class="visual-point-num">03</span>
+              <div class="visual-point-body">
+                <span class="visual-point-label">{{ t('login.card3_label') }}</span>
+                <strong>{{ t('login.card3_strong') }}</strong>
+              </div>
+            </li>
+          </ul>
+
+          <p class="visual-foot">{{ branding.companyName || branding.appName }}</p>
+        </div>
+      </aside>
+
       <section class="login-panel">
         <div class="login-panel-inner">
           <div class="login-locale-wrap">
             <LoginLocaleSwitcher />
           </div>
 
-          <div class="login-brand">
-            <BrandLogo size="lg" />
-            <div class="login-brand-text">
-              <span class="login-app-name">{{ branding.headerTitle() }}</span>
-              <span v-if="branding.companyName" class="login-company">{{ branding.companyName }}</span>
-            </div>
+          <div class="login-mobile-brand">
+            <BrandLogo size="sm" />
+            <span class="login-mobile-brand-name">{{ branding.headerTitle() }}</span>
           </div>
 
           <h1 class="login-heading">{{ t('auth.welcome') }}</h1>
           <p class="login-sub">{{ t('auth.login_hint') }}</p>
 
-          <div class="login-mode">
+          <div class="login-mode" role="tablist">
             <button
               type="button"
+              role="tab"
               class="login-mode-btn"
               :class="{ active: mode === 'password' }"
+              :aria-selected="mode === 'password'"
               @click="mode = 'password'"
             >
               {{ t('auth.password') }}
             </button>
             <button
               type="button"
+              role="tab"
               class="login-mode-btn"
               :class="{ active: mode === 'email' }"
+              :aria-selected="mode === 'email'"
               @click="mode = 'email'"
             >
               {{ t('auth.email_code') }}
@@ -76,7 +122,7 @@
             </a-button>
           </a-form>
 
-          <a-form v-else layout="vertical" class="login-form" @submit-success="loginEmail">
+          <a-form v-else :model="emailForm" layout="vertical" class="login-form" @submit-success="loginEmail">
             <a-form-item :label="t('auth.email')" hide-label class="login-field">
               <a-input
                 v-model="emailForm.email"
@@ -130,35 +176,8 @@
           </template>
 
           <p v-if="error" class="login-error" role="alert">{{ error }}</p>
-
-          <p v-if="branding.companyName" class="login-footer">{{ branding.companyName }}</p>
         </div>
       </section>
-
-      <aside class="login-visual" aria-hidden="true">
-        <div class="login-visual-bg" />
-        <div class="login-visual-content">
-          <p class="visual-tag">{{ t('login.visual_tag') }}</p>
-          <h2 class="visual-title">
-            {{ t('login.visual_title_1') }}<br />{{ t('login.visual_title_2') }}
-          </h2>
-          <p class="visual-desc">{{ t('login.visual_desc') }}</p>
-          <div class="visual-cards">
-            <div class="visual-card visual-card-1">
-              <span class="visual-card-label">{{ t('login.card1_label') }}</span>
-              <strong>{{ t('login.card1_strong') }}</strong>
-            </div>
-            <div class="visual-card visual-card-2">
-              <span class="visual-card-label">{{ t('login.card2_label') }}</span>
-              <strong>{{ t('login.card2_strong') }}</strong>
-            </div>
-            <div class="visual-card visual-card-3">
-              <span class="visual-card-label">{{ t('login.card3_label') }}</span>
-              <strong>{{ t('login.card3_strong') }}</strong>
-            </div>
-          </div>
-        </div>
-      </aside>
     </div>
   </a-config-provider>
 </template>
@@ -326,113 +345,269 @@ onMounted(async () => {
 
 <style scoped>
 .login-page {
-  min-height: 100dvh;
   display: flex;
+  min-height: 100dvh;
   background: var(--surface);
 }
 
-.login-panel {
-  flex: 1;
+/* —— 品牌侧 —— */
+.login-visual {
+  position: relative;
+  display: none;
+  width: 46%;
+  max-width: 660px;
+  overflow: hidden;
+  background: #131418;
+  color: #fff;
+}
+
+.login-visual-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse at 30% 15%, #000 10%, transparent 72%);
+}
+
+.login-visual-glow {
+  position: absolute;
+  top: -220px;
+  right: -180px;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(80, 52, 255, 0.5) 0%, transparent 66%);
+  filter: blur(4px);
+}
+
+.login-visual-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 3rem 3.25rem;
+  gap: 3rem;
+}
+
+.visual-brand {
   display: flex;
   align-items: center;
+  gap: 0.7rem;
+}
+
+.visual-brand .brand-logo {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.visual-brand-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.visual-copy {
+  margin-top: auto;
+}
+
+.visual-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.visual-eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: var(--brand);
+}
+
+.visual-title {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 2.8vw, 2.6rem);
+  font-weight: 650;
+  line-height: 1.24;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.visual-desc {
+  max-width: 24rem;
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.visual-points {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.visual-point {
+  display: flex;
+  align-items: baseline;
+  gap: 1.1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.visual-point-num {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.38);
+  font-variant-numeric: tabular-nums;
+}
+
+.visual-point-body {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.visual-point-label {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.visual-point-body strong {
+  font-size: 0.9375rem;
+  font-weight: 550;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.visual-foot {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+/* —— 表单侧 —— */
+.login-panel {
+  display: flex;
+  flex: 1;
+  align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
   min-width: 0;
+  padding: 2.5rem 1.5rem;
+  background: var(--surface);
 }
 
 .login-panel-inner {
   width: 100%;
-  max-width: 400px;
-  position: relative;
+  max-width: 376px;
 }
 
 .login-locale-wrap {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2.5rem;
 }
 
-.login-brand {
+.login-mobile-brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
   margin-bottom: 2rem;
-  padding-right: 140px;
 }
 
-.login-brand-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.login-app-name {
-  font-weight: 700;
-  font-size: 1.05rem;
+.login-mobile-brand-name {
+  font-size: 0.9375rem;
+  font-weight: 650;
   color: var(--text);
-}
-
-.login-company {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
 }
 
 .login-heading {
   margin: 0 0 0.5rem;
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 1.875rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
   color: var(--text);
+  line-height: 1.25;
 }
 
 .login-sub {
-  margin: 0 0 1.75rem;
-  font-size: 0.9375rem;
+  margin: 0 0 2rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .login-mode {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.25rem;
   padding: 0.25rem;
-  background: var(--surface-muted);
-  border-radius: var(--radius-md);
   margin-bottom: 1.5rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .login-mode-btn {
   flex: 1;
-  border: none;
-  background: transparent;
-  padding: 0.55rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  color: var(--text-secondary);
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.login-mode-btn:hover {
+  color: var(--text);
 }
 
 .login-mode-btn.active {
   background: var(--surface);
-  color: var(--brand);
+  border-color: var(--border);
+  color: var(--text);
   box-shadow: var(--shadow-xs);
 }
 
 .login-form :deep(.arco-form-item) {
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 }
 
 .login-field :deep(.arco-input-wrapper),
 .login-field :deep(.arco-input-password) {
-  border-radius: var(--radius-sm);
+  height: 44px;
+  border-radius: var(--radius-md);
   background: var(--surface);
-  border-color: var(--border);
+  border-color: var(--border-strong);
+}
+
+.login-field :deep(.arco-input-wrapper:hover),
+.login-field :deep(.arco-input-password:hover) {
+  border-color: var(--border-input);
+}
+
+.login-field :deep(.arco-input-wrapper.arco-input-focus),
+.login-field :deep(.arco-input-password.arco-input-focus) {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(80, 52, 255, 0.14);
 }
 
 .login-code-row {
@@ -448,24 +623,25 @@ onMounted(async () => {
 
 .login-code-btn {
   flex-shrink: 0;
-  border-radius: var(--radius-sm) !important;
+  height: 44px !important;
+  border-radius: var(--radius-md) !important;
 }
 
 .login-submit {
-  margin-top: 0.5rem;
-  height: 48px !important;
-  border-radius: var(--radius-sm) !important;
+  height: 46px !important;
+  margin-top: 0.35rem;
+  border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
-  font-size: 1rem !important;
+  font-size: 0.9375rem !important;
 }
 
 .login-divider {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin: 1.25rem 0;
+  margin: 1.35rem 0;
   color: var(--text-tertiary);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 .login-divider::before,
@@ -477,144 +653,66 @@ onMounted(async () => {
 }
 
 .login-sso {
-  height: 48px !important;
-  border-radius: var(--radius-sm) !important;
-  border-color: var(--border) !important;
+  height: 46px !important;
+  border-radius: var(--radius-md) !important;
+  border-color: var(--border-strong) !important;
   background: var(--surface) !important;
+  color: var(--text) !important;
   font-weight: 500 !important;
+}
+
+.login-sso:hover {
+  border-color: var(--border-input) !important;
+  background: var(--surface-muted) !important;
 }
 
 .login-error {
   margin: 1rem 0 0;
   padding: 0.65rem 0.85rem;
-  font-size: 0.875rem;
-  color: #c42b2b;
-  background: #fff2f0;
-  border-radius: var(--radius-sm);
-  text-align: center;
-}
-
-.login-footer {
-  margin: 2rem 0 0;
-  text-align: center;
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-}
-
-/* 右侧视觉区 — 桌面 */
-.login-visual {
-  display: none;
-  width: 46%;
-  max-width: 640px;
-  position: relative;
-  overflow: hidden;
-}
-
-.login-visual-bg {
-  position: absolute;
-  inset: 0;
-  background: var(--brand-gradient);
-  opacity: 0.95;
-}
-
-.login-visual-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 45%),
-    radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.25) 0%, transparent 40%);
-}
-
-.login-visual-content {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  padding: 3.5rem 3rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  color: #fff;
-}
-
-.visual-tag {
-  display: inline-block;
-  width: fit-content;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  backdrop-filter: blur(8px);
-  margin-bottom: 1.25rem;
-}
-
-.visual-title {
-  margin: 0 0 1rem;
-  font-size: clamp(1.75rem, 3vw, 2.25rem);
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
-}
-
-.visual-desc {
-  margin: 0 0 2.5rem;
-  font-size: 1rem;
-  line-height: 1.6;
-  opacity: 0.92;
-  max-width: 22rem;
-}
-
-.visual-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  max-width: 28rem;
-}
-
-.visual-card {
-  padding: 1rem 0.85rem;
+  border: 1px solid #f4d3cd;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.visual-card-label {
-  display: block;
-  font-size: 0.75rem;
-  opacity: 0.85;
-  margin-bottom: 0.35rem;
-}
-
-.visual-card strong {
-  font-size: 0.9375rem;
-  font-weight: 700;
-}
-
-.visual-card-2 {
-  transform: translateY(8px);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-align: center;
 }
 
 @media (min-width: 900px) {
   .login-visual {
     display: flex;
   }
+
+  .login-mobile-brand {
+    display: none;
+  }
+
+  .login-locale-wrap {
+    margin-bottom: 3rem;
+  }
 }
 
 @media (max-width: 899px) {
   .login-page {
-    background: linear-gradient(180deg, var(--brand-soft) 0%, var(--surface) 28%);
+    background: var(--surface);
   }
 
-  .login-brand {
-    padding-right: 0;
-    margin-top: 2.5rem;
+  .login-panel {
+    align-items: flex-start;
+    padding: 1.25rem 1.25rem 2.5rem;
+  }
+
+  .login-panel-inner {
+    max-width: 420px;
+    margin: 0 auto;
   }
 
   .login-locale-wrap {
-    top: -0.5rem;
-    right: 0;
+    margin-bottom: 1.5rem;
+  }
+
+  .login-heading {
+    font-size: 1.625rem;
   }
 }
 </style>

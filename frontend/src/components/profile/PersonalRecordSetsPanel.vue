@@ -3,7 +3,7 @@
     <p class="hint-text">
       此处维护您在填表时保存的个人常用数据（如个人收款账号）。公司级配置由管理员在系统设置中维护；个人级配置表仅显示本人数据。
     </p>
-    <a-form layout="vertical" class="mb-3">
+    <a-form layout="vertical" class="mb-3" :model="filterForm">
       <a-form-item label="控件配置表">
         <a-select
           v-model="selectedCode"
@@ -54,7 +54,7 @@
       @ok="saveRow"
       @cancel="rowModal = false"
     >
-      <a-form layout="vertical">
+      <a-form layout="vertical" :model="rowEdit">
         <a-row :gutter="[12, 8]">
           <a-col v-for="c in columns" :key="c.field_key" :span="columnSpan(c)">
             <a-form-item :label="c.label" required>
@@ -83,6 +83,7 @@ import {
 import { recordSetColumnSpan } from '@/utils/recordSetLayout'
 
 const overview = ref<MyRecordSetOverview[]>([])
+const filterForm = {}
 const selectedCode = ref('')
 const loading = ref(false)
 const columns = ref<RecordSetColumn[]>([])

@@ -31,19 +31,15 @@
       <template #icon><icon-settings /></template>
       <template #title>{{ t('menu.system_admin') }}</template>
 
-      <a-sub-menu key="group-system-settings">
-        <template #title>{{ t('menu.system_settings_group') }}</template>
-        <a-menu-item v-for="tab in systemSettingTabs" :key="tab.key">
-          {{ tab.label }}
-        </a-menu-item>
-      </a-sub-menu>
+      <a-menu-item key="settings-tab-brand">
+        <template #icon><icon-settings /></template>
+        {{ t('menu.system_settings_group') }}
+      </a-menu-item>
 
-      <a-sub-menu key="group-form-settings">
-        <template #title>{{ t('menu.form_settings_group') }}</template>
-        <a-menu-item v-for="tab in formSettingTabs" :key="tab.key">
-          {{ tab.label }}
-        </a-menu-item>
-      </a-sub-menu>
+      <a-menu-item key="settings-tab-option-sets">
+        <template #icon><icon-apps /></template>
+        {{ t('menu.form_settings_group') }}
+      </a-menu-item>
 
       <a-menu-item key="admin-logs">
         <template #icon><icon-history /></template>
@@ -68,20 +64,11 @@ import {
   IconHistory,
   IconExport,
   IconBarChart,
+  IconApps,
+  IconFile,
 } from '@arco-design/web-vue/es/icon'
 import NavBadge from '@/components/NavBadge.vue'
 import { useNavMenu } from '@/composables/useNavMenu'
-
-const SYSTEM_SETTING_TAB_KEYS = [
-  'brand',
-  'sectors',
-  'admins',
-  'mail',
-  'sms',
-  'azure',
-  'attachments',
-  'i18n',
-] as const
 
 const FORM_SETTING_TAB_KEYS = [
   'option-sets',
@@ -90,22 +77,6 @@ const FORM_SETTING_TAB_KEYS = [
   'llm',
   'print-templates',
 ] as const
-
-const SETTINGS_TAB_LABEL_KEYS: Record<string, string> = {
-  brand: 'settings.tab_brand',
-  sectors: 'settings.tab_sectors',
-  admins: 'settings.tab_admins',
-  mail: 'settings.tab_mail',
-  sms: 'settings.tab_sms',
-  azure: 'settings.tab_azure',
-  attachments: 'settings.tab_attachments',
-  i18n: 'admin.i18n_title',
-  'option-sets': 'settings.tab_option_sets',
-  'record-sets': 'settings.tab_record_sets',
-  'exchange-rates': 'settings.tab_exchange_rates',
-  llm: 'settings.tab_llm',
-  'print-templates': 'settings.tab_print_templates',
-}
 
 const props = defineProps<{ collapsed?: boolean }>()
 
@@ -123,36 +94,15 @@ const {
   showFinanceExport,
 } = useNavMenu()
 
-function settingMenuKey(tab: string) {
-  return `settings-tab-${tab}`
-}
-
-const systemSettingTabs = computed(() =>
-  SYSTEM_SETTING_TAB_KEYS.map((tab) => ({
-    key: settingMenuKey(tab),
-    label: t(SETTINGS_TAB_LABEL_KEYS[tab] || tab),
-  })),
-)
-
-const formSettingTabs = computed(() =>
-  FORM_SETTING_TAB_KEYS.map((tab) => ({
-    key: settingMenuKey(tab),
-    label: t(SETTINGS_TAB_LABEL_KEYS[tab] || tab),
-  })),
-)
-
 const selectedKeys = computed(() => {
   const name = String(route.name || '')
   if (name === 'admin-settings') {
     const tab = String(route.query.tab || 'brand')
     if (tab === 'workflow-instances') return ['admin-workflow-instances']
-    if ((SYSTEM_SETTING_TAB_KEYS as readonly string[]).includes(tab)) {
-      return [settingMenuKey(tab)]
-    }
     if ((FORM_SETTING_TAB_KEYS as readonly string[]).includes(tab)) {
-      return [settingMenuKey(tab)]
+      return ['settings-tab-option-sets']
     }
-    return [settingMenuKey('brand')]
+    return ['settings-tab-brand']
   }
   return [name]
 })
@@ -163,19 +113,8 @@ function syncOpenKeys() {
   if (name === 'admin-sector-monitor' || name === 'admin-finance-export') {
     keys.push('group-stats')
   }
-  if (name === 'admin-logs' || name === 'admin-workflow-instances') {
+  if (name === 'admin-logs' || name === 'admin-workflow-instances' || name === 'admin-settings') {
     keys.push('group-system')
-  }
-  if (name === 'admin-settings') {
-    keys.push('group-system')
-    const tab = String(route.query.tab || 'brand')
-    if ((SYSTEM_SETTING_TAB_KEYS as readonly string[]).includes(tab)) {
-      keys.push('group-system-settings')
-    } else if ((FORM_SETTING_TAB_KEYS as readonly string[]).includes(tab)) {
-      keys.push('group-form-settings')
-    } else if (tab === 'workflow-instances') {
-      /* 与系统日志同级，无需展开子组 */
-    }
   }
   openKeys.value = keys
 }

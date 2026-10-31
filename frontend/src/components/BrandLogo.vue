@@ -1,17 +1,18 @@
 <template>
   <div class="brand-logo" :class="`brand-logo--${size}`" :title="title">
     <img
-      v-if="src"
+      v-if="showImage"
       :src="src"
-      alt="组织 Logo"
+      alt=""
       class="brand-logo-img"
+      @error="onImageError"
     />
     <span v-else class="brand-logo-fallback">{{ fallbackLetter }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useBrandingStore } from '@/stores/branding'
 
 const props = withDefaults(
@@ -27,8 +28,18 @@ const props = withDefaults(
 )
 
 const branding = useBrandingStore()
+const failed = ref(false)
 
 const src = computed(() => props.imageUrl || branding.logoUrl || '')
+const showImage = computed(() => Boolean(src.value) && !failed.value)
+
+watch(src, () => {
+  failed.value = false
+})
+
+function onImageError() {
+  failed.value = true
+}
 
 const fallbackLetter = computed(() => {
   if (props.fallback) return props.fallback.slice(0, 1).toUpperCase()
@@ -43,34 +54,34 @@ const fallbackLetter = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  background: var(--brand-gradient, linear-gradient(135deg, #5034ff, #7b61ff));
-  box-shadow: 0 4px 14px rgba(80, 52, 255, 0.28);
+  background: var(--brand, #5034ff);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 .brand-logo--sm {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
 }
 
 .brand-logo--md {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
 }
 
 .brand-logo--lg {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
 }
 
 .brand-logo:has(.brand-logo-img) {
   background: var(--surface, #fff);
   box-shadow: none;
-  border: 1px solid var(--border, #e6e9ef);
+  border: 1px solid var(--border, #e8e7e2);
 }
 
 .brand-logo-img {
@@ -82,19 +93,20 @@ const fallbackLetter = computed(() => {
 
 .brand-logo-fallback {
   color: #fff;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .brand-logo--sm .brand-logo-fallback {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .brand-logo--md .brand-logo-fallback {
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
 .brand-logo--lg .brand-logo-fallback {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
 }
 </style>

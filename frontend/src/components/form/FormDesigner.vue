@@ -1,7 +1,18 @@
 <template>
-  <div class="form-designer">
+  <div
+    class="form-designer"
+    :class="{ 'narrow-palette-open': narrowPaletteOpen, 'narrow-props-open': narrowPropsOpen }"
+  >
+    <div
+      v-if="narrowPaletteOpen || narrowPropsOpen"
+      class="designer-backdrop"
+      @click="closeNarrowPanels"
+    />
     <div class="designer-left">
-      <div class="panel-title">{{ t('designer.palette') }}</div>
+      <div class="panel-head-row">
+        <div class="panel-title">{{ t('designer.palette') }}</div>
+        <a-button class="panel-close" size="mini" @click="closeNarrowPanels">×</a-button>
+      </div>
       <div class="palette-scroll">
         <section v-for="g in fieldCatalog" :key="g.groupKey" class="palette-section">
           <div class="palette-group-title">{{ g.group }}</div>
@@ -28,10 +39,20 @@
 
     <div class="designer-center">
       <div class="center-toolbar">
+        <button type="button" class="panel-toggle" @click="narrowPaletteOpen = true">
+          {{ t('designer.palette') }}
+        </button>
         <a-radio-group v-model="device" type="button" size="small">
           <a-radio value="desktop">{{ t('designer.desktop') }}</a-radio>
           <a-radio value="mobile">{{ t('designer.mobile') }}</a-radio>
         </a-radio-group>
+        <button
+          type="button"
+          class="panel-toggle panel-toggle--end"
+          @click="narrowPropsOpen = true"
+        >
+          {{ t('designer.field_props') }}
+        </button>
       </div>
       <div class="canvas" :class="`preview-${device}`">
         <div
@@ -112,18 +133,27 @@
     <div class="designer-right">
       <div class="panel-head-row">
         <div class="panel-title">{{ t('designer.field_props') }}</div>
-        <a-button
-          v-if="selected"
-          size="mini"
-          status="danger"
-          @click="removeSelectedField"
-        >
-          {{ t('designer.delete_field') }}
-        </a-button>
+        <a-space>
+          <a-button
+            v-if="selected"
+            size="mini"
+            status="danger"
+            @click="removeSelectedField"
+          >
+            {{ t('designer.delete_field') }}
+          </a-button>
+          <a-button class="panel-close" size="mini" @click="closeNarrowPanels">×</a-button>
+        </a-space>
       </div>
       <template v-if="selected">
         <div class="props-scroll">
-          <a-form layout="vertical" size="small" class="props-form" :key="propsPanelKey">
+          <a-form
+            layout="vertical"
+            size="small"
+            class="props-form"
+            :model="selected || {}"
+            :key="propsPanelKey"
+          >
             <div class="props-grid cols-3">
               <a-form-item :label="t('designer.label')" class="props-item">
                 <a-input v-model="selected.label" />
@@ -465,6 +495,17 @@ const selectedSectionId = ref<string>('')
 const dropTarget = ref<{ sectionId: string; index: number } | null>(null)
 /** 属性面板 key：schema 深拷贝后强制重绑选中字段，避免开关等控件 UI 不刷新 */
 const propsPanelKey = ref(0)
+const narrowPaletteOpen = ref(false)
+const narrowPropsOpen = ref(false)
+
+function isNarrowDesigner() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 1280px)').matches
+}
+
+function closeNarrowPanels() {
+  narrowPaletteOpen.value = false
+  narrowPropsOpen.value = false
+}
 
 const selectedSection = computed(() =>
   schema.value.sections.find((s) => s.id === selectedSectionId.value) || null,
@@ -1144,11 +1185,16 @@ function selectField(f: FormFieldDef, sec: FormSection) {
   if (!f.span) f.span = { desktop: 12, mobile: 24 }
   detailColSelected.value = null
   propsPanelKey.value += 1
+  if (isNarrowDesigner()) {
+    narrowPaletteOpen.value = false
+    narrowPropsOpen.value = true
+  }
 }
 
 function selectDetailCol(col: FormFieldDef) {
   detailColSelected.value = col
   propsPanelKey.value += 1
+  if (isNarrowDesigner()) narrowPropsOpen.value = true
 }
 
 function removeField(sec: { fields: FormFieldDef[] }, fi: number) {
@@ -1427,9 +1473,39 @@ function moveSection(si: number, delta: number) {
   margin-top: 6px;
 }
 
+.panel-toggle,
+.panel-close,
+.designer-backdrop {
+  display: none;
+}
+
+.panel-toggle {
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--text-secondary, #5b6066);
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-strong, #d9d8d2);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: border-color var(--dur-fast, 120ms) var(--ease-out, ease),
+    color var(--dur-fast, 120ms) var(--ease-out, ease);
+}
+
+.panel-toggle:hover {
+  color: var(--brand, #5034ff);
+  border-color: var(--brand, #5034ff);
+}
+
+.panel-toggle--end {
+  margin-left: auto;
+}
+
 
 .center-toolbar {
   display: flex;
+  align-items: center;
   gap: 8px;
   padding: 8px;
   background: #fff;
@@ -1591,9 +1667,9 @@ function moveSection(si: number, delta: number) {
   background: #e8f3ff;
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 1440px) {
   .form-designer {
-    grid-template-columns: 220px 1fr minmax(400px, 480px);
+    grid-template-columns: 220px minmax(0, 1fr) minmax(400px, 480px);
   }
 
   .props-grid.cols-3 {
@@ -1601,9 +1677,53 @@ function moveSection(si: number, delta: number) {
   }
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .form-designer {
-    grid-template-columns: 200px 1fr 360px;
+    position: relative;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .panel-toggle {
+    display: inline-flex;
+  }
+
+  .panel-close {
+    display: inline-flex;
+  }
+
+  .designer-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background: rgb(23 25 27 / 32%);
+  }
+
+  .designer-left,
+  .designer-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 30;
+    width: min(400px, 92%);
+    box-shadow: var(--shadow-lg, 0 12px 32px rgb(23 25 27 / 14%));
+    transition: transform var(--dur-base, 160ms) var(--ease-out, ease);
+  }
+
+  .designer-left {
+    left: 0;
+    transform: translateX(-104%);
+  }
+
+  .designer-right {
+    right: 0;
+    transform: translateX(104%);
+  }
+
+  .narrow-palette-open .designer-left,
+  .narrow-props-open .designer-right {
+    transform: none;
   }
 
   .palette-grid {

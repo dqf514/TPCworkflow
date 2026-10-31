@@ -1,48 +1,53 @@
 <template>
-  <div class="page-shell pb-20 md:pb-8">
+  <div class="page-shell instance-detail">
     <a-spin :loading="loading" class="w-full">
       <template v-if="inst">
-        <div class="flex justify-end mb-4">
-          <a-button size="small" type="primary" :loading="printPreviewLoading" @click="openPrintPreview">
-            {{ t('print.print_btn') }}
-          </a-button>
-        </div>
+        <div class="instance-detail-grid">
+          <main class="instance-detail-main">
+            <div class="app-card instance-detail-card">
+              <InstanceContextHeader
+                :title="inst.definition_name || '申请详情'"
+                :meta="contextMeta"
+                :status-label="instanceStatusLabel"
+              />
+              <FormRenderer
+                v-if="formSchema"
+                :schema="formSchema"
+                :model-value="formValues"
+                :company-id="inst.company_id"
+                :holiday-user-id="inst.initiator_id"
+                readonly
+                :device="formDevice"
+              />
+              <a-empty v-else description="无表单数据" />
+            </div>
+          </main>
 
-        <div class="rounded-xl border bg-white p-4 sm:p-6 mb-4">
-          <InstanceContextHeader
-            :title="inst.definition_name || '申请详情'"
-            :meta="contextMeta"
-          />
-          <FormRenderer
-            v-if="formSchema"
-            :schema="formSchema"
-            :model-value="formValues"
-            :company-id="inst.company_id"
-            :holiday-user-id="inst.initiator_id"
-            readonly
-            :device="formDevice"
-          />
-          <a-empty v-else description="无表单数据" />
-        </div>
+          <aside class="instance-detail-rail">
+            <div class="rail-actions">
+              <a-button
+                long
+                type="outline"
+                :loading="printPreviewLoading"
+                @click="openPrintPreview"
+              >
+                {{ t('print.print_btn') }}
+              </a-button>
+            </div>
 
-        <WorkflowProgressPanel
-          v-if="flowProgress?.process_graph?.nodes?.length || inst.timeline?.length"
-          class="mb-4"
-          :status="inst.status"
-          :status-label="instanceStatusLabel"
-          :process-graph="flowProgress?.process_graph"
-          :form-schema="formSchema || undefined"
-          :form-data="formValues"
-          :current-node-ids="flowProgress?.current_node_ids"
-          :completed-node-ids="flowProgress?.completed_node_ids"
-          :step-started-at="flowProgress?.step_started_at"
-          :timeline="inst.timeline"
-        />
-
-        <div class="flex justify-end mt-4">
-          <a-button size="small" type="primary" :loading="printPreviewLoading" @click="openPrintPreview">
-            {{ t('print.print_btn') }}
-          </a-button>
+            <WorkflowProgressPanel
+              v-if="flowProgress?.process_graph?.nodes?.length || inst.timeline?.length"
+              :status="inst.status"
+              :status-label="instanceStatusLabel"
+              :process-graph="flowProgress?.process_graph"
+              :form-schema="formSchema || undefined"
+              :form-data="formValues"
+              :current-node-ids="flowProgress?.current_node_ids"
+              :completed-node-ids="flowProgress?.completed_node_ids"
+              :step-started-at="flowProgress?.step_started_at"
+              :timeline="inst.timeline"
+            />
+          </aside>
         </div>
       </template>
     </a-spin>
@@ -100,6 +105,7 @@ const inst = ref<{
   form_schema?: FormSchema
   variables?: { form?: Record<string, unknown> }
   initiator_name?: string
+  initiator_id?: number
   company_name?: string
   department_name?: string
   apply_department_path?: string
@@ -186,3 +192,57 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.instance-detail {
+  padding-bottom: 2rem;
+}
+
+.instance-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .instance-detail-grid {
+    grid-template-columns: minmax(0, 1fr) 348px;
+  }
+
+  .instance-detail-rail {
+    position: sticky;
+    top: 0;
+  }
+}
+
+.instance-detail-main {
+  min-width: 0;
+}
+
+.instance-detail-card {
+  padding: 18px 20px 20px;
+}
+
+.instance-detail-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.rail-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rail-actions :deep(.arco-btn) {
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .instance-detail-card {
+    padding: 14px;
+  }
+}
+</style>

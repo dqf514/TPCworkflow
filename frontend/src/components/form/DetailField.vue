@@ -1,12 +1,11 @@
 <template>
-  <div class="detail-field" :class="{ 'detail-field--mobile': isMobileLayout }">
-    <div v-if="!rows.length && readonly" class="detail-empty text-gray-500 text-sm">暂无明细</div>
+  <div class="detail-field" :class="{ 'detail-field--readonly': readonly }">
+    <div v-if="!rows.length && readonly" class="detail-empty">暂无明细</div>
 
-    <!-- 手机端：卡片纵向布局，避免明细表横向滚动 -->
-    <div v-else-if="isMobileLayout" class="detail-mobile-list">
-      <div v-for="(row, ri) in rows" :key="ri" class="detail-mobile-card">
-        <div class="detail-mobile-card-head">
-          <span class="detail-mobile-index">第 {{ ri + 1 }} 行</span>
+    <div v-else class="detail-rows">
+      <div v-for="(row, ri) in rows" :key="ri" class="detail-row">
+        <div v-if="!readonly || rows.length > 1" class="detail-row-head">
+          <span class="detail-row-index">第 {{ ri + 1 }} 行</span>
           <a-button
             v-if="!readonly"
             type="text"
@@ -18,67 +17,32 @@
             删除
           </a-button>
         </div>
-        <div v-for="col in columns" :key="col.id" class="detail-mobile-field">
-          <label class="detail-mobile-label">
-            {{ col.label }}
-            <span v-if="col.required" class="detail-req">*</span>
-          </label>
-          <DetailCell
-            :column="col"
-            :columns="columns"
-            :detail-key="detailKey"
-            :row-index="ri"
-            :model-value="row[col.key]"
-            :readonly="readonly"
-            :inline="false"
-            @update:model-value="(v) => setCell(ri, col.key, v)"
-            @fill-row="(patch) => applyRowPatch(ri, patch)"
-          />
-        </div>
-      </div>
-    </div>
 
-    <!-- 桌面端：表格布局 -->
-    <div v-else class="detail-table-wrap">
-      <table class="detail-table">
-        <thead>
-          <tr>
-            <th v-for="col in columns" :key="col.id" class="detail-th">
+        <div class="detail-row-grid">
+          <div
+            v-for="col in columns"
+            :key="col.id"
+            class="detail-cell"
+            :class="{ 'detail-cell--wide': isWideColumn(col) }"
+          >
+            <label class="detail-cell-label">
               {{ col.label }}
               <span v-if="col.required" class="detail-req">*</span>
-            </th>
-            <th v-if="!readonly" class="detail-th detail-th-action">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, ri) in rows" :key="ri" class="detail-tr">
-            <td v-for="col in columns" :key="col.id" class="detail-td">
-              <DetailCell
-                :column="col"
-                :columns="columns"
-                :detail-key="detailKey"
-                :row-index="ri"
-                :model-value="row[col.key]"
-                :readonly="readonly"
-                inline
-                @update:model-value="(v) => setCell(ri, col.key, v)"
-                @fill-row="(patch) => applyRowPatch(ri, patch)"
-              />
-            </td>
-            <td v-if="!readonly" class="detail-td detail-td-action">
-              <a-button
-                type="text"
-                size="mini"
-                status="danger"
-                :disabled="rows.length <= 1"
-                @click="removeRow(ri)"
-              >
-                删除
-              </a-button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </label>
+            <DetailCell
+              :column="col"
+              :columns="columns"
+              :detail-key="detailKey"
+              :row-index="ri"
+              :model-value="row[col.key]"
+              :readonly="readonly"
+              :inline="false"
+              @update:model-value="(v) => setCell(ri, col.key, v)"
+              @fill-row="(patch) => applyRowPatch(ri, patch)"
+            />
+          </div>
+        </div>
+      </div>
     </div>
 
     <a-button
@@ -101,11 +65,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
 import type { DeviceMode, FormFieldDef } from '@/types/form'
 import { getAmountColumnTotal, createEmptyMoney, isAmountSummaryFieldType } from '@/composables/useMoneyField'
-import { matchMobileViewport, MOBILE_MEDIA_QUERY, useBreakpoint } from '@/composables/useBreakpoint'
 import DetailCell from '@/components/form/DetailCell.vue'
 
 const props = withDefaults(
@@ -124,22 +87,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{ 'update:modelValue': [Record<string, unknown>[]] }>()
 
-const { isMobile: viewportMobile } = useBreakpoint()
-const screenMobile = ref(matchMobileViewport())
-
-const isMobileLayout = computed(
-  () => props.device === 'mobile' || screenMobile.value || viewportMobile.value,
-)
-
 onMounted(() => {
   ensureDefaultRow()
-  const mq = window.matchMedia(MOBILE_MEDIA_QUERY)
-  const sync = () => {
-    screenMobile.value = mq.matches
-  }
-  sync()
-  mq.addEventListener('change', sync)
-  onBeforeUnmount(() => mq.removeEventListener('change', sync))
 })
 
 const rows = computed({
@@ -205,6 +154,10 @@ function applyRowPatch(ri: number, patch: Record<string, unknown>) {
   rows.value = next
 }
 
+function isWideColumn(col: FormFieldDef) {
+  return col.type === 'textarea' || col.type === 'attachment' || col.type === 'image'
+}
+
 function formatMoney(n: number) {
   return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -223,172 +176,127 @@ watch(
   max-width: 100%;
 }
 
-.detail-table-wrap {
-  overflow-x: auto;
-  max-width: 100%;
-  border: 1px solid var(--border, #e6e9ef);
-  border-radius: var(--radius-md, 12px);
-  background: var(--surface, #fff);
+.detail-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.detail-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 640px;
+.detail-row {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
 
-@media (max-width: 1023px) {
-  .detail-table {
-    min-width: 0;
-  }
-
-  .detail-table-wrap {
-    overflow-x: visible;
-  }
+.detail-field--readonly .detail-row {
+  padding: 14px;
+  background: var(--surface-muted);
+  border-color: transparent;
 }
 
-.detail-th {
-  padding: 8px 10px;
-  font-size: 0.8125rem;
+.detail-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.detail-row-index {
+  font-size: 0.75rem;
   font-weight: 600;
-  text-align: left;
-  background: var(--surface-muted, #f5f6f8);
-  border-bottom: 1px solid var(--border, #e6e9ef);
-  white-space: nowrap;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
-.detail-th-action {
-  width: 56px;
-  text-align: center;
+.detail-row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: 10px 14px;
+}
+
+.detail-cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.detail-cell-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.35;
 }
 
 .detail-req {
-  color: #f53f3f;
   margin-left: 2px;
-}
-
-.detail-td {
-  padding: 6px 8px;
-  vertical-align: middle;
-  border-bottom: 1px solid var(--border, #e6e9ef);
-}
-
-.detail-tr:last-child .detail-td {
-  border-bottom: none;
-}
-
-.detail-td-action {
-  text-align: center;
+  color: var(--danger);
 }
 
 .detail-add-btn {
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .detail-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 22px;
   margin-top: 12px;
   padding: 10px 14px;
-  background: var(--brand-soft, #f0ecff);
-  border-radius: var(--radius-sm, 8px);
-  border: 1px solid #e8e4ff;
+  border: 1px solid #e6e0ff;
+  border-radius: var(--radius-md);
+  background: var(--brand-softer);
 }
 
 .detail-summary-line {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.9375rem;
-}
-
-.detail-summary-line + .detail-summary-line {
-  margin-top: 6px;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
 }
 
 .detail-summary-line strong {
-  color: var(--brand, #5034ff);
-  font-size: 1.05rem;
+  color: var(--brand);
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .detail-empty {
-  padding: 8px 0;
+  padding: 10px 0;
+  font-size: var(--app-font-sm);
+  color: var(--text-tertiary);
 }
 
-/* 手机端卡片明细 */
-.detail-mobile-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+@media (min-width: 768px) {
+  .detail-cell--wide {
+    grid-column: span 2;
+  }
 }
 
-.detail-mobile-card {
-  border: 1px solid var(--border, #e6e9ef);
-  border-radius: var(--radius-md, 12px);
-  background: var(--surface, #fff);
-  padding: 12px;
-}
-
-.detail-mobile-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px dashed var(--border, #e6e9ef);
-}
-
-.detail-mobile-index {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary, #676879);
-}
-
-.detail-mobile-field {
-  margin-bottom: 12px;
-}
-
-.detail-mobile-field:last-child {
-  margin-bottom: 0;
-}
-
-.detail-mobile-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary, #676879);
-}
-
-.detail-field--mobile :deep(.detail-inline-att) {
-  max-width: none;
-  min-width: 0;
+.detail-field :deep(.arco-input-wrapper),
+.detail-field :deep(.arco-select-view),
+.detail-field :deep(.arco-picker),
+.detail-field :deep(.arco-input-number) {
   width: 100%;
 }
 
-.detail-field--mobile :deep(.arco-input),
-.detail-field--mobile :deep(.arco-select),
-.detail-field--mobile :deep(.arco-picker),
-.detail-field--mobile :deep(.arco-input-number),
-.detail-field--mobile :deep(.arco-textarea) {
-  width: 100%;
-}
-
-.detail-field--mobile :deep(.money-field .money-grid),
-.detail-field--mobile :deep(.money-field--compact .money-grid) {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-}
-
-.detail-field--mobile :deep(.attachment-field),
-.detail-field--mobile :deep(.arco-upload),
-.detail-field--mobile :deep(.arco-upload-list),
-.detail-field--mobile :deep(.arco-upload-list-item) {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.detail-field--mobile :deep(.arco-upload-list-item-name) {
+.detail-field :deep(.arco-upload-list-item-name) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.detail-field--readonly :deep(.arco-input-wrapper[readonly]),
+.detail-field--readonly :deep(.arco-input[readonly]) {
+  background: transparent;
+  border-color: transparent;
+  padding-left: 0;
 }
 </style>

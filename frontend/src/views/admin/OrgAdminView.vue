@@ -81,10 +81,11 @@
                   row-key="membership_id"
                   :pagination="false"
                   :loading="membersLoading"
+                  :scroll="{ x: 'max-content' }"
                   @row-click="(r: MemberRow) => openMemberProfile(r)"
                 >
                   <template #columns>
-                    <a-table-column :title="t('org.col_name')">
+                    <a-table-column :title="t('org.col_name')" :width="180">
                       <template #cell="{ record }">
                         <a-link @click.stop="openMemberProfile(record)">{{ record.display_name }}</a-link>
                         <a-tag v-if="record.role_in_dept === 'manager'" color="arcoblue" size="small" class="ml-2">
@@ -92,8 +93,8 @@
                         </a-tag>
                       </template>
                     </a-table-column>
-                    <a-table-column :title="t('org.col_username')" data-index="username" />
-                    <a-table-column :title="t('org.col_job')" data-index="job_title" />
+                    <a-table-column :title="t('org.col_username')" data-index="username" :width="130" />
+                    <a-table-column :title="t('org.col_job')" data-index="job_title" :width="150" />
                     <a-table-column :title="t('org.col_dept_count')" :width="88">
                       <template #cell="{ record }">
                         {{ record.membership_count ?? 1 }}
@@ -104,7 +105,7 @@
                         {{ record.role_in_dept === 'manager' ? t('org.role_manager') : t('org.role_member') }}
                       </template>
                     </a-table-column>
-                    <a-table-column :title="t('org.col_actions')" :width="280">
+                    <a-table-column :title="t('org.col_actions')" :width="280" fixed="right">
                       <template #cell="{ record }">
                         <a-space>
                           <a-button size="mini" @click.stop="openMemberProfile(record)">{{ t('org.member_detail') }}</a-button>
@@ -132,14 +133,24 @@
             <template v-else-if="companyId && companyName">
               <div class="panel-head">{{ companyName }}</div>
               <div class="panel-body company-overview">
-                <a-descriptions :column="2" bordered size="medium">
-                  <a-descriptions-item :label="t('org.org_name')">{{ companyName }}</a-descriptions-item>
-                  <a-descriptions-item :label="t('org.dept_count')">{{ deptCount }}</a-descriptions-item>
-                  <a-descriptions-item :label="t('org.member_total')">{{ totalMemberCount }}</a-descriptions-item>
-                  <a-descriptions-item :label="t('org.tips')">
-                    {{ t('org.tips_text') }}
-                  </a-descriptions-item>
-                </a-descriptions>
+                <div class="company-facts">
+                  <div class="company-fact">
+                    <span class="company-fact-label">{{ t('org.org_name') }}</span>
+                    <span class="company-fact-value">{{ companyName }}</span>
+                  </div>
+                  <div class="company-fact">
+                    <span class="company-fact-label">{{ t('org.dept_count') }}</span>
+                    <span class="company-fact-value">{{ deptCount }}</span>
+                  </div>
+                  <div class="company-fact">
+                    <span class="company-fact-label">{{ t('org.member_total') }}</span>
+                    <span class="company-fact-value">{{ totalMemberCount }}</span>
+                  </div>
+                  <div class="company-fact company-fact--wide">
+                    <span class="company-fact-label">{{ t('org.tips') }}</span>
+                    <span class="company-fact-value company-fact-value--muted">{{ t('org.tips_text') }}</span>
+                  </div>
+                </div>
               </div>
             </template>
             <a-empty v-else class="panel-empty" :description="t('org.loading')" />
@@ -1047,13 +1058,13 @@ onMounted(async () => {
 }
 
 .structure-tree-panel {
-  flex: 0 0 440px;
-  max-width: 46%;
-  min-width: 360px;
-  border-right: 1px solid #e5e6eb;
+  flex: 0 0 330px;
+  max-width: 42%;
+  min-width: 272px;
+  border-right: 1px solid var(--border, #e5e6eb);
   display: flex;
   flex-direction: column;
-  background: #fafbfc;
+  background: var(--surface-muted, #fafbfc);
 }
 
 .tree-spin {
@@ -1149,6 +1160,44 @@ onMounted(async () => {
 
 .company-overview {
   padding: 16px;
+}
+
+.company-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.company-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--surface-muted, #f7f8fa);
+  border-radius: var(--radius-md, 8px);
+  min-width: 0;
+}
+
+.company-fact--wide {
+  grid-column: 1 / -1;
+}
+
+.company-fact-label {
+  font-size: var(--app-font-xs, 12.5px);
+  color: var(--text-tertiary, #86909c);
+}
+
+.company-fact-value {
+  font-size: var(--app-font-base, 15px);
+  font-weight: 500;
+  color: var(--text, #1d2129);
+  word-break: break-word;
+}
+
+.company-fact-value--muted {
+  font-weight: 400;
+  color: var(--text-secondary, #4e5969);
+  line-height: 1.6;
 }
 
 .panel-empty,

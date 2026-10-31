@@ -3,20 +3,20 @@
     class="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 safe-bottom md:hidden"
     role="navigation"
   >
-    <div class="flex items-stretch justify-around h-14 max-w-lg mx-auto">
+    <div class="mobile-tab-bar__inner">
       <button
         v-for="tab in bottomBarTabs"
         :key="tab.key"
         type="button"
-        class="flex flex-1 flex-col items-center justify-center gap-0.5 min-w-0 px-1 text-xs transition-colors"
-        :class="active === tab.key ? 'text-[var(--color-primary)]' : 'text-gray-500'"
+        class="mobile-tab"
+        :class="{ 'is-active': active === tab.key }"
         @click="go(tab.key)"
       >
         <span class="tab-icon-wrap">
-          <component :is="tab.icon" :size="22" />
+          <component :is="tab.icon" :size="20" />
           <NavBadge v-if="tab.badge" :count="tab.badge" />
         </span>
-        <span class="truncate max-w-full">{{ tab.label }}</span>
+        <span class="tab-label">{{ tab.label }}</span>
       </button>
     </div>
   </nav>
@@ -41,15 +41,62 @@ function go(name: string) {
 
 <style scoped>
 .mobile-tab-bar {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
   border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.06);
-  backdrop-filter: blur(8px);
+  backdrop-filter: saturate(180%) blur(16px);
+}
+
+.mobile-tab-bar__inner {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  height: 3.5rem;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.mobile-tab {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.mobile-tab.is-active {
+  color: var(--brand);
 }
 
 .tab-icon-wrap {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 24px;
+  border-radius: var(--radius-pill);
   line-height: 0;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.mobile-tab.is-active .tab-icon-wrap {
+  background: var(--brand-soft);
+}
+
+.tab-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
 }
 </style>

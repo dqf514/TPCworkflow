@@ -1,7 +1,7 @@
 <template>
   <PageChrome :title="t('workflow.todo')" :description="pageDesc">
     <div class="tasks-workspace">
-      <a-tabs v-model:active-key="activeTab" type="rounded" class="tasks-tabs" @change="onTabChange">
+      <a-tabs v-model:active-key="activeTab" type="line" class="tasks-tabs" @change="onTabChange">
         <a-tab-pane key="todo">
           <template #title>
             <span class="tab-title-with-badge">
@@ -592,9 +592,9 @@ watch(activeTab, (tab) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin: 10px 0 12px;
-  flex-wrap: nowrap;
+  gap: 10px;
+  margin: 12px 0 12px;
+  flex-wrap: wrap;
 }
 
 .tasks-toolbar-filters {
@@ -603,7 +603,7 @@ watch(activeTab, (tab) => {
   gap: 8px;
   flex: 1 1 auto;
   min-width: 0;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .tasks-toolbar-actions {
@@ -614,8 +614,9 @@ watch(activeTab, (tab) => {
 }
 
 .tasks-toolbar-search {
-  width: 240px;
-  flex: 0 0 240px;
+  width: 260px;
+  max-width: 100%;
+  flex: 0 1 260px;
 }
 
 .tasks-toolbar-search :deep(.arco-input-wrapper) {
@@ -623,13 +624,13 @@ watch(activeTab, (tab) => {
 }
 
 .tasks-toolbar-select {
-  width: 132px;
-  flex: 0 0 132px;
+  width: 140px;
+  flex: 0 0 140px;
 }
 
 .tasks-toolbar-select--status {
-  width: 108px;
-  flex-basis: 108px;
+  width: 116px;
+  flex-basis: 116px;
 }
 
 .tasks-toolbar-filters :deep(.arco-select-view-single),
@@ -638,24 +639,16 @@ watch(activeTab, (tab) => {
 }
 
 @media (max-width: 900px) {
-  .tasks-toolbar {
-    flex-wrap: wrap;
-  }
-
-  .tasks-toolbar-filters {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-
   .tasks-toolbar-search {
-    flex: 1 1 200px;
+    flex: 1 1 180px;
     width: auto;
     min-width: 160px;
   }
 
   .tasks-toolbar-select {
-    flex: 0 0 120px;
-    width: 120px;
+    flex: 1 1 120px;
+    width: auto;
+    min-width: 110px;
   }
 
   .tasks-toolbar-actions {

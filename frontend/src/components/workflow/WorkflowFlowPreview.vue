@@ -1,28 +1,36 @@
 <template>
-  <div class="wf-flow-textline" :class="{ 'is-runtime': mode === 'runtime' }">
-    <div v-if="title || durationText" class="wf-flow-textline__head">
-      <span v-if="title" class="wf-flow-textline__title">{{ title }}</span>
-      <span v-if="durationText" class="wf-flow-textline__duration">{{ durationText }}</span>
+  <div class="wf-flow" :class="{ 'is-runtime': mode === 'runtime' }">
+    <div v-if="title || durationText" class="wf-flow-head">
+      <span v-if="title" class="wf-flow-title">{{ title }}</span>
+      <span v-if="durationText" class="wf-flow-duration">{{ durationText }}</span>
     </div>
-    <p v-if="steps.length" class="wf-flow-textline__track">
-      <template v-for="(step, index) in steps" :key="step.id">
-        <span v-if="index > 0" class="wf-flow-textline__sep">&gt;&gt;</span>
-        <span class="wf-flow-textline__step" :class="{ 'is-current': isCurrentStep(step) }">
-          <span class="wf-flow-textline__num">{{ index + 1 }}.</span>
-          {{ step.label }}
-          <span v-if="isCurrentStep(step)" class="wf-flow-textline__current-tag">
-            （{{ t('workflow.flow_current_node') }}）
-          </span>
+
+    <ol v-if="steps.length" class="wf-flow-steps">
+      <li
+        v-for="(step, index) in steps"
+        :key="step.id"
+        class="wf-step"
+        :class="[`is-${stepState(step)}`, { 'is-first': index === 0 }]"
+      >
+        <span class="wf-step-marker">
+          <icon-check v-if="stepState(step) === 'done'" />
+          <span v-else class="wf-step-num">{{ index + 1 }}</span>
         </span>
-      </template>
-    </p>
-    <p v-else class="wf-flow-textline__empty">{{ t('workflow.flow_preview_empty') }}</p>
+        <span class="wf-step-label">{{ step.label }}</span>
+        <span v-if="stepState(step) === 'current'" class="wf-step-tag">
+          {{ t('workflow.flow_current_node') }}
+        </span>
+      </li>
+    </ol>
+
+    <p v-else class="wf-flow-empty">{{ t('workflow.flow_preview_empty') }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { IconCheck } from '@arco-design/web-vue/es/icon'
 import { useFormPreviewVariables } from '@/composables/useFormPreviewVariables'
 import { formatStepDuration } from '@/utils/formatStepDuration'
 import {
@@ -106,6 +114,11 @@ function isCurrentStep(step: FlowTextStep) {
   return false
 }
 
+function stepState(step: FlowTextStep): FlowNodePreviewState {
+  if (isCurrentStep(step)) return 'current'
+  return nodeStates.value[step.id] === 'done' ? 'done' : 'pending'
+}
+
 const durationText = computed(() => {
   if (props.mode !== 'runtime' || !props.stepStartedAt) return ''
   if (props.status && !['running', 'pending'].includes(props.status)) return ''
@@ -127,73 +140,151 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.wf-flow-textline {
-  margin-top: 16px;
+.wf-flow {
   width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #e5e6eb;
-  border-radius: 8px;
-  background: #f7f8fa;
+  min-width: 0;
 }
 
-.wf-flow-textline.is-runtime {
-  background: linear-gradient(180deg, #f7f8fa 0%, #f2f6ff 100%);
-}
-
-.wf-flow-textline__head {
+.wf-flow-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
-.wf-flow-textline__title {
-  font-size: 14px;
+.wf-flow-title {
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--text);
 }
 
-.wf-flow-textline__duration {
-  font-size: 11px;
-  color: #86909c;
+.wf-flow-duration {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
-.wf-flow-textline__track {
+.wf-flow-steps {
+  display: flex;
+  align-items: flex-start;
   margin: 0;
-  font-size: 14px;
-  line-height: 1.8;
-  color: #4e5969;
+  padding: 2px 0 4px;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.wf-step {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 84px;
+  max-width: 180px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  text-align: center;
+}
+
+.wf-step::before {
+  content: '';
+  position: absolute;
+  top: 11px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--divider);
+}
+
+.wf-step.is-first::before {
+  display: none;
+}
+
+.wf-step.is-done::before,
+.wf-step.is-current::before {
+  background: color-mix(in srgb, var(--success) 42%, var(--surface));
+}
+
+.wf-step-marker {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--border-input);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.wf-step.is-done .wf-step-marker {
+  border-color: var(--success);
+  background: var(--success);
+  color: #fff;
+  font-size: 12px;
+}
+
+.wf-step.is-current .wf-step-marker {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--brand-soft);
+}
+
+.wf-step-label {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.71875rem;
+  line-height: 1.4;
+  color: var(--text-tertiary);
   word-break: break-word;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-.wf-flow-textline__step {
-  display: inline;
+.wf-step.is-done .wf-step-label {
+  color: var(--text-secondary);
 }
 
-.wf-flow-textline__step.is-current {
+.wf-step.is-current .wf-step-label {
   font-weight: 600;
-  color: #1d2129;
+  color: var(--brand);
 }
 
-.wf-flow-textline__num {
-  margin-right: 2px;
-}
-
-.wf-flow-textline__current-tag {
+.wf-step-tag {
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 9.5px;
   font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
 }
 
-.wf-flow-textline__sep {
-  margin: 0 6px;
-  color: #c9cdd4;
-  font-weight: 400;
-}
-
-.wf-flow-textline__empty {
+.wf-flow-empty {
   margin: 0;
-  font-size: 13px;
-  color: #86909c;
+  padding: 4px 0;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .wf-step {
+    flex-basis: 96px;
+  }
 }
 </style>

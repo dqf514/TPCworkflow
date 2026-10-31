@@ -1,6 +1,6 @@
 <template>
   <PageChrome :title="t('workflow.my_instances')" :description="pageDesc">
-    <a-tabs v-model:active-key="activeTab" type="rounded" class="instances-tabs" @change="onTabChange">
+    <a-tabs v-model:active-key="activeTab" type="line" class="instances-tabs" @change="onTabChange">
       <a-tab-pane key="mine">
         <template #title>
           <span class="tab-title-with-badge">

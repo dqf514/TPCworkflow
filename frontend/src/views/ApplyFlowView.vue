@@ -17,7 +17,7 @@
         >
           {{ t('apply.print_preview') }}
         </a-button>
-        <a-button :loading="savingDraft" @click="saveDraft">{{ t('apply.save_draft') }}</a-button>
+        <a-button :loading="savingDraft" @click="saveDraft()">{{ t('apply.save_draft') }}</a-button>
         <a-button type="primary" :loading="submitting" @click="submit">
           {{ t('apply.submit_application') }}
         </a-button>
@@ -34,7 +34,7 @@
       </header>
 
       <a-card class="apply-card mb-4" :bordered="false">
-        <a-form layout="vertical" class="apply-org-form">
+        <a-form layout="vertical" class="apply-org-form" :model="orgFormModel">
           <div
             class="apply-org-grid"
             :class="{ 'apply-org-grid--with-org': showOrgUnitPicker && showCompanyPicker }"
@@ -122,7 +122,7 @@
 
         <div class="apply-footer-actions">
           <a-space wrap>
-            <a-button :loading="savingDraft" @click="saveDraft">{{ t('apply.save_draft') }}</a-button>
+            <a-button :loading="savingDraft" @click="saveDraft()">{{ t('apply.save_draft') }}</a-button>
             <a-button type="primary" :loading="submitting" class="!min-h-[44px]" @click="submit">
               {{ t('apply.submit_application') }}
             </a-button>
@@ -183,6 +183,7 @@ const orgUnitId = ref<number>()
 const departmentId = ref<number>()
 const formData = ref<Record<string, unknown>>({})
 const formSchema = ref<FormSchema | null>(null)
+const orgFormModel = {}
 const workflowDefId = ref<number>()
 const processGraph = ref<ProcessGraph>()
 const processIcon = ref('general')
@@ -764,6 +765,37 @@ onMounted(async () => {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--border, #e6e9ef);
+}
+
+@media (max-width: 767px) {
+  .apply-footer-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--mobile-tab-bar-height, calc(3.5rem + env(safe-area-inset-bottom, 0px)));
+    z-index: 55;
+    margin: 0;
+    padding: 10px 14px;
+    background: rgb(255 255 255 / 94%);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border, #e6e9ef);
+    box-shadow: 0 -6px 20px rgb(23 25 27 / 8%);
+  }
+
+  .apply-footer-actions :deep(.arco-space) {
+    display: flex;
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .apply-footer-actions :deep(.arco-space-item) {
+    flex: 1;
+  }
+
+  .apply-footer-actions :deep(.arco-btn) {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 
 /* 发起公司 + 申请部门：电脑端一行各半，手机端纵向排列 */

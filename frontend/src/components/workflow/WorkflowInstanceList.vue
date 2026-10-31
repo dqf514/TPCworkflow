@@ -9,7 +9,7 @@
       :pagination="pagination"
       :bordered="bordered"
       :row-selection="rowSelection"
-      :scroll="scroll"
+      :scroll="tableScroll"
       :row-class="rowClass"
       table-layout-fixed
       @page-change="(p: number) => emit('page-change', p)"
@@ -22,7 +22,7 @@
           v-if="cols.displayNo"
           :title="t('settings.instances_col_no')"
           data-index="display_no"
-          :width="168"
+          :width="150"
           :sortable="sortable ? { sortDirections: ['ascend', 'descend'] } : undefined"
           :sort-order="sortOrderFor('display_no')"
         >
@@ -38,7 +38,7 @@
           v-if="cols.flow"
           :title="t('workflow.col_flow')"
           data-index="definition_name"
-          :width="132"
+          :width="190"
           :ellipsis="true"
           :tooltip="true"
           :sortable="sortable ? { sortDirections: ['ascend', 'descend'] } : undefined"
@@ -56,7 +56,7 @@
           v-if="cols.sector"
           :title="t('workflow.col_sector')"
           data-index="business_sector_name"
-          :width="88"
+          :width="96"
           :ellipsis="true"
           :tooltip="true"
           :sortable="sortable ? { sortDirections: ['ascend', 'descend'] } : undefined"
@@ -83,14 +83,14 @@
           v-if="cols.status"
           :title="t('workflow.col_status')"
           data-index="status"
-          :width="128"
+          :width="120"
           :ellipsis="true"
           :tooltip="true"
           :sortable="sortable ? { sortDirections: ['ascend', 'descend'] } : undefined"
           :sort-order="sortOrderFor('status')"
         >
           <template #cell="{ record }">
-            <span class="wf-il-status">{{ displayStatus(record) }}</span>
+            <StatusPill :status="record.status" :label="displayStatus(record)" />
           </template>
         </a-table-column>
 
@@ -109,7 +109,7 @@
           v-if="cols.department"
           :title="t('workflow.col_department')"
           data-index="department_name"
-          :width="180"
+          :width="160"
           :ellipsis="true"
           :tooltip="true"
           :sortable="sortable ? { sortDirections: ['ascend', 'descend'] } : undefined"
@@ -189,9 +189,7 @@
             </span>
             <a-space wrap size="mini">
               <slot name="flow-extra" :record="record" />
-              <a-tag v-if="cols.status" size="small" class="wf-il-mobile-status">
-                {{ displayStatus(record) }}
-              </a-tag>
+              <StatusPill v-if="cols.status" :status="record.status" :label="displayStatus(record)" />
             </a-space>
           </div>
           <div v-if="cols.flow" class="wf-il-mobile-title">{{ record.definition_name || '—' }}</div>
@@ -242,6 +240,7 @@ import type {
 } from '@/types/workflowInstanceList'
 import { formatDateTime } from '@/utils/dateTime'
 import { formatInstanceListAmount } from '@/utils/instanceListFormat'
+import StatusPill from '@/components/workflow/StatusPill.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -272,6 +271,7 @@ const props = withDefaults(
     sortable: true,
     pagination: false,
     actionsWidth: 140,
+    actionsFixed: 'right',
     submittedAtTitle: '',
   },
 )
@@ -315,6 +315,10 @@ const selectedKeysModel = computed({
   set: (val: Array<string | number>) => emit('update:selectedKeys', val),
 })
 
+const tableScroll = computed<Record<string, unknown>>(
+  () => props.scroll || { x: 'max-content' },
+)
+
 function recordKey(record: WorkflowInstanceListRow): string | number {
   const raw = record[props.rowKey as keyof WorkflowInstanceListRow]
   return raw != null ? (raw as string | number) : record.id
@@ -356,7 +360,19 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 }
 
 .wf-instance-list :deep(.arco-table-td) {
-  font-size: 13px;
+  font-size: var(--app-font-sm, 13.5px);
+}
+
+.wf-instance-list :deep(.arco-table-col-fixed-right) {
+  background: var(--surface);
+}
+
+.wf-instance-list :deep(.arco-table-tr:hover .arco-table-col-fixed-right) {
+  background: var(--brand-softer);
+}
+
+.wf-instance-list :deep(.arco-table-col-fixed-right::before) {
+  box-shadow: none;
 }
 
 .wf-il-no {
@@ -412,10 +428,15 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 }
 
 .wf-il-mobile-card {
-  margin-bottom: 0.75rem;
-  border: 1px solid var(--border, #e6e9ef) !important;
-  border-radius: var(--radius-md, 8px) !important;
+  margin-bottom: 0.65rem;
+  border: 1px solid var(--border, #e8e7e2) !important;
+  border-radius: var(--radius-lg, 12px) !important;
+  box-shadow: var(--shadow-xs);
   cursor: pointer;
+}
+
+.wf-il-mobile-card :deep(.arco-card-body) {
+  padding: 14px;
 }
 
 .wf-il-mobile-card:last-child {
@@ -434,9 +455,11 @@ function displayStatus(record: WorkflowInstanceListRow): string {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  color: var(--text-secondary, #676879);
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--text-tertiary, #7a7f85);
   font-family: ui-monospace, 'Consolas', monospace;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -446,8 +469,8 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 
 .wf-il-mobile-title {
   font-weight: 600;
-  font-size: 16px;
-  color: var(--text, #1d2129);
+  font-size: 15px;
+  color: var(--text, #17191b);
   line-height: 1.35;
 }
 
@@ -455,14 +478,14 @@ function displayStatus(record: WorkflowInstanceListRow): string {
   margin-top: 4px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text, #1d2129);
+  color: var(--text, #17191b);
   font-variant-numeric: tabular-nums;
 }
 
 .wf-il-mobile-meta {
-  margin-top: 4px;
-  font-size: 13px;
-  color: var(--text-secondary, #676879);
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--text-secondary, #5b6066);
   line-height: 1.45;
   word-break: break-word;
 }
@@ -470,6 +493,6 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 .wf-il-mobile-actions {
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px solid var(--border, #e6e9ef);
+  border-top: 1px solid var(--divider, #efeeea);
 }
 </style>

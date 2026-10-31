@@ -1,33 +1,34 @@
 <template>
   <div class="instance-context-header">
-    <h2 v-if="title" class="ctx-title">{{ title }}</h2>
-    <table class="ctx-table">
-      <tbody>
-        <tr>
-          <th class="ctx-th">{{ t('print.org') }}</th>
-          <td class="ctx-td">{{ meta.companyName || '—' }}</td>
-          <th class="ctx-th">{{ t('print.approval_no') }}</th>
-          <td class="ctx-td ctx-mono">{{ meta.displayNo || meta.id || '—' }}</td>
-        </tr>
-        <tr>
-          <th class="ctx-th">{{ t('print.applicant') }}</th>
-          <td class="ctx-td">{{ meta.initiatorName || '—' }}</td>
-          <th class="ctx-th">{{ t('print.department') }}</th>
-          <td class="ctx-td">{{ meta.departmentPath || meta.departmentName || '—' }}</td>
-        </tr>
-        <tr>
-          <th class="ctx-th">{{ t('print.submitted_at') }}</th>
-          <td class="ctx-td">{{ formatPrintDateTime(meta.startedAt) }}</td>
-          <th class="ctx-th">{{ t('print.status') }}</th>
-          <td class="ctx-td">{{ instanceStatusLabel(meta.status || '') }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="ctx-head">
+      <div class="ctx-main">
+        <h2 v-if="title" class="ctx-title">{{ title }}</h2>
+        <div class="ctx-meta">
+          <span v-if="meta.displayNo || meta.id" class="ctx-no">
+            {{ meta.displayNo || `#${meta.id}` }}
+          </span>
+          <span v-if="meta.companyName" class="ctx-meta-item">{{ meta.companyName }}</span>
+          <span v-if="meta.departmentPath || meta.departmentName" class="ctx-meta-item">
+            {{ meta.departmentPath || meta.departmentName }}
+          </span>
+          <span v-if="meta.initiatorName" class="ctx-meta-item">{{ meta.initiatorName }}</span>
+          <span v-if="meta.startedAt" class="ctx-meta-item">
+            {{ formatPrintDateTime(meta.startedAt) }}
+          </span>
+        </div>
+      </div>
+      <StatusPill
+        v-if="meta.status"
+        :status="meta.status"
+        :label="statusLabel || instanceStatusLabel(meta.status)"
+        class="ctx-status"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
+import StatusPill from '@/components/workflow/StatusPill.vue'
 import { formatPrintDateTime, instanceStatusLabel } from '@/utils/printFormat'
 
 export interface InstanceContextMeta {
@@ -42,12 +43,14 @@ export interface InstanceContextMeta {
   startedAt?: string | null
 }
 
-defineProps<{
-  title?: string
-  meta: InstanceContextMeta
-}>()
-
-const { t } = useI18n()
+withDefaults(
+  defineProps<{
+    title?: string
+    meta: InstanceContextMeta
+    statusLabel?: string
+  }>(),
+  { statusLabel: '' },
+)
 </script>
 
 <style scoped>
@@ -55,64 +58,66 @@ const { t } = useI18n()
   margin-bottom: 16px;
 }
 
+.ctx-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.ctx-main {
+  min-width: 0;
+}
+
 .ctx-title {
-  margin: 0 0 12px;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1d2129;
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.35;
 }
 
-.ctx-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  border: 1px solid #e5e6eb;
-  border-radius: 8px;
+.ctx-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.ctx-meta-item {
+  position: relative;
+  max-width: 100%;
   overflow: hidden;
-}
-
-.ctx-th {
-  width: 88px;
-  padding: 10px 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #4e5969;
-  background: #f7f8fa;
-  border: 1px solid #e5e6eb;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.ctx-td {
-  padding: 10px 12px;
-  color: #1d2129;
-  border: 1px solid #e5e6eb;
-  background: #fff;
+.ctx-no {
+  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
-.ctx-mono {
-  font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
-  font-size: 13px;
+.ctx-status {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 @media (max-width: 640px) {
-  .ctx-table,
-  .ctx-table tbody,
-  .ctx-table tr,
-  .ctx-table th,
-  .ctx-table td {
-    display: block;
-    width: 100%;
+  .ctx-title {
+    font-size: 1.0625rem;
   }
 
-  .ctx-th {
-    border-bottom: none;
-    padding-bottom: 4px;
-  }
-
-  .ctx-td {
-    border-top: none;
-    padding-top: 0;
-    padding-bottom: 12px;
+  .ctx-meta {
+    gap: 4px 10px;
   }
 }
 </style>
