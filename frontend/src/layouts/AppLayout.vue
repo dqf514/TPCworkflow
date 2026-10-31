@@ -614,7 +614,7 @@ branding.load()
 
 .app-sider :deep(.arco-layout-sider-children) {
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   padding: 0.5rem 0;
   height: 100%;
   max-height: 100%;
