@@ -188,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
@@ -204,6 +204,7 @@ import type { ProcessGraph } from '@/utils/workflowFlowGraph'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkflowBadgesStore } from '@/stores/workflowBadges'
 import { useEmbedDesktop } from '@/composables/useEmbedDesktop'
+import { setPageHeaderTitle } from '@/composables/usePageHeader'
 import { validateNodeFieldRequirements } from '@/utils/nodeFieldRequirements'
 
 interface TaskDetail {
@@ -266,6 +267,15 @@ const hasMobileTabBar = computed(() => width.value < 768)
 const formDevice = computed(() => (isMobile.value ? 'mobile' : 'desktop'))
 const { t } = useI18n()
 const task = ref<TaskDetail | null>(null)
+
+watch(
+  task,
+  (value) => {
+    if (value) setPageHeaderTitle(value.instance?.definition_name || t('page.task_detail'))
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => setPageHeaderTitle(''))
 const timeline = ref<TimelineItem[]>([])
 const loading = ref(true)
 const acting = ref(false)

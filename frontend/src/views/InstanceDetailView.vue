@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { api, type ApiResponse } from '@/api/client'
@@ -67,6 +67,7 @@ import type { ProcessGraph } from '@/utils/workflowFlowGraph'
 import WorkflowPrintPreviewOverlay from '@/components/print/WorkflowPrintPreviewOverlay.vue'
 import WorkflowProgressPanel from '@/components/workflow/WorkflowProgressPanel.vue'
 import { formatInstanceStatus } from '@/composables/useWorkflowLabels'
+import { setPageHeaderTitle } from '@/composables/usePageHeader'
 import type { FormSchema } from '@/types/form'
 import type { PrintTemplateSchema } from '@/types/printTemplate'
 import { DEFAULT_FORM_SCHEMA } from '@/types/form'
@@ -123,6 +124,15 @@ const inst = ref<{
   print_template_schema?: PrintTemplateSchema
   print_config?: { templateMode?: string; templateCode?: string }
 } | null>(null)
+
+watch(
+  inst,
+  (value) => {
+    if (value) setPageHeaderTitle(value.definition_name || t('page.instance_detail'))
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => setPageHeaderTitle(''))
 
 const flowProgress = computed(() => inst.value?.flow_progress)
 

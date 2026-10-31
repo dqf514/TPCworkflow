@@ -159,6 +159,7 @@ import UnsavedLeaveModal from '@/components/common/UnsavedLeaveModal.vue'
 import { useUnsavedLeaveGuard } from '@/composables/useUnsavedLeaveGuard'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useEmbedDesktop } from '@/composables/useEmbedDesktop'
+import { setPageHeaderTitle } from '@/composables/usePageHeader'
 import { useAuthStore, type Membership } from '@/stores/auth'
 import type { FormSchema } from '@/types/form'
 import type { ProcessGraph } from '@/utils/workflowFlowGraph'
@@ -188,6 +189,9 @@ const workflowDefId = ref<number>()
 const processGraph = ref<ProcessGraph>()
 const processIcon = ref('general')
 const processTitle = ref('')
+watch(processTitle, (value) => {
+  if (value) setPageHeaderTitle(value)
+})
 const orgUnits = ref<{ id: number; name: string }[]>([])
 const departments = ref<DeptRow[]>([])
 const { isMobile } = useBreakpoint()

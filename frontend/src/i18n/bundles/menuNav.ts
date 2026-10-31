@@ -78,6 +78,8 @@ export const menuNavZh: Record<string, string> = {
   'palette.empty': '没有匹配的结果',
   'palette.hint': '↑↓ 选择 · Enter 打开 · Esc 关闭',
   'palette.trigger': '搜索',
+  'page.task_detail': '审批详情',
+  'page.instance_detail': '申请详情',
 }
 
 export const menuNavEn: Record<string, string> = {
@@ -159,4 +161,6 @@ export const menuNavEn: Record<string, string> = {
   'palette.empty': 'No matching results',
   'palette.hint': '↑↓ move · Enter open · Esc close',
   'palette.trigger': 'Search',
+  'page.task_detail': 'Approval details',
+  'page.instance_detail': 'Request details',
 }

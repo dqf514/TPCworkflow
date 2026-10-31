@@ -26,9 +26,7 @@
           <div class="app-header-brand">
             <BrandLogo size="sm" />
             <span class="app-header-title">{{ branding.headerTitle() }}</span>
-            <span v-if="branding.appName && branding.appName !== branding.headerTitle()" class="app-header-app">
-              {{ branding.appName }}
-            </span>
+            <h1 v-if="headerPageTitle" class="app-header-page">{{ headerPageTitle }}</h1>
           </div>
         </div>
         <div class="app-header-right">
@@ -204,17 +202,43 @@ import BrandLogo from '@/components/BrandLogo.vue'
 import CommandPalette from '@/components/layout/CommandPalette.vue'
 import { useTheme } from '@/composables/useTheme'
 import { useCommandPalette } from '@/composables/useCommandPalette'
-import { useRouter } from 'vue-router'
+import { usePageHeaderTitle } from '@/composables/usePageHeader'
+import { useRoute, useRouter } from 'vue-router'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const badges = useWorkflowBadgesStore()
 const branding = useBrandingStore()
 const router = useRouter()
+const route = useRoute()
 const { isMobile, isDesktop } = useBreakpoint()
 const { isEmbedDesktop } = useEmbedDesktop()
 const { isDark, toggleTheme } = useTheme()
 const { open: openPalette } = useCommandPalette()
+const storedPageTitle = usePageHeaderTitle()
+
+const ROUTE_PAGE_TITLE_KEYS: Record<string, string> = {
+  dashboard: 'menu.dashboard',
+  apply: 'menu.apply',
+  'apply-start': 'menu.apply',
+  tasks: 'workflow.todo',
+  'task-detail': 'page.task_detail',
+  'my-instances': 'workflow.my_instances',
+  'instance-detail': 'page.instance_detail',
+  'leave-calendar': 'menu.leave_calendar',
+  'admin-org': 'org.title',
+  'admin-form-studio': 'studio.title',
+  'admin-sector-monitor': 'monitor.title',
+  'admin-finance-export': 'menu.finance_export',
+  'admin-settings': 'menu.system_settings_group',
+  'admin-logs': 'adminLogs.title',
+}
+
+const headerPageTitle = computed(() => {
+  if (storedPageTitle.value) return storedPageTitle.value
+  const key = ROUTE_PAGE_TITLE_KEYS[String(route.name || '')]
+  return key ? t(key) : ''
+})
 const drawerVisible = ref(false)
 const profileVisible = ref(false)
 const profileTab = ref('profile')
@@ -456,6 +480,7 @@ branding.load()
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  min-width: 196px;
   height: 32px;
   padding: 0 0.4rem 0 0.6rem;
   border: 1px solid var(--border);
@@ -477,10 +502,16 @@ branding.load()
 }
 
 .app-search-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .app-search-kbd {
+  flex-shrink: 0;
   padding: 1px 5px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -488,6 +519,7 @@ branding.load()
   font-family: ui-monospace, 'Cascadia Code', monospace;
   font-size: 10px;
   color: var(--text-tertiary);
+  white-space: nowrap;
 }
 
 .app-header-brand {
@@ -507,11 +539,16 @@ branding.load()
   text-overflow: ellipsis;
 }
 
-.app-header-app {
+.app-header-page {
+  max-width: 240px;
+  margin: 0;
   padding-left: 0.6rem;
   border-left: 1px solid var(--border);
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -621,8 +658,17 @@ branding.load()
     padding: 0;
   }
 
-  .app-header-app {
+  .app-header-title {
     display: none;
+  }
+
+  .app-header-page {
+    max-width: 180px;
+    padding-left: 0;
+    border-left: 0;
+    font-size: 0.9375rem;
+    font-weight: 650;
+    color: var(--text);
   }
 
   .app-search-label,
@@ -632,6 +678,7 @@ branding.load()
 
   .app-search-trigger {
     width: 32px;
+    min-width: 0;
     padding: 0;
     justify-content: center;
   }
