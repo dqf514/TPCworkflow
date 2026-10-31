@@ -53,6 +53,7 @@
               :rows="displayRows"
               :loading="loading"
               row-key="id"
+              column-settings-key="finance-export"
               :columns="{
                 displayNo: false,
                 actions: false,

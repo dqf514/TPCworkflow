@@ -1265,11 +1265,11 @@ function moveSection(si: number, delta: number) {
 
 .designer-left,
 .designer-right {
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1326,7 +1326,7 @@ function moveSection(si: number, delta: number) {
   gap: 8px 20px;
   margin-bottom: 10px;
   padding: 8px 12px;
-  background: #f7f8fa;
+  background: var(--surface-muted);
   border-radius: 6px;
 }
 
@@ -1335,7 +1335,7 @@ function moveSection(si: number, delta: number) {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #4e5969;
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
@@ -1344,10 +1344,10 @@ function moveSection(si: number, delta: number) {
 .props-section-title {
   font-size: 12px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--text);
   margin: 10px 0 6px;
   padding-top: 8px;
-  border-top: 1px dashed #e5e6eb;
+  border-top: 1px dashed var(--border);
 }
 
 .props-section-title:first-child {
@@ -1372,9 +1372,9 @@ function moveSection(si: number, delta: number) {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #f7f8fa;
+  background: var(--surface-muted);
   overflow: hidden;
 }
 
@@ -1410,12 +1410,12 @@ function moveSection(si: number, delta: number) {
 .palette-section + .palette-section {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #f2f3f5;
+  border-top: 1px solid var(--divider);
 }
 
 .palette-group-title {
   font-size: 11px;
-  color: #86909c;
+  color: var(--text-tertiary);
   margin-bottom: 4px;
   line-height: 1.2;
 }
@@ -1434,16 +1434,16 @@ function moveSection(si: number, delta: number) {
   gap: 2px;
   padding: 5px 2px 4px;
   min-height: 46px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--surface);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
 .palette-tile:hover {
   border-color: rgb(var(--primary-6));
-  background: #f7faff;
+  background: var(--brand-softer);
   box-shadow: 0 1px 4px rgba(22, 93, 255, 0.08);
 }
 
@@ -1452,13 +1452,13 @@ function moveSection(si: number, delta: number) {
 }
 
 .palette-tile:active {
-  background: #e8f3ff;
+  background: var(--brand-soft);
 }
 
 .palette-tile-label {
   font-size: 10px;
   line-height: 1.2;
-  color: #4e5969;
+  color: var(--text-secondary);
   text-align: center;
   width: 100%;
   overflow: hidden;
@@ -1508,8 +1508,8 @@ function moveSection(si: number, delta: number) {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  background: #fff;
-  border-bottom: 1px solid #e5e6eb;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -1522,14 +1522,14 @@ function moveSection(si: number, delta: number) {
 .preview-mobile {
   max-width: 390px;
   margin: 0 auto;
-  background: #fff;
-  border: 1px dashed #c9cdd4;
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
   border-radius: 12px;
   min-height: 100%;
 }
 
 .canvas-section {
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
@@ -1552,16 +1552,16 @@ function moveSection(si: number, delta: number) {
 }
 
 .sec-drop-empty {
-  border: 1px dashed #c9cdd4;
+  border: 1px dashed var(--border-strong);
   border-radius: 6px;
   padding: 8px;
-  background: #fafafa;
+  background: var(--surface-muted);
 }
 
 .sec-drop-empty.drop-active,
 .sec-drop-tail.drop-active {
   border-color: rgb(var(--primary-6));
-  background: #e8f3ff;
+  background: var(--brand-soft);
 }
 
 .sec-drop-tail {
@@ -1593,11 +1593,11 @@ function moveSection(si: number, delta: number) {
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--border);
   border-radius: 6px;
   margin-bottom: 6px;
   cursor: grab;
-  background: #fafafa;
+  background: var(--surface-muted);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -1607,7 +1607,7 @@ function moveSection(si: number, delta: number) {
 
 .drag-handle {
   flex-shrink: 0;
-  color: #c9cdd4;
+  color: var(--border-strong);
   font-size: 12px;
   letter-spacing: -2px;
   user-select: none;
@@ -1616,12 +1616,12 @@ function moveSection(si: number, delta: number) {
 
 .field-chip.active {
   border-color: rgb(var(--primary-6));
-  background: #e8f3ff;
+  background: var(--brand-soft);
 }
 
 .type-tag {
   font-size: 10px;
-  color: #86909c;
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
@@ -1631,12 +1631,12 @@ function moveSection(si: number, delta: number) {
 
 .col-count {
   font-size: 10px;
-  color: #86909c;
+  color: var(--text-tertiary);
 }
 
 .hint-text {
   font-size: 12px;
-  color: #86909c;
+  color: var(--text-tertiary);
   margin: 0 0 8px;
   line-height: 1.5;
 }
@@ -1647,7 +1647,7 @@ function moveSection(si: number, delta: number) {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--border);
   border-radius: 4px;
   margin-bottom: 4px;
   cursor: pointer;
@@ -1664,7 +1664,7 @@ function moveSection(si: number, delta: number) {
 
 .detail-col-chip.active {
   border-color: rgb(var(--primary-6));
-  background: #e8f3ff;
+  background: var(--brand-soft);
 }
 
 @media (max-width: 1440px) {

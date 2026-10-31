@@ -9,8 +9,10 @@ import './styles/main.css'
 import './styles/form-fill.css'
 import './styles/print.css'
 import { isEmbedDesktopActive, markEmbedDesktopSession, syncEmbedDesktopDocumentClass } from './utils/embedDesktop'
+import { initTheme } from './composables/useTheme'
 
 async function bootstrap() {
+  initTheme()
   if (isEmbedDesktopActive()) {
     markEmbedDesktopSession()
     syncEmbedDesktopDocumentClass(true)

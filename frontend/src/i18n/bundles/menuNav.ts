@@ -70,6 +70,14 @@ export const menuNavZh: Record<string, string> = {
   'leave_calendar.holiday_region': '假期地区：{name}',
   'leave_calendar.holiday_source_company': '公司默认',
   'leave_calendar.holiday_source_user': '个人设置',
+  'palette.placeholder': '搜索页面、设置或操作…',
+  'palette.group_nav': '导航',
+  'palette.group_action': '快捷操作',
+  'palette.theme_dark': '切换为深色模式',
+  'palette.theme_light': '切换为浅色模式',
+  'palette.empty': '没有匹配的结果',
+  'palette.hint': '↑↓ 选择 · Enter 打开 · Esc 关闭',
+  'palette.trigger': '搜索',
 }
 
 export const menuNavEn: Record<string, string> = {
@@ -143,4 +151,12 @@ export const menuNavEn: Record<string, string> = {
   'leave_calendar.holiday_region': 'Holiday region: {name}',
   'leave_calendar.holiday_source_company': 'Company default',
   'leave_calendar.holiday_source_user': 'Personal',
+  'palette.placeholder': 'Search pages, settings or actions…',
+  'palette.group_nav': 'Navigation',
+  'palette.group_action': 'Quick actions',
+  'palette.theme_dark': 'Switch to dark mode',
+  'palette.theme_light': 'Switch to light mode',
+  'palette.empty': 'No matching results',
+  'palette.hint': '↑↓ move · Enter open · Esc close',
+  'palette.trigger': 'Search',
 }

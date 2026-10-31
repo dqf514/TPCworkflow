@@ -6,7 +6,7 @@
     <a-tabs v-model:active-key="tab" type="rounded" class="settings-tabs settings-tabs--nav-hidden" @change="onTabChange">
       <a-tab-pane key="brand" :title="t('settings.tab_brand')">
         <a-card class="settings-card max-w-2xl" :bordered="false">
-          <a-form layout="vertical">
+          <a-form layout="vertical" :model="form">
             <a-form-item :label="t('settings.company_name_label')">
               <a-input v-model="form.COMPANY_NAME" :placeholder="t('settings.company_name_ph')" />
             </a-form-item>
@@ -137,7 +137,7 @@
 
       <a-tab-pane key="mail" :title="t('settings.tab_mail')">
         <a-card class="settings-card max-w-2xl" :bordered="false">
-          <a-form layout="vertical">
+          <a-form layout="vertical" :model="form">
             <a-form-item :label="t('settings.mail_smtp')">
               <a-input v-model="form.MAIL_SERVER" :placeholder="t('settings.mail_smtp_ph')" />
             </a-form-item>
@@ -208,7 +208,7 @@
       <a-tab-pane key="attachments" :title="t('settings.tab_attachments')">
         <a-card class="settings-card max-w-2xl" :bordered="false">
           <p class="text-sm text-gray-500 mb-4">{{ t('settings.attachments_hint') }}</p>
-          <a-form layout="vertical">
+          <a-form layout="vertical" :model="form">
             <a-form-item :label="t('settings.attachments_extensions')">
               <a-textarea
                 v-model="form.ATTACHMENT_ALLOWED_EXTENSIONS"
@@ -238,7 +238,7 @@
 
       <a-tab-pane key="sms" :title="t('settings.tab_sms')">
         <a-card class="rounded-xl max-w-2xl">
-          <a-form layout="vertical">
+          <a-form layout="vertical" :model="form">
             <a-form-item :label="t('settings.sms_gateway')"><a-input v-model="form.SMS_GATEWAY_URL" /></a-form-item>
             <a-button type="primary" :loading="saving" @click="save">{{ t('common.save') }}</a-button>
           </a-form>
@@ -247,7 +247,7 @@
 
       <a-tab-pane key="azure" :title="t('settings.tab_azure')">
         <a-card class="settings-card max-w-2xl" :bordered="false">
-          <a-form layout="vertical">
+          <a-form layout="vertical" :model="form">
             <a-form-item label="Tenant ID"><a-input v-model="form.AZURE_TENANT_ID" /></a-form-item>
             <a-form-item label="Client ID"><a-input v-model="form.AZURE_CLIENT_ID" /></a-form-item>
             <a-form-item label="Client Secret"><a-input-password v-model="form.AZURE_CLIENT_SECRET" /></a-form-item>
@@ -299,7 +299,7 @@
     </a-modal>
 
     <a-modal v-model:visible="scopedModal" :title="t('settings.scoped_modal_title')" @ok="saveScoped" :width="560">
-      <a-form layout="vertical">
+      <a-form layout="vertical" :model="scopedEdit">
         <a-form-item :label="t('settings.col_user')" required>
           <a-select v-model="scopedEdit.user_id" :options="userOpts" allow-search :disabled="!!scopedEdit.id" />
         </a-form-item>
@@ -735,7 +735,30 @@ onMounted(() => {
 :deep(.settings-card) {
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-sm) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.settings-card :deep(.arco-form-item) {
+  margin-bottom: var(--app-space-form-item, 10px);
+}
+
+.settings-card :deep(.arco-form-item-label) {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.settings-card :deep(.arco-input-wrapper),
+.settings-card :deep(.arco-select-view-single),
+.settings-card :deep(.arco-select-view-multiple),
+.settings-card :deep(.arco-picker),
+.settings-card :deep(.arco-input-number) {
+  min-height: var(--app-control-h, 34px);
+  border-radius: var(--radius-sm);
+}
+
+.settings-card :deep(.arco-form-item-label-required-symbol) {
+  color: var(--danger);
 }
 
 .logo-manager {

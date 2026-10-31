@@ -13,6 +13,7 @@
             :rows="displayMineRows"
             :loading="loadingMine"
             row-key="public_uuid"
+            column-settings-key="instances-mine"
             :columns="{
               sector: false,
               applicant: false,
@@ -82,6 +83,7 @@
             :rows="displayParticipatedRows"
             :loading="loadingParticipated"
             row-key="public_uuid"
+            column-settings-key="instances-participated"
             :columns="{
               sector: false,
               department: false,
@@ -312,7 +314,7 @@ onActivated(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #f53f3f;
+  background: var(--danger);
 }
 
 .instances-mobile-card--unread {

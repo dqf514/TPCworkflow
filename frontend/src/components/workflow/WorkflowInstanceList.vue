@@ -1,5 +1,31 @@
 <template>
   <div class="wf-instance-list">
+    <div v-if="isDesktop && columnSettingsKey" class="wf-il-toolbar">
+      <a-popover trigger="click" position="br" :content-style="{ padding: '12px 14px' }">
+        <a-button size="mini" type="text" class="wf-il-col-btn">
+          <template #icon><icon-settings /></template>
+          {{ t('workflow.columns') }}
+        </a-button>
+        <template #content>
+          <div class="wf-il-col-panel">
+            <div class="wf-il-col-title">{{ t('workflow.columns') }}</div>
+            <a-checkbox
+              v-for="choice in columnChoices"
+              :key="choice.key"
+              :model-value="cols[choice.key]"
+              class="wf-il-col-check"
+              @change="(value: boolean) => setColumnVisible(choice.key, value)"
+            >
+              {{ choice.label }}
+            </a-checkbox>
+            <div class="wf-il-col-foot">
+              <span class="wf-il-col-hint">{{ t('workflow.columns_hint') }}</span>
+              <a-button size="mini" type="text" @click="resetColumns">{{ t('workflow.columns_reset') }}</a-button>
+            </div>
+          </div>
+        </template>
+      </a-popover>
+    </div>
     <a-table
       v-if="isDesktop"
       v-model:selected-keys="selectedKeysModel"
@@ -166,7 +192,14 @@
     </a-table>
 
     <div v-else class="wf-il-mobile safe-bottom">
-      <a-spin :loading="loading" class="wf-il-mobile-spin">
+      <div v-if="loading" class="wf-il-mobile-skeleton" aria-hidden="true">
+        <div v-for="n in 3" :key="`wf-il-sk-${n}`" class="wf-il-mobile-card wf-il-mobile-card--skeleton">
+          <span class="skeleton wf-il-sk-line wf-il-sk-line--no" />
+          <span class="skeleton wf-il-sk-line wf-il-sk-line--title" />
+          <span class="skeleton wf-il-sk-line wf-il-sk-line--meta" />
+        </div>
+      </div>
+      <template v-else>
         <a-card
           v-for="record in rows"
           :key="String(record[rowKey as keyof WorkflowInstanceListRow] ?? record.id)"
@@ -222,15 +255,16 @@
             <slot name="actions" :record="record" />
           </div>
         </a-card>
-        <a-empty v-if="!loading && !rows.length" />
-      </a-spin>
+        <a-empty v-if="!rows.length" />
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { IconSettings } from '@arco-design/web-vue/es/icon'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { formatInstanceListStatus } from '@/composables/useWorkflowLabels'
 import type {
@@ -263,6 +297,7 @@ const props = withDefaults(
     statusFormatter?: (record: WorkflowInstanceListRow) => string
     rowClass?: (record: WorkflowInstanceListRow) => string
     mobileCardClass?: (record: WorkflowInstanceListRow) => string
+    columnSettingsKey?: string
   }>(),
   {
     loading: false,
@@ -287,6 +322,63 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { isDesktop } = useBreakpoint()
 
+type ColumnChoiceKey =
+  | 'flow'
+  | 'sector'
+  | 'amount'
+  | 'status'
+  | 'applicant'
+  | 'department'
+  | 'submittedAt'
+  | 'updatedAt'
+  | 'finishedAt'
+  | 'actions'
+
+const STORAGE_PREFIX = 'imc-instance-cols:'
+const visibilityOverrides = ref<Partial<Record<ColumnChoiceKey, boolean>>>({})
+
+const storageKey = computed(() => (props.columnSettingsKey ? `${STORAGE_PREFIX}${props.columnSettingsKey}` : ''))
+
+function loadVisibility() {
+  visibilityOverrides.value = {}
+  if (!storageKey.value) return
+  try {
+    const raw = localStorage.getItem(storageKey.value)
+    if (!raw) return
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object') visibilityOverrides.value = parsed
+  } catch {
+    visibilityOverrides.value = {}
+  }
+}
+
+watch(storageKey, loadVisibility, { immediate: true })
+
+function persistVisibility() {
+  if (!storageKey.value) return
+  try {
+    localStorage.setItem(storageKey.value, JSON.stringify(visibilityOverrides.value))
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+function setColumnVisible(key: ColumnChoiceKey, visible: boolean) {
+  visibilityOverrides.value = { ...visibilityOverrides.value, [key]: visible }
+  persistVisibility()
+}
+
+function resetColumns() {
+  visibilityOverrides.value = {}
+  if (storageKey.value) {
+    try {
+      localStorage.removeItem(storageKey.value)
+    } catch {
+      /* storage unavailable */
+    }
+  }
+}
+
 const cols = computed(() => ({
   displayNo: true,
   flow: true,
@@ -300,6 +392,7 @@ const cols = computed(() => ({
   finishedAt: false,
   actions: true,
   ...props.columns,
+  ...(props.columnSettingsKey ? visibilityOverrides.value : {}),
 }))
 
 const submittedAtTitle = computed(
@@ -309,6 +402,19 @@ const submittedAtTitle = computed(
 const updatedAtTitle = computed(
   () => props.updatedAtTitle || t('workflow.col_updated_at'),
 )
+
+const columnChoices = computed<{ key: ColumnChoiceKey; label: string }[]>(() => [
+  { key: 'flow', label: t('workflow.col_flow') },
+  { key: 'sector', label: t('workflow.col_sector') },
+  { key: 'amount', label: t('workflow.col_amount') },
+  { key: 'status', label: t('workflow.col_status') },
+  { key: 'applicant', label: t('workflow.col_applicant') },
+  { key: 'department', label: t('workflow.col_department') },
+  { key: 'submittedAt', label: submittedAtTitle.value },
+  { key: 'updatedAt', label: updatedAtTitle.value },
+  { key: 'finishedAt', label: t('workflow.col_finished_at') },
+  { key: 'actions', label: t('settings.col_actions') },
+])
 
 const selectedKeysModel = computed({
   get: () => props.selectedKeys ?? [],
@@ -351,6 +457,57 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 </script>
 
 <style scoped>
+.wf-il-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.wf-il-col-btn {
+  height: 24px;
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.wf-il-col-btn:hover {
+  color: var(--text);
+}
+
+.wf-il-col-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 172px;
+}
+
+.wf-il-col-title {
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.wf-il-col-check {
+  font-size: 13px;
+}
+
+.wf-il-col-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--divider);
+}
+
+.wf-il-col-hint {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+}
+
 .wf-instance-list :deep(.arco-table-tr) {
   cursor: pointer;
 }
@@ -423,8 +580,30 @@ function displayStatus(record: WorkflowInstanceListRow): string {
   padding: 0.75rem;
 }
 
-.wf-il-mobile-spin {
-  width: 100%;
+.wf-il-mobile-card--skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  pointer-events: none;
+}
+
+.wf-il-sk-line {
+  height: 11px;
+}
+
+.wf-il-sk-line--no {
+  width: 34%;
+  height: 10px;
+}
+
+.wf-il-sk-line--title {
+  width: 62%;
+  height: 15px;
+}
+
+.wf-il-sk-line--meta {
+  width: 48%;
 }
 
 .wf-il-mobile-card {

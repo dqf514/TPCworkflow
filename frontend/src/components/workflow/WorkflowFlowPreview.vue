@@ -233,14 +233,14 @@ onBeforeUnmount(() => {
 .wf-step.is-done .wf-step-marker {
   border-color: var(--success);
   background: var(--success);
-  color: #fff;
+  color: var(--brand-contrast);
   font-size: 12px;
 }
 
 .wf-step.is-current .wf-step-marker {
   border-color: var(--brand);
   background: var(--brand);
-  color: #fff;
+  color: var(--brand-contrast);
   box-shadow: 0 0 0 4px var(--brand-soft);
 }
 

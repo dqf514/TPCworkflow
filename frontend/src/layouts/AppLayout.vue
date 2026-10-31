@@ -32,6 +32,27 @@
           </div>
         </div>
         <div class="app-header-right">
+          <button
+            type="button"
+            class="app-search-trigger"
+            :aria-label="t('palette.trigger')"
+            :title="`${t('palette.trigger')} (Ctrl K)`"
+            @click="openPalette"
+          >
+            <icon-search />
+            <span class="app-search-label">{{ t('palette.trigger') }}</span>
+            <kbd class="app-search-kbd">Ctrl K</kbd>
+          </button>
+          <button
+            type="button"
+            class="app-icon-btn"
+            :aria-label="isDark ? t('palette.theme_light') : t('palette.theme_dark')"
+            :title="isDark ? t('palette.theme_light') : t('palette.theme_dark')"
+            @click="toggleTheme"
+          >
+            <icon-sun v-if="isDark" />
+            <icon-moon v-else />
+          </button>
           <a-select
             v-model="currentLocale"
             :options="localeOptions"
@@ -84,7 +105,11 @@
             description="请点击右上角头像 →「密码设置」，设置后可使用账号密码登录。"
           />
           <div class="app-content-inner">
-            <router-view />
+            <router-view v-slot="{ Component, route: currentRoute }">
+              <transition name="page-fade" mode="out-in">
+                <component :is="Component" :key="currentRoute.path" />
+              </transition>
+            </router-view>
           </div>
         </a-layout-content>
       </a-layout>
@@ -104,6 +129,7 @@
       </a-drawer>
     </a-layout>
     <ProfileModal v-model:visible="profileVisible" :default-tab="profileTab" />
+    <CommandPalette />
 
     <a-modal
       v-model:visible="clientDownloadModalVisible"
@@ -162,7 +188,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
-import { IconMenu, IconLeft, IconRight, IconDown } from '@arco-design/web-vue/es/icon'
+import { IconMenu, IconLeft, IconRight, IconDown, IconSearch, IconSun, IconMoon } from '@arco-design/web-vue/es/icon'
 import { arcoLocaleMap, loadLocaleMessages } from '@/plugins/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkflowBadgesStore } from '@/stores/workflowBadges'
@@ -175,6 +201,9 @@ import SideMenu from '@/components/SideMenu.vue'
 import MobileTabBar from '@/components/MobileTabBar.vue'
 import ProfileModal from '@/components/ProfileModal.vue'
 import BrandLogo from '@/components/BrandLogo.vue'
+import CommandPalette from '@/components/layout/CommandPalette.vue'
+import { useTheme } from '@/composables/useTheme'
+import { useCommandPalette } from '@/composables/useCommandPalette'
 import { useRouter } from 'vue-router'
 
 const { t, locale } = useI18n()
@@ -184,6 +213,8 @@ const branding = useBrandingStore()
 const router = useRouter()
 const { isMobile, isDesktop } = useBreakpoint()
 const { isEmbedDesktop } = useEmbedDesktop()
+const { isDark, toggleTheme } = useTheme()
+const { open: openPalette } = useCommandPalette()
 const drawerVisible = ref(false)
 const profileVisible = ref(false)
 const profileTab = ref('profile')
@@ -421,6 +452,44 @@ branding.load()
   margin-right: 0.15rem;
 }
 
+.app-search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 32px;
+  padding: 0 0.4rem 0 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-tertiary);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.app-search-trigger:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+
+.app-search-label {
+  white-space: nowrap;
+}
+
+.app-search-kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
 .app-header-brand {
   display: flex;
   align-items: center;
@@ -555,6 +624,17 @@ branding.load()
   .app-header-app {
     display: none;
   }
+
+  .app-search-label,
+  .app-search-kbd {
+    display: none;
+  }
+
+  .app-search-trigger {
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+  }
 }
 
 .app-password-alert {
@@ -617,12 +697,12 @@ branding.load()
 
 .client-download-btn--primary {
   background: var(--brand);
-  color: #fff;
+  color: var(--brand-contrast);
 }
 
 .client-download-btn--primary:hover {
   opacity: 0.92;
-  color: #fff;
+  color: var(--brand-contrast);
 }
 
 .client-download-btn--secondary {

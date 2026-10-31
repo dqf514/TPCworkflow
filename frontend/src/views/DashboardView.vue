@@ -8,7 +8,13 @@
       <a-button @click="goTasks">{{ t('workflow.todo') }}</a-button>
     </template>
 
-    <section class="dash-metrics">
+    <section v-if="loading" class="dash-metrics" aria-hidden="true">
+      <div v-for="n in 4" :key="`metric-sk-${n}`" class="dash-metric dash-metric--skeleton">
+        <span class="skeleton dash-sk-label" />
+        <span class="skeleton dash-sk-value" />
+      </div>
+    </section>
+    <section v-else class="dash-metrics">
       <router-link
         v-for="metric in metrics"
         :key="metric.key"
@@ -39,7 +45,15 @@
           </router-link>
         </header>
 
-        <div v-if="loading" class="dash-loading"><a-spin /></div>
+        <div v-if="loading" class="dash-todo-skeleton" aria-hidden="true">
+          <div v-for="n in 3" :key="`todo-sk-${n}`" class="dash-sk-row">
+            <span class="skeleton dash-sk-dot" />
+            <span class="dash-sk-lines">
+              <span class="skeleton dash-sk-line dash-sk-line--title" />
+              <span class="skeleton dash-sk-line dash-sk-line--meta" />
+            </span>
+          </div>
+        </div>
         <ul v-else-if="todoRows.length" class="dash-todo-list">
           <li v-for="row in todoRows" :key="row.task_id">
             <button type="button" class="dash-todo" @click="goTask(row)">
@@ -80,7 +94,13 @@
             </router-link>
           </header>
 
-          <div v-if="quickItems.length" class="dash-quick">
+          <div v-if="loading" class="dash-quick" aria-hidden="true">
+            <div v-for="n in 4" :key="`quick-sk-${n}`" class="dash-quick-item dash-quick-item--skeleton">
+              <span class="skeleton dash-sk-icon" />
+              <span class="skeleton dash-sk-line" />
+            </div>
+          </div>
+          <div v-else-if="quickItems.length" class="dash-quick">
             <button
               v-for="item in quickItems"
               :key="`${item.form_key}-${item.workflow_definition_id}`"
@@ -114,7 +134,16 @@
         </router-link>
       </header>
 
-      <ul v-if="recentRows.length" class="dash-recent-list">
+      <div v-if="loading" class="dash-todo-skeleton" aria-hidden="true">
+        <div v-for="n in 3" :key="`recent-sk-${n}`" class="dash-sk-row">
+          <span class="dash-sk-lines">
+            <span class="skeleton dash-sk-line dash-sk-line--title" />
+            <span class="skeleton dash-sk-line dash-sk-line--meta" />
+          </span>
+          <span class="skeleton dash-sk-pill" />
+        </div>
+      </div>
+      <ul v-else-if="recentRows.length" class="dash-recent-list">
         <li v-for="row in recentRows" :key="row.public_uuid">
           <button type="button" class="dash-recent-row" @click="goInstance(row)">
             <span class="dash-recent-main">
@@ -489,11 +518,89 @@ onMounted(loadDashboard)
   color: var(--brand);
 }
 
-.dash-loading {
+.dash-metric--skeleton {
+  pointer-events: none;
+}
+
+.dash-sk-label {
+  width: 64px;
+  height: 12px;
+  margin-top: 4px;
+}
+
+.dash-sk-value {
+  width: 84px;
+  height: 26px;
+  margin-top: 6px;
+}
+
+.dash-todo-skeleton {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-sk-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 160px;
+  gap: 12px;
+  padding: 13px 16px;
+}
+
+.dash-sk-row + .dash-sk-row {
+  border-top: 1px solid var(--divider);
+}
+
+.dash-sk-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dash-sk-lines {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash-sk-line {
+  width: 60%;
+  height: 11px;
+}
+
+.dash-sk-line--title {
+  width: 46%;
+  height: 13px;
+}
+
+.dash-sk-line--meta {
+  width: 72%;
+}
+
+.dash-sk-pill {
+  flex-shrink: 0;
+  width: 64px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+}
+
+.dash-sk-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+}
+
+.dash-quick-item--skeleton {
+  pointer-events: none;
+}
+
+.dash-quick-item--skeleton .dash-sk-line {
+  flex: 1;
+  width: auto;
+  height: 12px;
 }
 
 .dash-empty {
@@ -610,7 +717,7 @@ onMounted(loadDashboard)
 }
 
 .dash-quick-item:hover {
-  border-color: #d9d2ff;
+  border-color: var(--brand-border);
   background: var(--brand-softer);
 }
 

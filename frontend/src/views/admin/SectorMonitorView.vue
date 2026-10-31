@@ -20,6 +20,7 @@
         :rows="displayRows"
         :loading="loading"
         row-key="id"
+        column-settings-key="sector-monitor"
         :columns="{ actions: false, updatedAt: true }"
         :sort-field="sortField"
         :sort-direction="sortDirection"

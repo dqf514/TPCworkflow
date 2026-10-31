@@ -25,6 +25,7 @@
       :rows="displayRows"
       :loading="loading"
       row-key="id"
+      column-settings-key="admin-all-instances"
       :pagination="pagination"
       :sort-field="sortField"
       :sort-direction="sortDirection"

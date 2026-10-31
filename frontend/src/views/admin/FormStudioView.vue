@@ -1,15 +1,10 @@
 <template>
   <div class="form-studio page-shell" :class="{ 'is-editing': editing }">
     <template v-if="!editing">
-      <div class="studio-header flex flex-wrap justify-between gap-2 mb-4">
-        <div>
-          <h1 class="text-xl sm:text-2xl font-bold">{{ t('studio.title') }}</h1>
-          <p class="text-sm text-gray-500 mt-1">
-            {{ t('studio.subtitle') }}
-          </p>
-        </div>
-        <a-button type="primary" @click="startCreate">{{ t('studio.new_form') }}</a-button>
-      </div>
+      <PageChrome :title="t('studio.title')" :description="t('studio.subtitle')">
+        <template #actions>
+          <a-button type="primary" @click="startCreate">{{ t('studio.new_form') }}</a-button>
+        </template>
 
       <a-table
         :data="displayRows"
@@ -52,15 +47,16 @@
           :sort-order="listSort.field === 'status' ? listSort.direction || undefined : undefined"
         >
           <template #cell="{ record }">
-            <a-tag :color="record.status === 'published' ? 'green' : record.status === 'archived' ? 'gray' : 'orange'">
-              {{
+            <StatusPill
+              :tone="record.status === 'published' ? 'success' : record.status === 'archived' ? 'neutral' : 'warning'"
+              :label="
                 record.status === 'published'
                   ? t('studio.status_published')
                   : record.status === 'archived'
                     ? t('studio.status_archived')
                     : t('studio.status_draft')
-              }}
-            </a-tag>
+              "
+            />
           </template>
         </a-table-column>
         <a-table-column :title="t('studio.col_flow_id')" data-index="workflow_definition_id" />
@@ -104,6 +100,7 @@
         </a-table-column>
       </template>
       </a-table>
+      </PageChrome>
     </template>
 
     <div v-else class="studio-editor">
@@ -394,6 +391,8 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import { api, type ApiResponse } from '@/api/client'
+import PageChrome from '@/components/layout/PageChrome.vue'
+import StatusPill from '@/components/workflow/StatusPill.vue'
 import FormDesigner from '@/components/form/FormDesigner.vue'
 import FormRenderer from '@/components/form/FormRenderer.vue'
 import WorkflowDesigner from '@/components/WorkflowDesigner.vue'

@@ -4,32 +4,32 @@
       <a-button :loading="loadingSummary" @click="loadSummary">{{ t('adminLogs.refresh') }}</a-button>
     </template>
 
-    <div v-if="summary" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <a-card class="rounded-xl" :bordered="false">
-        <div class="text-xs text-gray-500">{{ t('adminLogs.summary_auth') }}</div>
-        <div class="text-lg font-semibold mt-1">
-          <span class="text-green-600">{{ summary.auth_24h.success }}</span>
-          <span class="text-gray-400 mx-1">/</span>
-          <span class="text-red-500">{{ summary.auth_24h.failed }}</span>
-          <span class="text-xs text-gray-400 ml-1">({{ t('adminLogs.success') }}/{{ t('adminLogs.failed') }})</span>
+    <div v-if="summary" class="logs-summary">
+      <div class="stat-card">
+        <div class="logs-stat-label">{{ t('adminLogs.summary_auth') }}</div>
+        <div class="logs-stat-value">
+          <span class="logs-stat-ok">{{ summary.auth_24h.success }}</span>
+          <span class="logs-stat-sep">/</span>
+          <span class="logs-stat-bad">{{ summary.auth_24h.failed }}</span>
+          <span class="logs-stat-unit">({{ t('adminLogs.success') }}/{{ t('adminLogs.failed') }})</span>
         </div>
-      </a-card>
-      <a-card class="rounded-xl" :bordered="false">
-        <div class="text-xs text-gray-500">{{ t('adminLogs.summary_access') }}</div>
-        <div class="text-lg font-semibold mt-1">{{ summary.access_24h }}</div>
-      </a-card>
-      <a-card class="rounded-xl" :bordered="false">
-        <div class="text-xs text-gray-500">{{ t('adminLogs.summary_workflow') }}</div>
-        <div class="text-lg font-semibold mt-1">{{ summary.workflow_24h }}</div>
-      </a-card>
-      <a-card class="rounded-xl" :bordered="false">
-        <div class="text-xs text-gray-500">{{ t('adminLogs.summary_email') }}</div>
-        <div class="text-lg font-semibold mt-1">
-          <span class="text-green-600">{{ summary.email_24h.sent }}</span>
-          <span class="text-gray-400 mx-1">/</span>
-          <span class="text-red-500">{{ summary.email_24h.failed }}</span>
+      </div>
+      <div class="stat-card">
+        <div class="logs-stat-label">{{ t('adminLogs.summary_access') }}</div>
+        <div class="logs-stat-value">{{ summary.access_24h }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="logs-stat-label">{{ t('adminLogs.summary_workflow') }}</div>
+        <div class="logs-stat-value">{{ summary.workflow_24h }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="logs-stat-label">{{ t('adminLogs.summary_email') }}</div>
+        <div class="logs-stat-value">
+          <span class="logs-stat-ok">{{ summary.email_24h.sent }}</span>
+          <span class="logs-stat-sep">/</span>
+          <span class="logs-stat-bad">{{ summary.email_24h.failed }}</span>
         </div>
-      </a-card>
+      </div>
     </div>
 
     <a-alert
@@ -821,6 +821,47 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.logs-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.logs-stat-label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.logs-stat-value {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.logs-stat-ok {
+  color: var(--success);
+}
+
+.logs-stat-bad {
+  color: var(--danger);
+}
+
+.logs-stat-sep {
+  margin: 0 4px;
+  color: var(--text-tertiary);
+}
+
+.logs-stat-unit {
+  margin-left: 4px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
 .logs-tabs :deep(.arco-tabs-content) {
   padding-top: 0.75rem;
 }

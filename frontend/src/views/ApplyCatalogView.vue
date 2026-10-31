@@ -51,8 +51,31 @@
       </section>
     </div>
 
-    <a-spin :loading="loading" class="catalog-spin">
-      <template v-if="filteredGroups.length">
+    <div v-if="loading" class="catalog-skeleton" aria-hidden="true">
+      <section v-for="n in 2" :key="`catalog-sk-${n}`" class="sector-block">
+        <div class="sector-head">
+          <span class="skeleton catalog-sk-sector" />
+          <span class="sector-rule" aria-hidden="true" />
+        </div>
+        <div v-if="viewMode === 'grid'" class="process-grid">
+          <div v-for="m in 4" :key="`catalog-sk-card-${n}-${m}`" class="process-card process-card--skeleton">
+            <span class="skeleton catalog-sk-icon" />
+            <span class="skeleton catalog-sk-line" />
+            <span class="skeleton catalog-sk-line catalog-sk-line--short" />
+          </div>
+        </div>
+        <div v-else class="process-list">
+          <div v-for="m in 3" :key="`catalog-sk-row-${n}-${m}`" class="process-row process-row--skeleton">
+            <span class="skeleton catalog-sk-icon catalog-sk-icon--sm" />
+            <span class="catalog-sk-lines">
+              <span class="skeleton catalog-sk-line" />
+              <span class="skeleton catalog-sk-line catalog-sk-line--short" />
+            </span>
+          </div>
+        </div>
+      </section>
+    </div>
+    <template v-else-if="filteredGroups.length">
         <section v-for="group in filteredGroups" :key="group.sector_id ?? 'other'" class="sector-block">
           <div class="sector-head">
             <h2 class="sector-title">{{ group.sector_name }}</h2>
@@ -114,8 +137,7 @@
           </div>
         </section>
       </template>
-      <a-empty v-else-if="!loading" :description="t('apply.catalog_empty')" />
-    </a-spin>
+    <a-empty v-if="!loading && !filteredGroups.length" :description="t('apply.catalog_empty')" />
   </PageChrome>
 </template>
 
@@ -293,9 +315,63 @@ onMounted(loadCatalog)
   max-width: 360px;
 }
 
-.catalog-spin {
-  display: block;
-  width: 100%;
+.catalog-skeleton {
+  pointer-events: none;
+}
+
+.catalog-sk-sector {
+  width: 96px;
+  height: 15px;
+}
+
+.process-card--skeleton {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 14px 18px;
+}
+
+.catalog-sk-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+}
+
+.catalog-sk-line {
+  width: 70%;
+  height: 12px;
+}
+
+.catalog-sk-line--short {
+  width: 52%;
+  height: 10px;
+}
+
+.process-row--skeleton {
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.catalog-sk-icon--sm {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+
+.catalog-sk-lines {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.catalog-sk-lines .catalog-sk-line {
+  width: 46%;
+}
+
+.catalog-sk-lines .catalog-sk-line--short {
+  width: 30%;
 }
 
 .catalog-shortcuts {
@@ -349,7 +425,7 @@ onMounted(loadCatalog)
 }
 
 .catalog-chip:hover {
-  border-color: #d9d2ff;
+  border-color: var(--brand-border);
   background: var(--brand-softer);
 }
 
@@ -418,7 +494,7 @@ onMounted(loadCatalog)
 }
 
 .process-card:hover {
-  border-color: #d5ccff;
+  border-color: var(--brand-border);
   box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
 }
@@ -513,7 +589,7 @@ onMounted(loadCatalog)
 }
 
 .process-row:hover {
-  border-color: #d5ccff;
+  border-color: var(--brand-border);
   background: var(--brand-softer);
 }
 

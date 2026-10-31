@@ -31,19 +31,17 @@
       <template #icon><icon-settings /></template>
       <template #title>{{ t('menu.system_admin') }}</template>
 
-      <a-sub-menu key="group-system-settings">
-        <template #title>{{ t('menu.system_settings_group') }}</template>
+      <a-menu-item-group :title="t('menu.system_settings_group')">
         <a-menu-item v-for="tab in systemSettingTabs" :key="tab.key">
           {{ tab.label }}
         </a-menu-item>
-      </a-sub-menu>
+      </a-menu-item-group>
 
-      <a-sub-menu key="group-form-settings">
-        <template #title>{{ t('menu.form_settings_group') }}</template>
+      <a-menu-item-group :title="t('menu.form_settings_group')">
         <a-menu-item v-for="tab in formSettingTabs" :key="tab.key">
           {{ tab.label }}
         </a-menu-item>
-      </a-sub-menu>
+      </a-menu-item-group>
 
       <a-menu-item key="admin-logs">
         <template #icon><icon-history /></template>
@@ -72,41 +70,11 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import NavBadge from '@/components/NavBadge.vue'
 import { useNavMenu } from '@/composables/useNavMenu'
-
-const SYSTEM_SETTING_TAB_KEYS = [
-  'brand',
-  'sectors',
-  'admins',
-  'mail',
-  'sms',
-  'azure',
-  'attachments',
-  'i18n',
-] as const
-
-const FORM_SETTING_TAB_KEYS = [
-  'option-sets',
-  'record-sets',
-  'exchange-rates',
-  'llm',
-  'print-templates',
-] as const
-
-const SETTINGS_TAB_LABEL_KEYS: Record<string, string> = {
-  brand: 'settings.tab_brand',
-  sectors: 'settings.tab_sectors',
-  admins: 'settings.tab_admins',
-  mail: 'settings.tab_mail',
-  sms: 'settings.tab_sms',
-  azure: 'settings.tab_azure',
-  attachments: 'settings.tab_attachments',
-  i18n: 'admin.i18n_title',
-  'option-sets': 'settings.tab_option_sets',
-  'record-sets': 'settings.tab_record_sets',
-  'exchange-rates': 'settings.tab_exchange_rates',
-  llm: 'settings.tab_llm',
-  'print-templates': 'settings.tab_print_templates',
-}
+import {
+  FORM_SETTING_TAB_KEYS,
+  SETTINGS_TAB_LABEL_KEYS,
+  SYSTEM_SETTING_TAB_KEYS,
+} from '@/constants/settingsTabs'
 
 const props = defineProps<{ collapsed?: boolean }>()
 
@@ -169,14 +137,6 @@ function syncOpenKeys() {
   }
   if (name === 'admin-settings') {
     keys.push('group-system')
-    const tab = String(route.query.tab || 'brand')
-    if ((SYSTEM_SETTING_TAB_KEYS as readonly string[]).includes(tab)) {
-      keys.push('group-system-settings')
-    } else if ((FORM_SETTING_TAB_KEYS as readonly string[]).includes(tab)) {
-      keys.push('group-form-settings')
-    } else if (tab === 'workflow-instances') {
-      /* 与系统日志同级，无需展开子组 */
-    }
   }
   openKeys.value = keys
 }
@@ -224,6 +184,20 @@ function onMenuClick(key: string) {
 
 .side-menu :deep(.arco-menu-pop-header) {
   border-radius: var(--radius-sm);
+}
+
+.side-menu :deep(.arco-menu-group-title) {
+  margin-top: 8px;
+  padding-bottom: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+}
+
+.side-menu :deep(.arco-menu-group .arco-menu-item) {
+  margin-bottom: 1px;
 }
 
 .side-menu-badge {

@@ -6,25 +6,29 @@
       'task-detail-page--above-tab': hasMobileTabBar,
     }"
   >
-    <div v-if="task && !loading" class="task-page-topbar no-print">
-      <span class="task-page-topbar-title">{{ task.instance?.definition_name || '审批' }}</span>
-      <a-button
-        v-if="formSchema"
-        size="small"
-        type="outline"
-        :loading="printPreviewLoading"
-        @click="openPrintPreview"
-      >
-        {{ t('print.preview_title') }}
-      </a-button>
+    <div v-if="task && !loading" class="task-page-header no-print">
+      <InstanceContextHeader
+        v-if="applyOrg"
+        :title="task.instance?.definition_name || '审批'"
+        :meta="taskContextMeta"
+        class="task-page-header-ctx"
+      />
+      <div class="task-page-header-side">
+        <span class="task-node-chip">任务 #{{ task.id }} · {{ taskNodeLabel }}</span>
+        <a-button
+          v-if="formSchema"
+          size="small"
+          type="outline"
+          :loading="printPreviewLoading"
+          @click="openPrintPreview"
+        >
+          {{ t('print.preview_title') }}
+        </a-button>
+      </div>
     </div>
 
     <a-spin :loading="loading" class="w-full">
       <template v-if="task">
-        <a-card class="rounded-xl mb-4" :title="task.instance?.definition_name || '审批'">
-          <p class="text-sm text-gray-500 mb-3">任务 #{{ task.id }} · {{ taskNodeLabel }}</p>
-          <InstanceContextHeader v-if="applyOrg" :meta="taskContextMeta" class="!mb-0" />
-        </a-card>
 
         <a-alert
           v-if="task.is_add_sign_task"
@@ -644,22 +648,61 @@ onMounted(async () => {
   padding-bottom: calc(var(--task-footer-height) + var(--mobile-tab-bar-height));
 }
 
-.task-page-topbar {
+.task-page-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px 16px;
+  margin-bottom: 16px;
 }
 
-.task-page-topbar-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1d2129;
+.task-page-header-ctx {
+  flex: 1 1 420px;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-bottom: 0;
+}
+
+.task-page-header-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-node-chip {
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-size: 12px;
   white-space: nowrap;
+}
+
+.task-detail-page :deep(.arco-card) {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+}
+
+.task-detail-page :deep(.arco-card-header) {
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-detail-page :deep(.arco-card-header-title) {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.task-detail-page :deep(.arco-card-body) {
+  padding: 16px 18px;
+}
+
+@media (max-width: 767px) {
+  .task-page-header-ctx {
+    flex-basis: 100%;
+  }
 }
 
 .task-footer-actions--mobile {

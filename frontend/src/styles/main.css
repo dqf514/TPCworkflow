@@ -13,6 +13,7 @@
   --brand-active: #3a22d4;
   --brand-soft: #f1eeff;
   --brand-softer: #f8f6ff;
+  --brand-border: #d9d2ff;
   --brand-contrast: #ffffff;
 
   /* —— 画布与表面（暖中性）—— */
@@ -136,6 +137,50 @@
   --border-radius-circle: 50%;
 }
 
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --brand: #8a76ff;
+  --brand-hover: #9c8bff;
+  --brand-active: #7760ff;
+  --brand-soft: #272040;
+  --brand-softer: #211b34;
+  --brand-border: #3b3358;
+  --brand-contrast: #ffffff;
+
+  --bg: #131416;
+  --surface: #1b1d20;
+  --surface-muted: #23262a;
+  --surface-sunken: #17191c;
+  --surface-elevated: #23262a;
+
+  --border: #2c3034;
+  --border-strong: #3b4046;
+  --border-input: #4a5057;
+  --divider: #262a2e;
+
+  --text: #e8ebee;
+  --text-secondary: #a3aab2;
+  --text-tertiary: #7d858d;
+  --text-disabled: #5a6068;
+  --text-inverse: #141517;
+
+  --success: #4cc38a;
+  --success-soft: #143126;
+  --warning: #e0a44a;
+  --warning-soft: #35280f;
+  --danger: #f07a70;
+  --danger-soft: #391d1a;
+  --info: #6aa9f8;
+  --info-soft: #16293f;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 35%);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 40%);
+  --shadow-md: 0 6px 16px rgb(0 0 0 / 45%);
+  --shadow-lg: 0 16px 40px rgb(0 0 0 / 50%);
+  --shadow-pop: 0 20px 48px rgb(0 0 0 / 55%);
+}
+
 html,
 body,
 #app {
@@ -162,6 +207,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
 }
 
 h1,
@@ -173,8 +221,12 @@ h5 {
 }
 
 ::selection {
-  background: rgba(80, 52, 255, 0.16);
+  background: color-mix(in srgb, var(--brand) 22%, transparent);
   color: var(--text);
+}
+
+[data-theme='dark'] ::selection {
+  color: #fff;
 }
 
 :where(a, button, [role='button'], .arco-btn, .arco-tabs-tab):focus-visible {
@@ -207,6 +259,78 @@ h5 {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(23, 25, 27, 0.32);
   background-clip: padding-box;
+}
+
+[data-theme='dark'] * {
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  background-clip: padding-box;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+}
+
+/* —— 页面切换过渡 —— */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-2px);
+}
+
+/* —— 骨架屏 —— */
+.skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--surface) 72%, transparent),
+    transparent
+  );
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* —— Arco 基础重塑 —— */
