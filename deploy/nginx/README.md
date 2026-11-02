@@ -48,9 +48,21 @@ export BEHIND_PROXY=true
 export SESSION_COOKIE_SECURE=1
 export FLASK_DEBUG=0
 export TPC_SKIP_STARTUP_MAINTENANCE=1
+# 会话签名密钥：必须固定且保密；不设则后端会生成 backend/data/.secret_key（需自行备份）
+export SECRET_KEY=<请填入随机长字符串>
 ```
 
 写入 systemd 服务或 `backend` 启动脚本，然后重启后端。
+
+也可以把这些变量写进 `backend/.env`（后端启动时自动加载，不会覆盖已有的系统环境变量）：
+
+```
+SECRET_KEY=xxxxxxxxxxxxxxxx
+SESSION_COOKIE_SECURE=1
+BEHIND_PROXY=true
+FLASK_DEBUG=0
+TPC_SKIP_STARTUP_MAINTENANCE=1
+```
 
 **说明**：此前每次 `restart` 会同步跑数据库迁移与种子数据（`ensure_bootstrap`），导致启动需数十秒甚至更久。生产环境应设 `FLASK_DEBUG=0` 并跳过启动维护；**代码升级后**再手动执行一次：
 

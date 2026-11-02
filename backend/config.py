@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import secrets
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..'))
@@ -13,10 +14,56 @@ os.makedirs(BRANDING_DIR, exist_ok=True)
 
 _db_path = os.path.join(DATA_DIR, 'tpcworkflow.db').replace('\\', '/')
 
+# 本地 .env（backend/.env）自动加载；已有进程环境变量优先，不会被 .env 覆盖。
+try:  # pragma: no cover - 依赖是否安装均可运行
+    from dotenv import load_dotenv
+
+    load_dotenv(os.path.join(BASE_DIR, '.env'))
+except Exception:  # pragma: no cover
+    pass
+
+# 开发态默认开调试；生产按 deploy/nginx/README.md 设 FLASK_DEBUG=0
+DEBUG_MODE = os.environ.get('FLASK_DEBUG', '1') == '1'
+
+# 公开的默认值：仅允许在开发调试模式下使用
+DEFAULT_SECRET_KEY = 'dev-change-me-in-production'
+# 已知弱密钥（示例值 / 占位符）：视同未配置
+WEAK_SECRET_KEYS = {'', 'change-me', 'changeme', 'secret', 'dev-change-me-in-production'}
+_SECRET_KEY_FILE = os.path.join(DATA_DIR, '.secret_key')
+
+
+def _resolve_secret_key() -> str:
+    """解析会话签名密钥。
+
+    1) 优先环境变量 SECRET_KEY（示例弱值视同未配置）；
+    2) 非调试模式下读取/生成 data/.secret_key（持久化，避免重启踢掉所有人）；
+    3) 调试模式退回公开默认值。
+    """
+    env_key = (os.environ.get('SECRET_KEY') or '').strip()
+    if env_key and env_key.lower() not in WEAK_SECRET_KEYS:
+        return env_key
+    if DEBUG_MODE:
+        return DEFAULT_SECRET_KEY
+    if os.path.isfile(_SECRET_KEY_FILE):
+        try:
+            with open(_SECRET_KEY_FILE, 'r', encoding='utf-8') as fp:
+                stored = fp.read().strip()
+            if stored:
+                return stored
+        except OSError:
+            pass
+    generated = secrets.token_hex(32)
+    try:
+        with open(_SECRET_KEY_FILE, 'w', encoding='utf-8') as fp:
+            fp.write(generated)
+    except OSError:
+        pass
+    return generated
+
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-change-me-in-production')
-    # 生产 HTTPS 反代：.env 设 SESSION_COOKIE_SECURE=1；SECRET_KEY 必须固定且勿用默认值
+    SECRET_KEY = _resolve_secret_key()
+    # 生产 HTTPS 反代：在 backend/.env 或系统环境变量里设 SESSION_COOKIE_SECURE=1
     SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in (
         '1',
         'true',

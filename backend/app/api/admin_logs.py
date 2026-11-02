@@ -25,6 +25,7 @@ from app.services.admin_logs_service import (
 )
 from app.services.instance_access import ensure_instance_public_uuid
 from app.utils.datetime_fmt import format_display_datetime
+from app.utils.mask import mask_sensitive_text
 from app.utils.response import fail, ok
 
 admin_logs_api = Blueprint('admin_logs_api', __name__)
@@ -280,9 +281,10 @@ def list_notification_logs():
             'task_id': r.task_id,
             'instance_id': r.instance_id,
             'subject': r.subject,
-            'body': r.body,
+            # 兜底脱敏：历史遗留行可能仍存有明文验证码 / 审批 token
+            'body': mask_sensitive_text(r.body),
             'status': r.status,
-            'error_message': r.error_message,
+            'error_message': mask_sensitive_text(r.error_message),
             'created_at': format_display_datetime(r.created_at),
         })
 

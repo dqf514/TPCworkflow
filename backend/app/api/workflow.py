@@ -1192,6 +1192,10 @@ def get_task(task_id):
     task = TaskInstance.query.get(task_id)
     if not task:
         return fail('任务不存在', status=404)
+    # 越权保护：任务详情含整张表单与流程配置，只有该实例的参与人可看
+    # （发起人 / 审批人 / 时间线参与者 / 有查看权限的管理员）
+    if not user_can_view_instance(current_user, task.instance):
+        return fail('无权查看该任务', status=403)
     return ok(_task_dict(task, detail=True))
 
 
@@ -1207,8 +1211,22 @@ def complete_task(task_id):
     if form_update and isinstance(form_update, dict) and action == 'approve':
         definition = task.instance.definition
         schema = _resolve_form_schema(definition) if definition else {}
+        # 只接受本节点被授予「可编辑」的字段（服务端强制，前端禁用只是表象）
+        from app.services.node_field_requirements import (
+            filter_editable_fields,
+            forbidden_editable_fields,
+        )
+
+        node_cfg = (
+            find_node(parse_graph(definition.process_graph if definition else ''), task.node_id) or {}
+        ).get('config') or {}
+        # 节点上被显式设为「只读/隐藏」的字段不允许提交，直接报错而不是静默丢弃
+        forbidden = forbidden_editable_fields(node_cfg, form_update, schema)
+        if forbidden:
+            return fail(f'以下字段在当前节点不可修改：{"、".join(forbidden)}', status=400)
+        editable_update = filter_editable_fields(node_cfg, form_update)
         merged = dict(parse_variables(task.instance.variables).get('form') or {})
-        merged.update(form_update)
+        merged.update(editable_update)
         from app.services.date_range_value import apply_date_range_auto_days
         apply_date_range_auto_days(
             schema, merged, task.instance.company_id, task.instance.initiator_id,

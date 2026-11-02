@@ -21,6 +21,7 @@ from app.services.email_content import (
     build_test_email,
 )
 from app.services.graph_utils import find_node, parse_graph, parse_variables
+from app.utils.mask import mask_code, mask_sensitive_text
 
 MAIL_CONFIG_KEYS = (
     'MAIL_SERVER',
@@ -66,6 +67,8 @@ def get_mail_config(app, override: dict | None = None) -> dict:
     return cfg
 
 
+# 邮件正文里可能带有可直接复用的一次性凭证（登录验证码、邮件快捷审批 token）。
+# 通知日志对管理员可见，因此落库前统一脱敏，避免「日志接口 = 凭证泄露接口」。
 def _resolve_sender(ec: dict) -> tuple[str, str]:
     """
     解析发件人：信封地址（纯邮箱）与 From 头（可含显示名）。
@@ -117,7 +120,7 @@ def _log_notify(
             task_id=task_id,
             instance_id=instance_id,
             subject=(subject or '')[:256],
-            body=body,
+            body=mask_sensitive_text(body),
             status=status,
             error_message=(error or '')[:512] if error else None,
         ),
@@ -187,7 +190,7 @@ def send_login_email_code(app, email: str, code: str, user_id: int | None = None
         user_id,
         'email',
         subject,
-        text_body[:2000],
+        mask_code(text_body, code)[:2000],
         'sent' if ok else 'failed',
         err,
         mail_type='login_code',
@@ -216,7 +219,7 @@ def send_admin_confirm_email_code(
         user_id,
         'email',
         subject,
-        text_body[:2000],
+        mask_code(text_body, code)[:2000],
         'sent' if ok else 'failed',
         err,
         mail_type='admin_confirm_code',
@@ -687,7 +690,7 @@ def send_login_sms_code(
             user_id,
             'sms',
             '登录验证码',
-            f'手机号 {phone} 验证码 {code}（未配置网关，仅记录）',
+            f'手机号 {phone} 验证码 ******（未配置网关，仅记录）',
             'dev_log',
             mail_type='sms_login',
             recipient=phone,

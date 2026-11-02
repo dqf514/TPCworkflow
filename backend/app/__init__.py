@@ -28,6 +28,26 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # 会话密钥体检：公开默认值只能用于本地开发，否则等于任何人都能伪造 session cookie
+    from config import DEFAULT_SECRET_KEY, WEAK_SECRET_KEYS
+
+    _secret = app.config.get('SECRET_KEY') or ''
+    if _secret == DEFAULT_SECRET_KEY:
+        app.logger.warning(
+            'SECRET_KEY 仍为公开默认值，仅可用于本地开发调试。'
+            '生产环境请设置 SECRET_KEY 环境变量（backend/.env 亦可）。',
+        )
+    elif (os.environ.get('SECRET_KEY') or '').strip().lower() in WEAK_SECRET_KEYS:
+        app.logger.warning(
+            'SECRET_KEY 环境变量为空或为示例弱值，已忽略并改用本地持久化密钥 '
+            'backend/data/.secret_key；生产请设置一个随机长字符串。',
+        )
+    elif not (os.environ.get('SECRET_KEY') or '').strip():
+        app.logger.info(
+            '未检测到 SECRET_KEY 环境变量，已启用本地持久化密钥 backend/data/.secret_key；'
+            '请备份该文件，或改为用环境变量注入。',
+        )
+
     # 识别 nginx / 负载均衡后的 X-Forwarded-*，保证 HTTPS 下 Session Cookie 正确
     if os.environ.get('BEHIND_PROXY', 'false').lower() in ('1', 'true', 'yes'):
         from werkzeug.middleware.proxy_fix import ProxyFix

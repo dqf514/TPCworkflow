@@ -44,6 +44,22 @@ def _field_def_by_key(schema: dict, key: str) -> dict | None:
     return None
 
 
+def _field_labels_by_key(schema: dict) -> dict:
+    """key → 字段中文名，用于错误提示。"""
+    out: dict[str, str] = {}
+    for sec in schema.get('sections') or []:
+        for field in sec.get('fields') or []:
+            key = field.get('key')
+            if key:
+                out[key] = field.get('label') or key
+            if field.get('type') == 'detail':
+                for col in (field.get('props') or {}).get('columns') or []:
+                    ck = col.get('key')
+                    if ck:
+                        out[ck] = col.get('label') or ck
+    return out
+
+
 def _value_empty_for_field(field: dict, val) -> bool:
     errs: list[str] = []
     label = field.get('label') or field.get('key') or '字段'
@@ -153,6 +169,47 @@ def validate_node_field_requirements(
             errors.append(f'「{label}」须修改后方可同意')
 
     return errors
+
+
+def filter_editable_fields(node_config: dict | None, form_update: dict | None) -> dict:
+    """按节点字段权限过滤审批人提交的表单修改。
+
+    只有在流程设计里被显式授予「可编辑」的字段才允许被改写；
+    节点没有配置 field_permissions 时视为全部只读。
+    这道服务端校验是必需的——前端只是把不可编辑字段禁用掉，
+    直接调接口仍然可以提交任意字段（越权改金额的经典入口）。
+    """
+    if not form_update or not isinstance(form_update, dict):
+        return {}
+    perms = (node_config or {}).get('field_permissions') or {}
+    if not perms:
+        return {}
+    return {key: value for key, value in form_update.items() if perms.get(key) == 'edit'}
+
+
+def forbidden_editable_fields(
+    node_config: dict | None,
+    form_update: dict | None,
+    schema: dict | None = None,
+) -> list[str]:
+    """返回「提交了但本节点明确不允许修改」的字段 key 列表。
+
+    只针对在流程设计里被显式标记为 view / hidden 的字段报错；
+    未在 field_permissions 中出现的字段按「全部只读」静默丢弃，
+    以免历史实例与外部客户端因多余字段整单失败。
+    """
+    if not form_update or not isinstance(form_update, dict):
+        return []
+    perms = (node_config or {}).get('field_permissions') or {}
+    if not perms:
+        return []
+    labels = _field_labels_by_key(schema or {})
+    out: list[str] = []
+    for key in form_update:
+        perm = perms.get(key)
+        if perm in ('view', 'hidden'):
+            out.append(labels.get(key) or key)
+    return out
 
 
 def node_has_field_requirements(node_config: dict | None) -> bool:

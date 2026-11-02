@@ -2,6 +2,7 @@
 import base64
 import os
 import re
+import urllib.parse
 import uuid
 from datetime import datetime
 
@@ -15,9 +16,63 @@ uploads_api = Blueprint('uploads_api', __name__)
 files_api = Blueprint('files_api', __name__)
 public_files_api = Blueprint('public_files_api', __name__)
 
+# 允许通过 /api/v1/files 下载的目录白名单。
+# 历史实现只过滤 '..'，等价于「backend/ 下任意文件可下载」——普通员工账号即可拖走
+# data/tpcworkflow.db（含全部密码哈希、LLM Key、验证码与审批 token）与 .env。
+SERVED_DIRS = (
+    'uploads/attachments/',
+    'uploads/avatars/',
+    'uploads/signatures/',
+    'uploads/branding/',
+)
+
+# 品牌 Logo 允许匿名访问（登录页也要显示）
+PUBLIC_DIRS = ('uploads/branding/',)
+
+# 只有这些类型允许浏览器内联渲染，其余一律作为附件下载，避免同源存储型 XSS
+# （html / svg / xml 等可携带脚本，text/html 内联即等价于把上传内容变成同源页面）
+INLINE_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.pdf'}
+
 
 def _project_base() -> str:
     return os.path.abspath(os.path.join(current_app.root_path, '..'))
+
+
+def _normalize_rel(rel: str) -> str:
+    """去掉路径分隔与 '..'，返回规范化相对路径。"""
+    parts = []
+    for seg in (rel or '').replace('\\', '/').split('/'):
+        if seg in ('', '.', '..'):
+            continue
+        parts.append(seg)
+    return '/'.join(parts)
+
+
+def _resolve_upload_path(rel: str, allowed_dirs) -> str | None:
+    """把请求路径解析成白名单目录内的绝对路径；越界返回 None。"""
+    norm = _normalize_rel(rel)
+    if not norm.startswith(tuple(allowed_dirs)):
+        return None
+    base = _project_base()
+    full = os.path.abspath(os.path.join(base, norm))
+    # 双保险：解析后必须仍在项目目录内
+    if not full.startswith(base + os.sep):
+        return None
+    if not os.path.isfile(full):
+        return None
+    return full
+
+
+def _send_upload(full: str):
+    """发送上传文件，并按类型决定内联展示还是作为附件下载。"""
+    resp = send_from_directory(os.path.dirname(full), os.path.basename(full))
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    name = os.path.basename(full)
+    ext = os.path.splitext(name)[1].lower()
+    if ext not in INLINE_IMAGE_EXT:
+        quoted = urllib.parse.quote(name)
+        resp.headers['Content-Disposition'] = f"attachment; filename*=UTF-8''{quoted}"
+    return resp
 
 
 @uploads_api.route('/attachment-policy', methods=['GET'])
@@ -97,30 +152,25 @@ def upload_attachment():
 @public_files_api.route('/<path:subpath>', methods=['GET'])
 def serve_public_file(subpath):
     """无需登录：仅允许访问组织品牌 Logo。"""
-    norm = subpath.replace('\\', '/')
-    if not norm.startswith('uploads/branding/'):
+    full = _resolve_upload_path(subpath, PUBLIC_DIRS)
+    if not full:
         return fail('无权访问', status=403)
-    base = _project_base()
-    full = os.path.join(base, norm.replace('..', ''))
-    if not os.path.isfile(full):
-        return fail('文件不存在', status=404)
-    directory = os.path.dirname(full)
-    return send_from_directory(directory, os.path.basename(full))
+    return _send_upload(full)
 
 
 @files_api.route('/<path:subpath>', methods=['GET'])
 @login_required
 def serve_file(subpath):
-    base = _project_base()
-    norm = subpath.replace('\\', '/').replace('..', '')
-    full = os.path.join(base, norm)
-    if not os.path.isfile(full):
+    norm = _normalize_rel(subpath)
+    # 白名单之外一律 403（原先可下载 backend/ 下任意文件，含 data/tpcworkflow.db）
+    if not norm.startswith(SERVED_DIRS):
         # 兼容旧数据：avatar_path 仅存文件名
         if '/' not in norm:
-            legacy = os.path.join(base, 'uploads', 'avatars', norm)
-            if os.path.isfile(legacy):
-                full = legacy
-    if not os.path.isfile(full):
+            legacy = _resolve_upload_path(f'uploads/avatars/{norm}', SERVED_DIRS)
+            if legacy:
+                return _send_upload(legacy)
+        return fail('无权访问', status=403)
+    full = _resolve_upload_path(norm, SERVED_DIRS)
+    if not full:
         return fail('文件不存在', status=404)
-    directory = os.path.dirname(full)
-    return send_from_directory(directory, os.path.basename(full))
+    return _send_upload(full)

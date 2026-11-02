@@ -8,6 +8,8 @@ backend/data/*.db
 backend/data/*.db-journal
 backend/data/*.db-wal
 backend/data/*.db-shm
+# 会话签名密钥：未配置 SECRET_KEY 时后端自动生成，绝不能进仓库
+backend/data/.secret_key
 
 # Uploads
 backend/uploads/
