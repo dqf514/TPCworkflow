@@ -79,6 +79,7 @@
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import { IconUpload } from '@arco-design/web-vue/es/icon'
 import type { FileItem, RequestOption } from '@arco-design/web-vue'
@@ -103,6 +104,8 @@ import {
 import { collectFormFieldHints } from '@/composables/useReceiptRecognition'
 import { formatReceiptDuplicateMessage, isReceiptDuplicate } from '@/composables/useReceiptDuplicate'
 import { openAttachmentPreview } from '@/composables/useAttachmentPreview'
+
+const { t } = useI18n()
 
 interface PendingItem {
   uid: string
@@ -289,7 +292,7 @@ function confirmFillByUid(uid: string) {
     p.uid === uid ? { ...p, applied: true } : p,
   )
   emit('filled')
-  Message.success('已自动填入表单')
+  Message.success(t('common.auto_filled_form'))
 }
 
 function dismissPending(uid: string) {
@@ -351,14 +354,14 @@ function beforeRemove(file: FileItem) {
 }
 
 .sr-empty {
-  color: var(--color-text-3, #86909c);
-  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  font-size: var(--app-font-md);
 }
 
 .sr-hint {
-  margin: 6px 0 0;
-  font-size: 0.75rem;
-  color: var(--color-text-3, #86909c);
+  margin: var(--app-space-6) 0 0;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
   line-height: 1.4;
   word-break: break-word;
 }
@@ -366,31 +369,31 @@ function beforeRemove(file: FileItem) {
 .sr-file-list {
   margin: 0;
   padding-left: 1.1rem;
-  font-size: 0.875rem;
+  font-size: var(--app-font-md);
 }
 
 .sr-file-list a {
-  color: rgb(var(--primary-6));
+  color: var(--brand-text);
 }
 
 .sr-result-card {
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid var(--color-border-2, #e5e6eb);
-  border-radius: 8px;
-  background: var(--color-fill-1, #f7f8fa);
+  margin-top: var(--app-space-12);
+  padding: var(--app-space-12);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
 }
 
 .sr-result-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-8);
 }
 
 .sr-file-name {
   flex: 1;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -400,20 +403,20 @@ function beforeRemove(file: FileItem) {
 .sr-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px 12px;
-  font-size: 0.8125rem;
-  margin-bottom: 8px;
+  gap: var(--app-space-6) var(--app-space-12);
+  font-size: var(--app-font-sm);
+  margin-bottom: var(--app-space-8);
 }
 
 .sr-label {
-  color: var(--color-text-3, #86909c);
-  margin-right: 6px;
+  color: var(--text-tertiary);
+  margin-right: var(--app-space-6);
 }
 
 .sr-conf {
   grid-column: 1 / -1;
-  font-size: 0.75rem;
-  color: var(--color-text-3, #86909c);
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
   word-break: break-word;
 }
 
@@ -424,6 +427,6 @@ function beforeRemove(file: FileItem) {
 }
 
 .sr-alert {
-  margin-bottom: 8px;
+  margin-bottom: var(--app-space-8);
 }
 </style>

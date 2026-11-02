@@ -11,7 +11,7 @@
     <div class="designer-left">
       <div class="panel-head-row">
         <div class="panel-title">{{ t('designer.palette') }}</div>
-        <a-button class="panel-close" size="mini" @click="closeNarrowPanels">×</a-button>
+        <a-button class="panel-close" size="mini" aria-label="关闭字段面板" @click="closeNarrowPanels">×</a-button>
       </div>
       <div class="palette-scroll">
         <section v-for="g in fieldCatalog" :key="g.groupKey" class="palette-section">
@@ -55,12 +55,18 @@
         </button>
       </div>
       <div class="canvas" :class="`preview-${device}`">
+        <!-- 分区卡片可点击：补 role/tabindex/键盘事件，键盘用户也能选中分区 -->
         <div
           v-for="(sec, si) in schema.sections"
           :key="sec.id"
           class="canvas-section"
           :class="{ 'section-active': selectedSectionId === sec.id }"
+          role="button"
+          tabindex="0"
+          :aria-label="sec.title || '未命名分区'"
           @click="selectSection(sec)"
+          @keydown.enter.prevent="selectSection(sec)"
+          @keydown.space.prevent="selectSection(sec)"
         >
           <div class="sec-head">
             <a-input v-model="sec.title" size="small" class="sec-title-input" @click.stop />
@@ -68,9 +74,14 @@
               {{ t('designer.section_active') }}
             </a-tag>
             <a-space @click.stop>
-              <a-button size="mini" @click="moveSection(si, -1)" :disabled="si === 0">↑</a-button>
-              <a-button size="mini" @click="moveSection(si, 1)" :disabled="si >= schema.sections.length - 1">↓</a-button>
-              <a-button size="mini" status="danger" @click="removeSection(si)">删</a-button>
+              <a-button size="mini" aria-label="上移分区" @click="moveSection(si, -1)" :disabled="si === 0">↑</a-button>
+              <a-button size="mini" aria-label="下移分区" @click="moveSection(si, 1)" :disabled="si >= schema.sections.length - 1">↓</a-button>
+              <a-popconfirm
+                :title="t('designer.delete_section_confirm', { name: sec.title || '未命名分区' })"
+                @ok="removeSection(si)"
+              >
+                <a-button size="mini" status="danger" aria-label="删除分区">{{ t('designer.delete_short') }}</a-button>
+              </a-popconfirm>
             </a-space>
           </div>
           <div
@@ -79,6 +90,7 @@
             @dragleave="onSectionDragLeave(sec.id)"
             @drop.prevent="onSectionDrop($event, sec)"
           >
+            <!-- 字段卡片可点击：补 role/tabindex/键盘事件（内部含按钮，不能改成 <button>） -->
             <div
               v-for="(field, fi) in sec.fields"
               :key="field.id"
@@ -87,15 +99,26 @@
                 active: selected?.id === field.id,
                 'drop-before': dropTarget?.sectionId === sec.id && dropTarget?.index === fi,
               }"
-              draggable="true"
+              role="button"
+              tabindex="0"
+              :aria-label="field.label || field.key || '未命名字段'"
               @click.stop="selectField(field, sec)"
-              @dragstart.stop="onFieldDragStart($event, sec, field)"
+              @keydown.enter.prevent="selectField(field, sec)"
+              @keydown.space.prevent="selectField(field, sec)"
               @dragover.prevent.stop="onFieldDragOver($event, sec.id, fi)"
               @dragleave.stop="onFieldDragLeave"
               @drop.prevent.stop="onFieldDrop($event, sec, fi)"
-              @dragend="onDragEnd"
             >
-              <span class="drag-handle" title="拖动排序">⋮⋮</span>
+              <!-- 拖拽源收在手柄上：整块 chip 可点击选中，误触不会起拖 -->
+              <span
+                class="drag-handle"
+                draggable="true"
+                :title="t('designer.drag_handle_hint')"
+                :aria-label="t('designer.drag_handle_hint')"
+                @dragstart.stop="onFieldDragStart($event, sec, field)"
+                @dragend="onDragEnd"
+                @click.stop
+              >⋮⋮</span>
               <span class="type-tag">{{ field.type }}</span>
               <span class="truncate">
                 {{ field.label || field.key }}
@@ -106,9 +129,14 @@
                 </span>
               </span>
               <a-space class="chip-actions" @click.stop>
-                <a-button size="mini" @click="moveField(sec, fi, -1)" :disabled="fi === 0">↑</a-button>
-                <a-button size="mini" @click="moveField(sec, fi, 1)" :disabled="fi >= sec.fields.length - 1">↓</a-button>
-                <a-button size="mini" status="danger" @click="removeField(sec, fi)">{{ t('designer.delete_short') }}</a-button>
+                <a-button size="mini" aria-label="上移字段" @click="moveField(sec, fi, -1)" :disabled="fi === 0">↑</a-button>
+                <a-button size="mini" aria-label="下移字段" @click="moveField(sec, fi, 1)" :disabled="fi >= sec.fields.length - 1">↓</a-button>
+                <a-popconfirm
+                  :title="t('designer.delete_field_confirm', { name: field.label || field.key || '未命名字段' })"
+                  @ok="removeField(sec, fi)"
+                >
+                  <a-button size="mini" status="danger" aria-label="删除字段">{{ t('designer.delete_short') }}</a-button>
+                </a-popconfirm>
               </a-space>
             </div>
             <div
@@ -134,34 +162,38 @@
       <div class="panel-head-row">
         <div class="panel-title">{{ t('designer.field_props') }}</div>
         <a-space>
-          <a-button
+          <a-popconfirm
             v-if="selected"
-            size="mini"
-            status="danger"
-            @click="removeSelectedField"
+            :title="t('designer.delete_field_confirm', { name: selected.label || selected.key || '未命名字段' })"
+            @ok="removeSelectedField"
           >
-            {{ t('designer.delete_field') }}
-          </a-button>
-          <a-button class="panel-close" size="mini" @click="closeNarrowPanels">×</a-button>
+            <a-button size="mini" status="danger">
+              {{ t('designer.delete_field') }}
+            </a-button>
+          </a-popconfirm>
+          <a-button class="panel-close" size="mini" aria-label="关闭属性面板" @click="closeNarrowPanels">×</a-button>
         </a-space>
       </div>
       <template v-if="selected">
         <div class="props-scroll">
+          <!-- 表单 key 改为「当前选中字段 id」：
+               原先使用自增计数器 propsPanelKey，每选一次字段就重建整个表单，
+               既浪费又会让控件状态/焦点丢失；改用字段 id 后只在真正切换字段时重建。 -->
           <a-form
             layout="vertical"
             size="small"
             class="props-form"
             :model="selected || {}"
-            :key="propsPanelKey"
+            :key="selected?.id || 'none'"
           >
             <div class="props-grid cols-3">
-              <a-form-item :label="t('designer.label')" class="props-item">
+              <a-form-item field="label" :label="t('designer.label')" class="props-item">
                 <a-input v-model="selected.label" />
               </a-form-item>
-              <a-form-item v-if="needsKey(selected.type)" :label="t('designer.field_key')" class="props-item">
+              <a-form-item v-if="needsKey(selected.type)" field="key" :label="t('designer.field_key')" class="props-item">
                 <a-input v-model="selected.key" />
               </a-form-item>
-              <a-form-item :label="t('designer.type')" class="props-item">
+              <a-form-item field="type" :label="t('designer.type')" class="props-item">
                 <a-input :model-value="selected.type" disabled />
               </a-form-item>
             </div>
@@ -234,7 +266,7 @@
                   <a-switch v-model="dateRangeCountWorkdays" size="small" />
                 </label>
               </div>
-              <a-form-item :label="t('designer.date_range_auto_days')" class="props-item">
+              <a-form-item field="dateRangeAutoDaysKey" :label="t('designer.date_range_auto_days')" class="props-item">
                 <a-select
                   v-model="dateRangeAutoDaysKey"
                   :options="dateRangeAutoDaysOptions"
@@ -247,17 +279,17 @@
             </template>
 
             <div v-if="needsKey(selected.type)" class="props-grid cols-2">
-              <a-form-item :label="t('designer.placeholder')" class="props-item props-item-span-2">
+              <a-form-item field="placeholder" :label="t('designer.placeholder')" class="props-item props-item-span-2">
                 <a-input v-model="selected.placeholder" />
               </a-form-item>
             </div>
 
             <div class="props-section-title">{{ t('designer.grid_divider') }}</div>
             <div class="props-grid cols-2">
-              <a-form-item :label="t('designer.desktop')" class="props-item">
+              <a-form-item field="span.desktop" :label="t('designer.desktop')" class="props-item">
                 <a-slider v-model="selected.span!.desktop" :min="6" :max="24" :step="2" />
               </a-form-item>
-              <a-form-item :label="t('designer.mobile')" class="props-item">
+              <a-form-item field="span.mobile" :label="t('designer.mobile')" class="props-item">
                 <a-slider v-model="selected.span!.mobile" :min="12" :max="24" :step="12" />
               </a-form-item>
             </div>
@@ -288,7 +320,7 @@
 
             <template v-if="selected.type === 'plain_amount'">
               <div class="props-section-title">{{ t('designer.plain_amount_props') }}</div>
-              <a-form-item :label="t('designer.formula_precision')" class="props-item">
+              <a-form-item field="plainAmountPrecision" :label="t('designer.formula_precision')" class="props-item">
                 <a-input-number v-model="plainAmountPrecision" :min="0" :max="8" />
               </a-form-item>
               <p class="hint-text">{{ t('designer.plain_amount_hint') }}</p>
@@ -303,28 +335,28 @@
             <template v-if="selected.type === 'serial_no'">
               <div class="props-section-title">{{ t('designer.serial_props') }}</div>
               <p class="hint-text">{{ t('designer.serial_hint') }}</p>
-              <a-form-item :label="t('designer.serial_prefix')" class="props-item">
+              <a-form-item field="serialPrefix" :label="t('designer.serial_prefix')" class="props-item">
                 <a-input v-model="serialPrefix" :placeholder="t('designer.serial_prefix_ph')" />
               </a-form-item>
-              <a-form-item :label="t('designer.serial_date_part')" class="props-item">
+              <a-form-item field="serialDatePart" :label="t('designer.serial_date_part')" class="props-item">
                 <a-select v-model="serialDatePart" :options="serialDatePartOpts" />
               </a-form-item>
-              <a-form-item :label="t('designer.serial_separator')" class="props-item">
+              <a-form-item field="serialSeparator" :label="t('designer.serial_separator')" class="props-item">
                 <a-input v-model="serialSeparator" :placeholder="t('designer.serial_separator_ph')" />
               </a-form-item>
-              <a-form-item :label="t('designer.serial_seq_digits')" class="props-item">
+              <a-form-item field="serialSeqDigits" :label="t('designer.serial_seq_digits')" class="props-item">
                 <a-input-number v-model="serialSeqDigits" :min="1" :max="10" />
               </a-form-item>
-              <a-form-item :label="t('designer.serial_suffix')" class="props-item">
+              <a-form-item field="serialSuffix" :label="t('designer.serial_suffix')" class="props-item">
                 <a-input v-model="serialSuffix" :placeholder="t('designer.serial_suffix_ph')" />
               </a-form-item>
-              <a-form-item :label="t('designer.serial_reset_cycle')" class="props-item">
+              <a-form-item field="serialResetCycle" :label="t('designer.serial_reset_cycle')" class="props-item">
                 <a-select v-model="serialResetCycle" :options="serialResetCycleOpts" />
               </a-form-item>
-              <a-form-item :label="t('designer.serial_scope')" class="props-item">
+              <a-form-item field="serialScope" :label="t('designer.serial_scope')" class="props-item">
                 <a-select v-model="serialScope" :options="serialScopeOpts" />
               </a-form-item>
-              <a-form-item :label="t('designer.serial_pattern_adv')" class="props-item">
+              <a-form-item field="serialPatternAdvanced" :label="t('designer.serial_pattern_adv')" class="props-item">
                 <a-textarea
                   v-model="serialPatternAdvanced"
                   :auto-size="{ minRows: 2, maxRows: 4 }"
@@ -336,7 +368,7 @@
             </template>
 
             <template v-if="selected.type === 'text_block'">
-              <a-form-item :label="t('designer.text_content')" class="props-item">
+              <a-form-item field="textBlockContent" :label="t('designer.text_content')" class="props-item">
                 <a-textarea v-model="textBlockContent" :auto-size="{ minRows: 2, maxRows: 6 }" />
               </a-form-item>
             </template>
@@ -346,18 +378,29 @@
             <template v-if="selected.type === 'detail'">
               <div class="props-section-title">{{ t('designer.detail_cols_tpl') }}</div>
               <p class="hint-text">{{ t('designer.detail_cols_hint') }}</p>
+              <!-- 明细列卡片可点击：补 role/tabindex/键盘事件 -->
               <div
                 v-for="(col, ci) in detailColumns"
                 :key="col.id"
                 class="detail-col-chip"
                 :class="{ active: detailColSelected?.id === col.id }"
+                role="button"
+                tabindex="0"
+                :aria-label="col.label || col.key || '未命名列'"
                 @click="selectDetailCol(col)"
+                @keydown.enter.prevent="selectDetailCol(col)"
+                @keydown.space.prevent="selectDetailCol(col)"
               >
                 <span class="detail-col-name">{{ col.label }} ({{ col.type }})</span>
                 <a-space class="chip-actions" @click.stop>
-                  <a-button size="mini" @click="moveDetailCol(ci, -1)" :disabled="ci === 0">↑</a-button>
-                  <a-button size="mini" @click="moveDetailCol(ci, 1)" :disabled="ci >= detailColumns.length - 1">↓</a-button>
-                  <a-button size="mini" status="danger" @click="removeDetailCol(ci)">{{ t('designer.delete_short') }}</a-button>
+                  <a-button size="mini" aria-label="上移明细列" @click="moveDetailCol(ci, -1)" :disabled="ci === 0">↑</a-button>
+                  <a-button size="mini" aria-label="下移明细列" @click="moveDetailCol(ci, 1)" :disabled="ci >= detailColumns.length - 1">↓</a-button>
+                  <a-popconfirm
+                    :title="t('designer.delete_column_confirm', { name: col.label || col.key || '未命名列' })"
+                    @ok="removeDetailCol(ci)"
+                  >
+                    <a-button size="mini" status="danger" aria-label="删除明细列">{{ t('designer.delete_short') }}</a-button>
+                  </a-popconfirm>
                 </a-space>
               </div>
               <a-dropdown trigger="click" @select="addDetailCol">
@@ -371,18 +414,23 @@
               <template v-if="detailColSelected">
                 <div class="props-section-title mt-2 props-section-row">
                   <span>{{ t('designer.col_props') }}</span>
-                  <a-button size="mini" status="danger" @click="removeSelectedDetailCol">
-                    {{ t('designer.delete_col') }}
-                  </a-button>
+                  <a-popconfirm
+                    :title="t('designer.delete_column_confirm', { name: detailColSelected.label || detailColSelected.key || '未命名列' })"
+                    @ok="removeSelectedDetailCol"
+                  >
+                    <a-button size="mini" status="danger">
+                      {{ t('designer.delete_col') }}
+                    </a-button>
+                  </a-popconfirm>
                 </div>
                 <div class="props-grid cols-3">
-                  <a-form-item :label="t('designer.col_label')" class="props-item">
+                  <a-form-item field="detailCol.label" :label="t('designer.col_label')" class="props-item">
                     <a-input v-model="detailColSelected.label" />
                   </a-form-item>
-                  <a-form-item :label="t('designer.col_key')" class="props-item">
+                  <a-form-item field="detailCol.key" :label="t('designer.col_key')" class="props-item">
                     <a-input v-model="detailColSelected.key" />
                   </a-form-item>
-                  <a-form-item :label="t('designer.required')" class="props-item props-item-switch">
+                  <a-form-item field="detailCol.required" :label="t('designer.required')" class="props-item props-item-switch">
                     <a-switch v-model="detailColSelected.required" size="small" />
                   </a-form-item>
                 </div>
@@ -398,7 +446,7 @@
                 />
                 <template v-if="detailColSelected?.type === 'plain_amount'">
                   <div class="props-section-title">{{ t('designer.plain_amount_props') }}</div>
-                  <a-form-item :label="t('designer.formula_precision')" class="props-item">
+                  <a-form-item field="detailColPlainAmountPrecision" :label="t('designer.formula_precision')" class="props-item">
                     <a-input-number v-model="detailColPlainAmountPrecision" :min="0" :max="8" />
                   </a-form-item>
                   <p class="hint-text">{{ t('designer.plain_amount_hint') }}</p>
@@ -413,6 +461,7 @@
                   </label>
                   <a-form-item
                     v-if="detailColAllowMultiple"
+                    field="detailColMaxCount"
                     :label="t('designer.attachment_max_count')"
                     class="props-item"
                   >
@@ -431,7 +480,7 @@
 
             <template v-if="selected.type === 'related_form'">
               <div class="props-section-title">{{ t('designer.related_link_scope') }}</div>
-              <a-form-item :label="t('designer.related_forms')" class="props-item">
+              <a-form-item field="relatedFormKeys" :label="t('designer.related_forms')" class="props-item">
                 <a-select
                   v-model="relatedFormKeys"
                   :options="publishedFormOpts"
@@ -489,12 +538,38 @@ const props = defineProps<{ modelValue?: FormSchema; currentFormKey?: string }>(
 const emit = defineEmits<{ 'update:modelValue': [FormSchema] }>()
 
 const schema = ref<FormSchema>(props.modelValue ? JSON.parse(JSON.stringify(props.modelValue)) : DEFAULT_FORM_SCHEMA())
+
+/**
+ * schema 指纹：用于判断「父级回写的 schema 与本地是否一致」。
+ *
+ * 直接 JSON.stringify 整份 schema 在大表单编辑时开销显著（每次回写都要序列化两次），
+ * 这里按对象引用缓存。schema 存在「就地修改」的情况（settings.relatedFormKeys 等），
+ * 所以用 mutationTick 标记本地是否被改过，改过就让缓存失效。
+ */
+const schemaFingerprintCache = new WeakMap<object, { tick: number; fp: string }>()
+let schemaMutationTick = 0
+
+/** 本地就地修改了 schema：让指纹缓存失效，避免父级回写被误判为「无变化」 */
+function markSchemaMutated() {
+  schemaMutationTick += 1
+}
+
+function schemaFingerprint(s: FormSchema | undefined): string {
+  if (!s) return ''
+  const cached = schemaFingerprintCache.get(s as object)
+  if (cached && cached.tick === schemaMutationTick) return cached.fp
+  const out = JSON.stringify(s)
+  schemaFingerprintCache.set(s as object, { tick: schemaMutationTick, fp: out })
+  return out
+}
+
+/** 分区 id 自增序号：Date.now() 在同一毫秒内新增两个分区会生成相同 id，这里补序号保证唯一 */
+let sectionIdSeq = 0
 const device = ref<'desktop' | 'mobile'>('desktop')
 const selected = ref<FormFieldDef | null>(null)
 const selectedSectionId = ref<string>('')
 const dropTarget = ref<{ sectionId: string; index: number } | null>(null)
-/** 属性面板 key：schema 深拷贝后强制重绑选中字段，避免开关等控件 UI 不刷新 */
-const propsPanelKey = ref(0)
+/** 属性面板表单的 key 依据「当前选中字段 id」推导，不再使用自增计数器 */
 const narrowPaletteOpen = ref(false)
 const narrowPropsOpen = ref(false)
 
@@ -538,6 +613,7 @@ const relatedFormKeys = computed({
   set: (v: string[]) => {
     if (!schema.value.settings) schema.value.settings = { relatedFormKeys: [] }
     schema.value.settings.relatedFormKeys = v
+    markSchemaMutated()
   },
 })
 
@@ -914,24 +990,27 @@ function moveDetailCol(ci: number, delta: number) {
 }
 
 onMounted(async () => {
-  if (!schema.value.settings) schema.value.settings = { relatedFormKeys: [] }
+  if (!schema.value.settings) {
+    schema.value.settings = { relatedFormKeys: [] }
+    markSchemaMutated()
+  }
   ensureSelectedSection()
-  const res = await api.get<ApiResponse<{ key: string; name: string; status: string }[]>>(
-    '/forms/definitions',
-    { params: { status: 'published' } },
-  )
-  if (res.data.ok) {
-    const selfKey = props.currentFormKey || ''
-    publishedFormOpts.value = res.data.data
-      .filter((f) => f.key && f.key !== selfKey)
-      .map((f) => ({ label: `${f.name}（${f.key}）`, value: f.key }))
+  try {
+    const res = await api.get<ApiResponse<{ key: string; name: string; status: string }[]>>(
+      '/forms/definitions',
+      { params: { status: 'published' } },
+    )
+    if (res.data.ok) {
+      const selfKey = props.currentFormKey || ''
+      publishedFormOpts.value = res.data.data
+        .filter((f) => f.key && f.key !== selfKey)
+        .map((f) => ({ label: `${f.name}（${f.key}）`, value: f.key }))
+    }
+  } catch (e) {
+    // 已发布表单列表只是「关联表单」下拉的候选，拉取失败不该让设计器报错空白
+    console.warn('[FormDesigner] 加载已发布表单失败', e)
   }
 })
-
-function schemaFingerprint(s: FormSchema | undefined): string {
-  if (!s) return ''
-  return JSON.stringify(s)
-}
 
 function emitSchema() {
   const out = JSON.parse(JSON.stringify(schema.value)) as FormSchema
@@ -982,6 +1061,8 @@ let syncingFromParent = false
 
 watch(schema, () => {
   if (syncingFromParent) return
+  // 本地就地改了 schema：指纹缓存必须失效，否则父级回写的相同内容会被误判为「无变化」
+  markSchemaMutated()
   emitSchemaDebounced()
 }, { deep: true })
 
@@ -1169,7 +1250,7 @@ function moveFieldByDrag(raw: string, toSectionId: string, toIndex: number) {
 
 function addSection() {
   const sec: FormSection = {
-    id: `section_${Date.now()}`,
+    id: `section_${Date.now()}_${sectionIdSeq++}`,
     title: t('designer.new_section'),
     collapsed: false,
     fields: [],
@@ -1184,7 +1265,6 @@ function selectField(f: FormFieldDef, sec: FormSection) {
   selected.value = f
   if (!f.span) f.span = { desktop: 12, mobile: 24 }
   detailColSelected.value = null
-  propsPanelKey.value += 1
   if (isNarrowDesigner()) {
     narrowPaletteOpen.value = false
     narrowPropsOpen.value = true
@@ -1193,7 +1273,6 @@ function selectField(f: FormFieldDef, sec: FormSection) {
 
 function selectDetailCol(col: FormFieldDef) {
   detailColSelected.value = col
-  propsPanelKey.value += 1
   if (isNarrowDesigner()) narrowPropsOpen.value = true
 }
 
@@ -1257,8 +1336,9 @@ function moveSection(si: number, delta: number) {
 <style scoped>
 .form-designer {
   display: grid;
-  grid-template-columns: 248px 1fr 560px;
-  gap: 12px;
+  /* 中列用 minmax(0, 1fr)，避免画布内容过长时把三栏撑破 */
+  grid-template-columns: 248px minmax(0, 1fr) 560px;
+  gap: var(--app-space-12);
   height: 100%;
   min-height: 480px;
 }
@@ -1266,8 +1346,8 @@ function moveSection(si: number, delta: number) {
 .designer-left,
 .designer-right {
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: var(--radius-md);
+  padding: var(--app-space-8);
   overflow: hidden;
   background: var(--surface);
   display: flex;
@@ -1279,7 +1359,7 @@ function moveSection(si: number, delta: number) {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: var(--app-space-4);
 }
 
 .designer-right :deep(.props-form .arco-form-item) {
@@ -1287,18 +1367,18 @@ function moveSection(si: number, delta: number) {
 }
 
 .designer-right :deep(.props-form .arco-form-item-label-col) {
-  padding-bottom: 2px;
+  padding-bottom: var(--app-space-2);
 }
 
 .designer-right :deep(.props-form .arco-form-item-label) {
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   line-height: 1.2;
 }
 
 .props-grid {
   display: grid;
-  gap: 4px 12px;
-  margin-bottom: 8px;
+  gap: var(--app-space-4) var(--app-space-12);
+  margin-bottom: var(--app-space-8);
 }
 
 .props-grid.cols-2 {
@@ -1323,18 +1403,18 @@ function moveSection(si: number, delta: number) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 20px;
-  margin-bottom: 10px;
-  padding: 8px 12px;
+  gap: var(--app-space-8) var(--app-space-20);
+  margin-bottom: var(--app-space-10);
+  padding: var(--app-space-8) var(--app-space-12);
   background: var(--surface-muted);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .props-switch-cell {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: var(--app-space-8);
+  font-size: var(--app-font-xs);
   color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
@@ -1342,11 +1422,11 @@ function moveSection(si: number, delta: number) {
 }
 
 .props-section-title {
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   font-weight: 600;
   color: var(--text);
-  margin: 10px 0 6px;
-  padding-top: 8px;
+  margin: var(--app-space-10) 0 var(--app-space-6);
+  padding-top: var(--app-space-8);
   border-top: 1px dashed var(--border);
 }
 
@@ -1357,15 +1437,15 @@ function moveSection(si: number, delta: number) {
 }
 
 .props-section-title.mt-2 {
-  margin-top: 12px;
+  margin-top: var(--app-space-12);
 }
 
 .designer-right :deep(.field-options-panel .arco-form-item) {
-  margin-bottom: 6px;
+  margin-bottom: var(--app-space-6);
 }
 
 .designer-right :deep(.field-options-panel .hint-text) {
-  margin: 2px 0 6px;
+  margin: var(--app-space-2) 0 var(--app-space-6);
 }
 
 .designer-center {
@@ -1373,7 +1453,7 @@ function moveSection(si: number, delta: number) {
   flex-direction: column;
   min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   overflow: hidden;
 }
@@ -1381,49 +1461,49 @@ function moveSection(si: number, delta: number) {
 .panel-title {
   font-weight: 600;
   margin-bottom: 0;
-  font-size: 13px;
+  font-size: var(--app-font-sm);
 }
 
 .panel-head-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-8);
 }
 
 .props-section-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .palette-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  margin: 0 -2px;
-  padding: 0 2px;
+  margin: 0 calc(var(--app-space-2) * -1);
+  padding: 0 var(--app-space-2);
 }
 
 .palette-section + .palette-section {
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: var(--app-space-8);
+  padding-top: var(--app-space-8);
   border-top: 1px solid var(--divider);
 }
 
 .palette-group-title {
-  font-size: 11px;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
-  margin-bottom: 4px;
+  margin-bottom: var(--app-space-4);
   line-height: 1.2;
 }
 
 .palette-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  gap: var(--app-space-4);
 }
 
 .palette-tile {
@@ -1431,24 +1511,24 @@ function moveSection(si: number, delta: number) {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 2px;
-  padding: 5px 2px 4px;
+  gap: var(--app-space-2);
+  padding: 5px var(--app-space-2) var(--app-space-4);
   min-height: 46px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
 .palette-tile:hover {
-  border-color: rgb(var(--primary-6));
+  border-color: var(--brand);
   background: var(--brand-softer);
-  box-shadow: 0 1px 4px rgba(22, 93, 255, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .palette-tile:hover :deep(.field-type-icon) {
-  color: rgb(var(--primary-6));
+  color: var(--brand-text);
 }
 
 .palette-tile:active {
@@ -1456,7 +1536,7 @@ function moveSection(si: number, delta: number) {
 }
 
 .palette-tile-label {
-  font-size: 10px;
+  font-size: var(--app-font-2xs);
   line-height: 1.2;
   color: var(--text-secondary);
   text-align: center;
@@ -1470,7 +1550,7 @@ function moveSection(si: number, delta: number) {
 
 .palette-add-section {
   flex-shrink: 0;
-  margin-top: 6px;
+  margin-top: var(--app-space-6);
 }
 
 .panel-toggle,
@@ -1482,12 +1562,12 @@ function moveSection(si: number, delta: number) {
 .panel-toggle {
   align-items: center;
   height: 26px;
-  padding: 0 10px;
-  font-size: 12px;
+  padding: 0 var(--app-space-10);
+  font-size: var(--app-font-xs);
   color: var(--text-secondary, #5b6066);
-  background: var(--surface, #fff);
+  background: var(--surface, #ffffff);
   border: 1px solid var(--border-strong, #d9d8d2);
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: border-color var(--dur-fast, 120ms) var(--ease-out, ease),
     color var(--dur-fast, 120ms) var(--ease-out, ease);
@@ -1506,8 +1586,8 @@ function moveSection(si: number, delta: number) {
 .center-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
+  gap: var(--app-space-8);
+  padding: var(--app-space-8);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -1516,7 +1596,7 @@ function moveSection(si: number, delta: number) {
 .canvas {
   flex: 1;
   overflow: auto;
-  padding: 12px;
+  padding: var(--app-space-12);
 }
 
 .preview-mobile {
@@ -1524,23 +1604,23 @@ function moveSection(si: number, delta: number) {
   margin: 0 auto;
   background: var(--surface);
   border: 1px dashed var(--border-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   min-height: 100%;
 }
 
 .canvas-section {
   background: var(--surface);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
+  border-radius: var(--radius-md);
+  padding: var(--app-space-12);
+  margin-bottom: var(--app-space-12);
   border: 2px solid transparent;
   transition: border-color 0.15s, box-shadow 0.15s;
   cursor: pointer;
 }
 
 .canvas-section.section-active {
-  border-color: rgb(var(--primary-6));
-  box-shadow: 0 0 0 1px rgba(var(--primary-6), 0.15);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 15%, transparent);
 }
 
 .sec-active-tag {
@@ -1553,29 +1633,29 @@ function moveSection(si: number, delta: number) {
 
 .sec-drop-empty {
   border: 1px dashed var(--border-strong);
-  border-radius: 6px;
-  padding: 8px;
+  border-radius: var(--radius-sm);
+  padding: var(--app-space-8);
   background: var(--surface-muted);
 }
 
 .sec-drop-empty.drop-active,
 .sec-drop-tail.drop-active {
-  border-color: rgb(var(--primary-6));
+  border-color: var(--brand);
   background: var(--brand-soft);
 }
 
 .sec-drop-tail {
   height: 10px;
-  margin-top: 4px;
-  border-radius: 4px;
+  margin-top: var(--app-space-4);
+  border-radius: var(--radius-sm);
   border: 1px dashed transparent;
 }
 
 .sec-head {
   display: flex;
-  gap: 8px;
+  gap: var(--app-space-8);
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--app-space-8);
 }
 
 .sec-title-input {
@@ -1583,7 +1663,7 @@ function moveSection(si: number, delta: number) {
 }
 
 .field-chip .linkage-tag {
-  margin-left: 4px;
+  margin-left: var(--app-space-4);
   vertical-align: middle;
   transform: scale(0.92);
 }
@@ -1591,36 +1671,36 @@ function moveSection(si: number, delta: number) {
 .field-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: var(--app-space-8);
+  padding: var(--app-space-8) var(--app-space-10);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  margin-bottom: 6px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--app-space-6);
   cursor: grab;
   background: var(--surface-muted);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .field-chip.drop-before {
-  box-shadow: inset 0 3px 0 rgb(var(--primary-6));
+  box-shadow: inset 0 3px 0 var(--brand);
 }
 
 .drag-handle {
   flex-shrink: 0;
   color: var(--border-strong);
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   letter-spacing: -2px;
   user-select: none;
   cursor: grab;
 }
 
 .field-chip.active {
-  border-color: rgb(var(--primary-6));
+  border-color: var(--brand);
   background: var(--brand-soft);
 }
 
 .type-tag {
-  font-size: 10px;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
   flex-shrink: 0;
 }
@@ -1630,14 +1710,14 @@ function moveSection(si: number, delta: number) {
 }
 
 .col-count {
-  font-size: 10px;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
 }
 
 .hint-text {
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
-  margin: 0 0 8px;
+  margin: 0 0 var(--app-space-8);
   line-height: 1.5;
 }
 
@@ -1645,13 +1725,21 @@ function moveSection(si: number, delta: number) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: var(--app-space-8);
+  padding: var(--app-space-6) var(--app-space-8);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  margin-bottom: 4px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--app-space-4);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--app-font-xs);
+}
+
+/* 画布内可聚焦元素（分区 / 字段 / 明细列）的键盘焦点环 */
+.canvas-section:focus-visible,
+.field-chip:focus-visible,
+.detail-col-chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 16%, transparent);
 }
 
 .detail-col-name {
@@ -1663,7 +1751,7 @@ function moveSection(si: number, delta: number) {
 }
 
 .detail-col-chip.active {
-  border-color: rgb(var(--primary-6));
+  border-color: var(--brand);
   background: var(--brand-soft);
 }
 
@@ -1731,6 +1819,11 @@ function moveSection(si: number, delta: number) {
   }
 
   .props-grid.cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  /* 抽屉式属性面板宽度有限，双列会挤成两条窄缝，这里降为单列 */
+  .props-grid.cols-2 {
     grid-template-columns: 1fr;
   }
 }

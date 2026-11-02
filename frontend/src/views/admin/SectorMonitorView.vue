@@ -14,7 +14,7 @@
       </a-button>
     </template>
     <div class="monitor-panel app-card">
-      <a-empty v-if="!loading && !sectorOpts.length" description="暂无有数据的业务板块" />
+      <a-empty v-if="!loading && !sectorOpts.length" :description="t('monitor.no_sector_data')" />
       <WorkflowInstanceList
         v-else
         :rows="displayRows"
@@ -155,9 +155,9 @@ async function exportExcel() {
     const fallbackName = `流程清单_${sectorName}_${formatDateTime(new Date().toISOString()).replace(/[:\s]/g, '')}.xlsx`
     const fname = parseContentDispositionFilename(res.headers['content-disposition']) || fallbackName
     downloadBlob(res.data as Blob, fname)
-    Message.success('导出成功')
+    Message.success(t('monitor.export_success'))
   } catch (e) {
-    Message.error(e instanceof Error ? e.message : '导出失败')
+    Message.error(e instanceof Error ? e.message : t('monitor.export_failed'))
   } finally {
     exporting.value = false
   }

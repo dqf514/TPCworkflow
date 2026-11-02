@@ -1,68 +1,68 @@
 <template>
   <a-modal
     v-model:visible="visible"
-    title="个人中心"
+    :title="t('profile.title')"
     :width="modalWidth"
     :footer="false"
     @cancel="emit('update:visible', false)"
   >
     <a-tabs v-model:active-key="tab">
-      <a-tab-pane key="profile" title="基本信息">
+      <a-tab-pane key="profile" :title="t('profile.tab_basic')">
         <a-form :model="profileForm" layout="vertical">
-          <a-form-item label="显示名">
+          <a-form-item field="display_name" :label="t('profile.display_name')">
             <a-input v-model="profileForm.display_name" />
           </a-form-item>
-          <a-form-item label="邮箱">
+          <a-form-item field="email" :label="t('profile.email')">
             <a-input :model-value="profileForm.email" readonly />
-            <template #extra><span class="text-xs text-gray-500">邮箱不可自行修改，请联系管理员</span></template>
+            <template #extra><span class="text-xs text-gray-500">{{ t('profile.email_fixed_hint') }}</span></template>
           </a-form-item>
-          <a-form-item label="手机">
+          <a-form-item field="phone" :label="t('profile.phone')">
             <a-input v-model="profileForm.phone" />
           </a-form-item>
-          <a-form-item label="部门职务">
+          <a-form-item field="dept_job" :label="t('profile.dept_job')">
             <div v-if="deptJobLines.length" class="dept-job-lines">
               <div v-for="(line, idx) in deptJobLines" :key="idx" class="text-sm">{{ line }}</div>
             </div>
             <span v-else class="text-sm text-gray-500">—</span>
-            <template #extra><span class="text-xs text-gray-500">职务由各任职部门分别设置</span></template>
+            <template #extra><span class="text-xs text-gray-500">{{ t('profile.dept_job_hint') }}</span></template>
           </a-form-item>
-          <a-form-item label="头像">
+          <a-form-item field="avatar" :label="t('profile.avatar')">
             <div class="avatar-row">
               <a-avatar :size="56" :image-url="avatarPreview">{{ auth.user?.display_name?.[0] }}</a-avatar>
               <div class="avatar-actions">
                 <a-button size="small" :loading="avatarUploading" @click="pickAvatar">
-                  {{ avatarUploading ? '上传中…' : '选择图片' }}
+                  {{ avatarUploading ? t('profile.avatar_uploading') : t('profile.avatar_pick') }}
                 </a-button>
-                <span class="avatar-hint">支持 PNG/JPEG/WEBP，选择后立即上传</span>
+                <span class="avatar-hint">{{ t('profile.avatar_hint') }}</span>
               </div>
               <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" @change="onAvatarFile" />
             </div>
           </a-form-item>
-          <a-button type="primary" :loading="saving" @click="saveProfile">保存资料</a-button>
+          <a-button type="primary" :loading="saving" @click="saveProfile">{{ t('profile.save') }}</a-button>
         </a-form>
       </a-tab-pane>
-      <a-tab-pane key="record-sets" title="我的配置表">
+      <a-tab-pane key="record-sets" :title="t('profile.tab_record_sets')">
         <PersonalRecordSetsPanel />
       </a-tab-pane>
-      <a-tab-pane key="password" title="密码">
+      <a-tab-pane key="password" :title="t('profile.tab_password')">
         <a-alert
           v-if="auth.user?.need_set_password"
           type="warning"
           class="mb-4"
-          title="您尚未设置登录密码，请设置后也可使用账号密码登录。"
+          :title="t('profile.password_not_set')"
         />
         <a-form :model="pwdForm" layout="vertical" @submit-success="savePassword">
-          <a-form-item v-if="auth.user?.has_password" label="当前密码" required>
+          <a-form-item v-if="auth.user?.has_password" field="old_password" :label="t('profile.current_password')" required>
             <a-input-password v-model="pwdForm.old_password" />
           </a-form-item>
-          <a-form-item label="新密码" required>
-            <a-input-password v-model="pwdForm.new_password" placeholder="至少 6 位" />
+          <a-form-item field="new_password" :label="t('profile.new_password')" required>
+            <a-input-password v-model="pwdForm.new_password" :placeholder="t('profile.new_password_ph')" />
           </a-form-item>
-          <a-form-item label="确认新密码" required>
+          <a-form-item field="confirm_password" :label="t('profile.confirm_password')" required>
             <a-input-password v-model="pwdForm.confirm_password" />
           </a-form-item>
           <a-button type="primary" html-type="submit" :loading="pwdSaving">
-            {{ auth.user?.has_password ? '修改密码' : '设置密码' }}
+            {{ auth.user?.has_password ? t('profile.change_password') : t('profile.set_password') }}
           </a-button>
         </a-form>
       </a-tab-pane>
@@ -72,6 +72,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import { api, type ApiResponse } from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
@@ -81,6 +82,7 @@ const props = defineProps<{ visible: boolean; defaultTab?: string }>()
 const emit = defineEmits<{ 'update:visible': [boolean] }>()
 
 const auth = useAuthStore()
+const { t } = useI18n()
 const tab = ref('profile')
 const saving = ref(false)
 const pwdSaving = ref(false)
@@ -93,7 +95,10 @@ const visible = computed({
   set: (v) => emit('update:visible', v),
 })
 
-const modalWidth = computed(() => (tab.value === 'record-sets' ? 880 : 520))
+// 弹窗宽度在窄屏收敛：避免固定 880px 撑破手机视口
+const modalWidth = computed(() =>
+  tab.value === 'record-sets' ? 'min(880px, 100vw)' : 'min(520px, 100vw)',
+)
 
 const profileForm = reactive({
   display_name: '',
@@ -147,7 +152,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result || ''))
-    reader.onerror = () => reject(new Error('读取图片失败'))
+    reader.onerror = () => reject(new Error(t('profile.read_image_failed')))
     reader.readAsDataURL(file)
   })
 }
@@ -157,12 +162,12 @@ async function onAvatarFile(e: Event) {
   const file = input.files?.[0]
   if (!file) return
   if (!file.type.startsWith('image/')) {
-    Message.warning('请选择图片文件')
+    Message.warning(t('profile.pick_image_only'))
     input.value = ''
     return
   }
   if (file.size > 5 * 1024 * 1024) {
-    Message.warning('图片不能超过 5 MB')
+    Message.warning(t('profile.image_too_large'))
     input.value = ''
     return
   }
@@ -173,13 +178,13 @@ async function onAvatarFile(e: Event) {
     const res = await api.post<ApiResponse<{ avatar_url?: string }>>('/auth/avatar', {
       avatar_data: dataUrl,
     })
-    if (!res.data.ok) throw new Error(res.data.message || '上传失败')
+    if (!res.data.ok) throw new Error(res.data.message || t('profile.upload_failed'))
     await auth.fetchMe()
     avatarPreviewOverride.value = ''
-    Message.success('头像已更新')
+    Message.success(t('profile.avatar_updated'))
   } catch (err) {
     avatarPreviewOverride.value = ''
-    Message.error(err instanceof Error ? err.message : '头像上传失败')
+    Message.error(err instanceof Error ? err.message : t('profile.avatar_upload_failed'))
   } finally {
     avatarUploading.value = false
     input.value = ''
@@ -193,29 +198,29 @@ async function saveProfile() {
       display_name: profileForm.display_name,
       phone: profileForm.phone,
     })
-    Message.success('资料已保存')
+    Message.success(t('profile.saved'))
   } catch (e) {
-    Message.error(e instanceof Error ? e.message : '保存失败')
+    Message.error(e instanceof Error ? e.message : t('profile.save_failed'))
   } finally {
     saving.value = false
   }
 }
 
 async function savePassword() {
-  if (pwdForm.new_password.length < 6) return Message.warning('新密码至少 6 位')
-  if (pwdForm.new_password !== pwdForm.confirm_password) return Message.warning('两次密码不一致')
+  if (pwdForm.new_password.length < 6) return Message.warning(t('profile.password_too_short'))
+  if (pwdForm.new_password !== pwdForm.confirm_password) return Message.warning(t('profile.password_mismatch'))
   pwdSaving.value = true
   try {
     await auth.changePassword({
       old_password: pwdForm.old_password,
       new_password: pwdForm.new_password,
     })
-    Message.success('密码已更新')
+    Message.success(t('profile.password_updated'))
     pwdForm.old_password = ''
     pwdForm.new_password = ''
     pwdForm.confirm_password = ''
   } catch (e) {
-    Message.error(e instanceof Error ? e.message : '失败')
+    Message.error(e instanceof Error ? e.message : t('profile.password_failed'))
   } finally {
     pwdSaving.value = false
   }
@@ -230,23 +235,23 @@ async function savePassword() {
 .avatar-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--app-space-12);
 }
 
 .avatar-actions {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--app-space-4);
 }
 
 .avatar-hint {
-  font-size: 12px;
-  color: var(--color-text-3);
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
 }
 
 .dept-job-lines {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--app-space-4);
 }
 </style>

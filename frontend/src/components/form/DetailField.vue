@@ -58,7 +58,7 @@
     <div v-if="showSummary && moneySummary.length" class="detail-summary">
       <div v-for="s in moneySummary" :key="s.key" class="detail-summary-line">
         <span>{{ s.label }} 合计</span>
-        <strong>¥ {{ formatMoney(s.total) }}</strong>
+        <strong>{{ formatMoney(s.total, 'CNY') }}</strong>
       </div>
     </div>
   </div>
@@ -70,6 +70,7 @@ import { IconPlus } from '@arco-design/web-vue/es/icon'
 import type { DeviceMode, FormFieldDef } from '@/types/form'
 import { getAmountColumnTotal, createEmptyMoney, isAmountSummaryFieldType } from '@/composables/useMoneyField'
 import DetailCell from '@/components/form/DetailCell.vue'
+import { formatMoney } from '@/utils/currency'
 
 const props = withDefaults(
   defineProps<{
@@ -158,10 +159,6 @@ function isWideColumn(col: FormFieldDef) {
   return col.type === 'textarea' || col.type === 'attachment' || col.type === 'image'
 }
 
-function formatMoney(n: number) {
-  return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
 watch(
   () => [props.columns, props.readonly],
   () => ensureDefaultRow(),
@@ -179,18 +176,18 @@ watch(
 .detail-rows {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--app-space-10);
 }
 
 .detail-row {
-  padding: 12px 14px;
+  padding: var(--app-space-12) var(--app-space-14);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
 .detail-field--readonly .detail-row {
-  padding: 14px;
+  padding: var(--app-space-14);
   background: var(--surface-muted);
   border-color: transparent;
 }
@@ -199,14 +196,14 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-10);
+  padding-bottom: var(--app-space-8);
   border-bottom: 1px dashed var(--border);
 }
 
 .detail-row-index {
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--text-tertiary);
@@ -216,40 +213,40 @@ watch(
 .detail-row-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
-  gap: 10px 14px;
+  gap: var(--app-space-10) var(--app-space-14);
 }
 
 .detail-cell {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--app-space-4);
 }
 
 .detail-cell-label {
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   font-weight: 500;
   color: var(--text-secondary);
   line-height: 1.35;
 }
 
 .detail-req {
-  margin-left: 2px;
+  margin-left: var(--app-space-2);
   color: var(--danger);
 }
 
 .detail-add-btn {
-  margin-top: 10px;
+  margin-top: var(--app-space-10);
 }
 
 .detail-summary {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px 22px;
-  margin-top: 12px;
-  padding: 10px 14px;
-  border: 1px solid #e6e0ff;
+  gap: var(--app-space-8) 22px;
+  margin-top: var(--app-space-12);
+  padding: var(--app-space-10) var(--app-space-14);
+  border: 1px solid var(--brand-border);
   border-radius: var(--radius-md);
   background: var(--brand-softer);
 }
@@ -257,19 +254,19 @@ watch(
 .detail-summary-line {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  font-size: 0.8125rem;
+  gap: var(--app-space-8);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
 }
 
 .detail-summary-line strong {
-  color: var(--brand);
-  font-size: 0.9375rem;
+  color: var(--brand-text);
+  font-size: var(--app-font-md);
   font-variant-numeric: tabular-nums;
 }
 
 .detail-empty {
-  padding: 10px 0;
+  padding: var(--app-space-10) 0;
   font-size: var(--app-font-sm);
   color: var(--text-tertiary);
 }

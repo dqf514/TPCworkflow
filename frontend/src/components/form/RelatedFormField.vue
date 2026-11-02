@@ -62,7 +62,7 @@
             <span class="text-xs text-gray-500 ml-2">{{ formatDateTime(opt.started_at) }}</span>
           </a-checkbox>
         </a-checkbox-group>
-        <a-empty v-if="!loading && !filteredOptions.length" description="没有可关联的已提交申请" />
+        <a-empty v-if="!loading && !filteredOptions.length" :description="t('apply.related_no_records')" />
       </a-spin>
     </a-modal>
   </div>
@@ -186,26 +186,26 @@ function openDetail(item: RelatedFormValue) {
 .related-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-8);
 }
 
 .related-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--app-space-8);
+  padding: var(--app-space-10) var(--app-space-12);
   border: 1px solid var(--border, #e6e9ef);
   border-radius: var(--radius-sm, 8px);
-  background: var(--surface, #fff);
+  background: var(--surface, #ffffff);
 }
 
 .related-item-main {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-space-8);
   min-width: 0;
 }
 
@@ -215,16 +215,16 @@ function openDetail(item: RelatedFormValue) {
 }
 
 .related-meta {
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary, #9699a6);
 }
 
 .related-pick-btn {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 }
 
 .related-radio {
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: var(--app-space-8);
 }
 </style>

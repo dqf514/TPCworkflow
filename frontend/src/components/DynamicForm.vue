@@ -3,6 +3,7 @@
     <a-form-item
       v-for="field in schema"
       :key="field.key"
+      :field="field.key"
       :label="field.label"
       :required="field.required"
     >

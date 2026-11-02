@@ -55,7 +55,7 @@ withDefaults(
 
 <style scoped>
 .instance-context-header {
-  margin-bottom: 16px;
+  margin-bottom: var(--app-space-16);
 }
 
 .ctx-head {
@@ -63,7 +63,7 @@ withDefaults(
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px 16px;
+  gap: var(--app-space-10) var(--app-space-16);
 }
 
 .ctx-main {
@@ -71,9 +71,9 @@ withDefaults(
 }
 
 .ctx-title {
-  margin: 0 0 6px;
-  font-size: 1.25rem;
-  font-weight: 650;
+  margin: 0 0 var(--app-space-6);
+  font-size: var(--app-font-xl);
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text);
   line-height: 1.35;
@@ -83,8 +83,8 @@ withDefaults(
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 14px;
-  font-size: 0.8125rem;
+  gap: var(--app-space-6) var(--app-space-14);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
 }
 
@@ -97,18 +97,18 @@ withDefaults(
 }
 
 .ctx-no {
-  padding: 1px 8px;
+  padding: 1px var(--app-space-8);
   border-radius: var(--radius-sm);
   background: var(--surface-muted);
   font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .ctx-status {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: var(--app-space-2);
 }
 
 @media (max-width: 640px) {
@@ -117,7 +117,7 @@ withDefaults(
   }
 
   .ctx-meta {
-    gap: 4px 10px;
+    gap: var(--app-space-4) var(--app-space-10);
   }
 }
 </style>

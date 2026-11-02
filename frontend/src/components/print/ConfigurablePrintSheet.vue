@@ -10,7 +10,7 @@
           v-if="logoUrl"
           class="cps-logo"
           :src="logoUrl"
-          alt="Logo"
+          :alt="t('print.logo_alt')"
           :style="{ width: `${logoWidthMm}mm` }"
         />
         <slot v-else name="logo-fallback" />
@@ -24,7 +24,7 @@
 
     <div class="cps-meta-row">
       <div v-if="blockMap.to_block" class="cps-meta-left">
-        <div v-for="(item, i) in blockMap.to_block.items || []" :key="i" class="cps-field-line">
+        <div v-for="(item, i) in blockMap.to_block.items || []" :key="toBlockItemKeys[i]" class="cps-field-line">
           <span class="cps-label">{{ item.label }}</span>
           <span class="cps-value">
             {{ resolveItem(item).value }}
@@ -33,7 +33,7 @@
         </div>
       </div>
       <div v-if="blockMap.doc_meta" class="cps-meta-right">
-        <div v-for="(item, i) in blockMap.doc_meta.items || []" :key="i" class="cps-field-line cps-field-line-right">
+        <div v-for="(item, i) in blockMap.doc_meta.items || []" :key="docMetaItemKeys[i]" class="cps-field-line cps-field-line-right">
           <span class="cps-label">{{ item.label }}</span>
           <span class="cps-value">{{ resolveItem(item).value }}</span>
         </div>
@@ -42,15 +42,17 @@
 
     <div v-if="blockMap.particulars_table" class="cps-table-wrap">
       <div class="cps-table-head">
-        <span class="cps-table-title">{{ blockMap.particulars_table.title || 'PARTICULARS' }}</span>
+        <span class="cps-table-title">{{ blockMap.particulars_table.title || t('print.particulars_title') }}</span>
         <span class="cps-table-currency">{{ currencyDisplay }}</span>
       </div>
       <table class="cps-table">
+        <caption class="a11y-table-caption">{{ blockMap.particulars_table.title || t('print.particulars_title') }}</caption>
         <thead>
           <tr>
             <th
               v-for="col in blockMap.particulars_table.columns || []"
               :key="col.key"
+              scope="col"
               :style="{ width: col.width, textAlign: col.align || 'left' }"
             >
               {{ col.header }}
@@ -58,7 +60,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, ri) in detailRows" :key="ri">
+          <tr v-for="(row, ri) in detailRows" :key="detailRowKeys[ri] ?? ri">
             <td
               v-for="col in blockMap.particulars_table.columns || []"
               :key="col.key"
@@ -68,9 +70,13 @@
               {{ cellValue(row, col) }}
             </td>
           </tr>
+          <!-- 空明细：给出明确占位，避免只剩一个空表 -->
+          <tr v-if="!detailRows.length" class="cps-empty-row">
+            <td :colspan="totalColspan" class="cps-empty-cell">{{ t('print.no_data') }}</td>
+          </tr>
           <tr v-if="blockMap.particulars_table.showTotal" class="cps-total-row">
             <td :colspan="totalColspan"></td>
-            <td class="cps-total-label">{{ blockMap.particulars_table.totalLabel || 'Total' }}</td>
+            <td class="cps-total-label">{{ blockMap.particulars_table.totalLabel || t('print.total_label') }}</td>
             <td class="cps-money cps-total-value">{{ formatPrintMoney(detailTotal, currency) }}</td>
           </tr>
         </tbody>
@@ -82,23 +88,23 @@
         v-if="blockMap.seal_sign.showSeal && sealUrl"
         class="cps-seal"
         :src="sealUrl"
-        alt="Seal"
+        :alt="t('print.seal_alt')"
         :style="{ width: `${sealWidthMm}mm`, opacity: sealOpacity }"
       />
       <div class="cps-sign-lines">
-        <div v-for="(line, i) in blockMap.seal_sign.lines || []" :key="i">{{ line }}</div>
+        <div v-for="(line, i) in blockMap.seal_sign.lines || []" :key="sealLineKeys[i]">{{ line }}</div>
       </div>
     </div>
 
     <div v-if="blockMap.payment_advice" class="cps-footer" :class="{ 'has-divider': blockMap.payment_advice.showDivider }">
       <div class="cps-kv-col">
-        <div v-for="(item, i) in blockMap.payment_advice.left || []" :key="`l-${i}`" class="cps-kv-line">
+        <div v-for="(item, i) in blockMap.payment_advice.left || []" :key="paymentLeftKeys[i]" class="cps-kv-line">
           <span class="cps-kv-label">{{ item.label }}</span>
           <span class="cps-kv-value">{{ resolveItem(item).value }}</span>
         </div>
       </div>
       <div class="cps-kv-col">
-        <div v-for="(item, i) in blockMap.payment_advice.right || []" :key="`r-${i}`" class="cps-kv-line">
+        <div v-for="(item, i) in blockMap.payment_advice.right || []" :key="paymentRightKeys[i]" class="cps-kv-line">
           <span class="cps-kv-label">{{ item.label }}</span>
           <span class="cps-kv-value">{{ resolveItem(item).value }}</span>
         </div>
@@ -109,6 +115,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   computeDetailTotal,
   formatPrintFieldValue,
@@ -117,12 +124,16 @@ import {
   resolveFieldItemText,
   resolveTemplateCurrency,
 } from '@/composables/usePrintTemplateFormat'
+import { currencySymbol } from '@/utils/printFormat'
+import { rowSignature, stableKeys } from '@/utils/stableKey'
 import type { PrintDetailColumn, PrintFieldItem, PrintTemplateSchema } from '@/types/printTemplate'
 
 const props = defineProps<{
   templateSchema: PrintTemplateSchema
   modelValue: Record<string, unknown>
 }>()
+
+const { t } = useI18n()
 
 const pageSize = computed(() => (props.templateSchema.page?.size || 'A4').toLowerCase())
 const orientation = computed(() => props.templateSchema.page?.orientation || 'portrait')
@@ -134,7 +145,8 @@ const currency = computed(() => resolveTemplateCurrency(props.templateSchema, pr
 const currencyDisplay = computed(() => {
   const b = blockMap.value.particulars_table
   if (b?.currencyLabel) return b.currencyLabel
-  return `${currency.value} ($)`
+  // 币种显示按币种取符号，不能把 CNY 也硬编码成 ($)
+  return currencySymbol(currency.value).trim()
 })
 
 const rootStyle = computed(() => ({
@@ -157,6 +169,37 @@ const detailRows = computed(() => {
   const rows = props.modelValue[key]
   return Array.isArray(rows) ? rows : []
 })
+
+/* 稳定 key：按下标复用 DOM 会让数据重排后渲染错位，这里按内容派生 */
+const detailColKeys = computed(() =>
+  (blockMap.value.particulars_table?.columns || []).map((c) => c.key),
+)
+
+const detailRowKeys = computed(() =>
+  stableKeys(detailRows.value, (row) =>
+    rowSignature(row as Record<string, unknown>, detailColKeys.value),
+  ),
+)
+
+const toBlockItemKeys = computed(() =>
+  stableKeys(blockMap.value.to_block?.items || [], (item) => item.fieldKey || item.label || ''),
+)
+
+const docMetaItemKeys = computed(() =>
+  stableKeys(blockMap.value.doc_meta?.items || [], (item) => item.fieldKey || item.label || ''),
+)
+
+const sealLineKeys = computed(() =>
+  stableKeys(blockMap.value.seal_sign?.lines || [], (line) => String(line ?? '')),
+)
+
+const paymentLeftKeys = computed(() =>
+  stableKeys(blockMap.value.payment_advice?.left || [], (item) => item.fieldKey || item.label || ''),
+)
+
+const paymentRightKeys = computed(() =>
+  stableKeys(blockMap.value.payment_advice?.right || [], (item) => item.fieldKey || item.label || ''),
+)
 
 const detailTotal = computed(() => {
   const b = blockMap.value.particulars_table
@@ -301,6 +344,13 @@ function cellValue(row: unknown, col: PrintDetailColumn) {
 
 .cps-total-value {
   text-align: right;
+}
+
+/* 空明细占位 */
+.cps-empty-cell {
+  padding: var(--app-space-6) var(--app-space-4);
+  color: var(--text-tertiary);
+  text-align: center;
 }
 
 .cps-signature {

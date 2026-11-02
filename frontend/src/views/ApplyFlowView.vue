@@ -40,7 +40,7 @@
             :class="{ 'apply-org-grid--with-org': showOrgUnitPicker && showCompanyPicker }"
           >
             <div class="apply-org-item apply-org-item--company">
-              <a-form-item v-if="showCompanyPicker" :label="t('apply.company_label')" required>
+              <a-form-item v-if="showCompanyPicker" field="companyId" :label="t('apply.company_label')" required>
                 <a-select
                   v-model="companyId"
                   :options="userCompanyOpts"
@@ -50,6 +50,7 @@
               </a-form-item>
               <a-form-item
                 v-else-if="showOrgUnitPicker"
+                field="orgUnitId"
                 :label="t('apply.company_label')"
                 required
               >
@@ -69,7 +70,7 @@
               v-if="showOrgUnitPicker && showCompanyPicker"
               class="apply-org-item apply-org-item--org"
             >
-              <a-form-item :label="t('apply.org_unit_label')" required>
+              <a-form-item field="orgUnitId" :label="t('apply.org_unit_label')" required>
                 <a-select
                   v-model="orgUnitId"
                   :options="orgUnitOpts"
@@ -80,7 +81,7 @@
             </div>
 
             <div class="apply-org-item apply-org-item--dept">
-              <a-form-item :label="t('apply.dept_label')" required>
+              <a-form-item field="departmentId" :label="t('apply.dept_label')" required>
                 <a-select
                   v-model="departmentId"
                   :options="filteredDeptOpts"
@@ -108,6 +109,7 @@
             :exclude-instance-ref="draftUuid || undefined"
             :apply-department-id="departmentId"
             apply-filler-defaults
+            @defaults-applied="onDefaultsApplied"
           />
         </div>
         <div class="apply-flow-preview-wrap">
@@ -184,7 +186,16 @@ const orgUnitId = ref<number>()
 const departmentId = ref<number>()
 const formData = ref<Record<string, unknown>>({})
 const formSchema = ref<FormSchema | null>(null)
-const orgFormModel = {}
+/**
+ * 组织选择表单的 model：镜像三个 ref。
+ * Arco 的 `a-form-item field` 需要从 model 上按路径取值，
+ * 之前 model 是空对象，字段无法参与校验/关联。
+ */
+const orgFormModel = computed(() => ({
+  companyId: companyId.value,
+  orgUnitId: orgUnitId.value,
+  departmentId: departmentId.value,
+}))
 const workflowDefId = ref<number>()
 const processGraph = ref<ProcessGraph>()
 const processIcon = ref('general')
@@ -207,6 +218,8 @@ const pendingResubmitCompanyId = ref<number>()
 const syncingOrg = ref(false)
 const savedSnapshot = ref('')
 const pageReady = ref(false)
+/** 表单默认值是否已回填完毕（用于决定何时打「未保存」基准快照） */
+const defaultsSettled = ref(false)
 const printPreviewLoading = ref(false)
 const printPreviewRef = ref<InstanceType<typeof WorkflowPrintPreviewOverlay> | null>(null)
 
@@ -221,6 +234,17 @@ function buildApplySnapshot() {
 
 function markApplySaved() {
   savedSnapshot.value = buildApplySnapshot()
+}
+
+/**
+ * 表单渲染器回填默认值（人员/部门默认项等）后回调。
+ * 必须在默认值落位之后再打基准快照，否则用户什么都没改也会被判定为「有未保存的修改」。
+ */
+function onDefaultsApplied(payload: Record<string, unknown>) {
+  formData.value = { ...payload }
+  if (defaultsSettled.value) return
+  defaultsSettled.value = true
+  if (pageReady.value) markApplySaved()
 }
 
 function isApplyDirty() {
@@ -635,7 +659,7 @@ onMounted(async () => {
       try {
         defId = await loadDraftContext(draftRef)
       } catch (e) {
-        Message.error(e instanceof Error ? e.message : '加载失败')
+        Message.error(e instanceof Error ? e.message : t('common.load_failed'))
         router.replace({ name: 'my-instances' })
         return
       }
@@ -643,7 +667,7 @@ onMounted(async () => {
       try {
         defId = await loadResubmitContext(fromRef)
       } catch (e) {
-        Message.error(e instanceof Error ? e.message : '加载失败')
+        Message.error(e instanceof Error ? e.message : t('common.load_failed'))
         router.replace({ name: 'my-instances' })
         return
       }
@@ -678,8 +702,9 @@ onMounted(async () => {
       }
     }
     await loadForm(defId, processTitle.value)
-    markApplySaved()
     pageReady.value = true
+    // 先按当前值打一份基准；表单渲染器回填默认值后会再打一次（见 onDefaultsApplied）
+    markApplySaved()
   } finally {
     pageLoading.value = false
   }
@@ -700,8 +725,8 @@ onMounted(async () => {
 .apply-process-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--app-space-12);
+  margin-bottom: var(--app-space-12);
 }
 
 .apply-process-head-text {
@@ -717,7 +742,7 @@ onMounted(async () => {
 }
 
 .apply-resubmit-hint {
-  margin: 4px 0 0;
+  margin: var(--app-space-4) 0 0;
   font-size: var(--app-font-xs, 13px);
   color: var(--text-tertiary, #9699a6);
 }
@@ -766,8 +791,8 @@ onMounted(async () => {
 .apply-footer-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
-  padding-top: 12px;
+  margin-top: var(--app-space-16);
+  padding-top: var(--app-space-12);
   border-top: 1px solid var(--border, #e6e9ef);
 }
 
@@ -779,11 +804,11 @@ onMounted(async () => {
     bottom: var(--mobile-tab-bar-height, calc(3.5rem + env(safe-area-inset-bottom, 0px)));
     z-index: 55;
     margin: 0;
-    padding: 10px 14px;
+    padding: var(--app-space-10) var(--app-space-14);
     background: rgb(255 255 255 / 94%);
     backdrop-filter: blur(10px);
     border-top: 1px solid var(--border, #e6e9ef);
-    box-shadow: 0 -6px 20px rgb(23 25 27 / 8%);
+    box-shadow: var(--shadow-md);
   }
 
   .apply-footer-actions :deep(.arco-space) {
@@ -816,7 +841,7 @@ onMounted(async () => {
   .apply-org-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 16px;
+    column-gap: var(--app-space-16);
     align-items: start;
   }
 

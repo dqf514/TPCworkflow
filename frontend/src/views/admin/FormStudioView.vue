@@ -234,33 +234,33 @@
         </a-tab-pane>
         <a-tab-pane key="print" :title="t('studio.tab_print')">
           <div class="tab-panel print-settings bg-white p-4 rounded-lg border overflow-auto">
-              <a-form layout="vertical">
-                <a-form-item :label="t('studio.print_enable')">
+              <a-form layout="vertical" :model="schema">
+                <a-form-item field="print.enabled" :label="t('studio.print_enable')">
                   <a-switch v-model="schema.print.enabled" />
                 </a-form-item>
-                <a-form-item label="模板类型">
+                <a-form-item field="print.templateMode" :label="t('studio.print_template_mode')">
                   <a-radio-group v-model="printTemplateMode" type="button">
-                    <a-radio value="default">通用审批单</a-radio>
-                    <a-radio value="custom">专用打印模板</a-radio>
+                    <a-radio value="default">{{ t('studio.print_template_default') }}</a-radio>
+                    <a-radio value="custom">{{ t('studio.print_template_custom') }}</a-radio>
                   </a-radio-group>
                 </a-form-item>
-                <a-form-item v-if="printTemplateMode === 'custom'" label="选择打印模板">
+                <a-form-item v-if="printTemplateMode === 'custom'" field="print.templateCode" :label="t('studio.print_template_pick')">
                   <a-select
                     v-model="printTemplateCode"
                     :options="printTemplateOpts"
                     allow-search
                     allow-clear
-                    placeholder="从模板库选择"
+                    :placeholder="t('studio.print_template_pick_ph')"
                     class="w-full max-w-xl"
                     :trigger-props="{ updateAtScroll: true }"
                   />
                   <p class="text-xs text-gray-500 mt-1">
-                    可在系统设置 → 打印模板 中调整 Logo、文案与银行信息。
+                    {{ t('studio.print_template_hint') }}
                   </p>
                 </a-form-item>
                 <a-row :gutter="16">
                   <a-col :span="8">
-                    <a-form-item :label="t('studio.print_paper')">
+                    <a-form-item field="print.pageSize" :label="t('studio.print_paper')">
                       <a-select v-model="schema.print.pageSize">
                         <a-option value="A4">A4</a-option>
                         <a-option value="A3">A3</a-option>
@@ -268,7 +268,7 @@
                     </a-form-item>
                   </a-col>
                   <a-col :span="8">
-                    <a-form-item :label="t('studio.print_orientation')">
+                    <a-form-item field="print.orientation" :label="t('studio.print_orientation')">
                       <a-select v-model="schema.print.orientation">
                         <a-option value="portrait">{{ t('studio.print_portrait') }}</a-option>
                         <a-option value="landscape">{{ t('studio.print_landscape') }}</a-option>
@@ -276,7 +276,7 @@
                     </a-form-item>
                   </a-col>
                   <a-col :span="8">
-                    <a-form-item :label="t('studio.print_margin')">
+                    <a-form-item field="print.marginMm" :label="t('studio.print_margin')">
                       <a-input-number v-model="schema.print.marginMm" :min="5" :max="30" />
                     </a-form-item>
                   </a-col>
@@ -329,21 +329,21 @@
       :mask-closable="false"
       @cancel="createModalVisible = false"
     >
-      <a-form layout="vertical">
-        <a-form-item :label="t('studio.form_name')" required>
+      <a-form layout="vertical" :model="createFormModel">
+        <a-form-item field="name" :label="t('studio.form_name')" required>
           <a-input v-model="createForm.name" :placeholder="t('studio.form_name_ph')" />
         </a-form-item>
-        <a-form-item :label="t('studio.form_key_label')" required>
+        <a-form-item field="key" :label="t('studio.form_key_label')" required>
           <a-input v-model="createForm.key" :placeholder="t('studio.form_key_ph')" :disabled="false" />
         </a-form-item>
-        <a-form-item :label="t('studio.create_mode')">
+        <a-form-item field="createMode" :label="t('studio.create_mode')">
           <a-radio-group v-model="createMode">
             <a-radio value="blank">{{ t('studio.create_blank') }}</a-radio>
             <a-radio value="builtin" :disabled="!builtinTemplateOptions.length">{{ t('studio.create_builtin') }}</a-radio>
             <a-radio value="copy" :disabled="!templateOptions.length">{{ t('studio.create_copy') }}</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item v-if="createMode === 'builtin'" :label="t('studio.pick_builtin')" required>
+        <a-form-item v-if="createMode === 'builtin'" field="createBuiltinKey" :label="t('studio.pick_builtin')" required>
           <a-select
             v-model="createBuiltinKey"
             :placeholder="t('studio.builtin_ph')"
@@ -352,7 +352,7 @@
           />
           <p class="text-xs text-gray-500 mt-1">{{ t('studio.builtin_hint') }}</p>
         </a-form-item>
-        <a-form-item v-if="createMode === 'copy'" :label="t('studio.pick_template')" required>
+        <a-form-item v-if="createMode === 'copy'" field="createTemplateId" :label="t('studio.pick_template')" required>
           <a-select
             v-model="createTemplateId"
             :placeholder="t('studio.template_ph')"
@@ -605,6 +605,14 @@ const createMode = ref<'blank' | 'copy' | 'builtin'>('blank')
 const createTemplateId = ref<number>()
 const createBuiltinKey = ref<string>()
 const createForm = reactive({ key: '', name: '' })
+/** 新建表单弹窗的 model：供 a-form-item 的 field 路径取值（Arco 需要 model 才能参与校验） */
+const createFormModel = computed(() => ({
+  name: createForm.name,
+  key: createForm.key,
+  createMode: createMode.value,
+  createBuiltinKey: createBuiltinKey.value,
+  createTemplateId: createTemplateId.value,
+}))
 
 const builtinTemplates = ref<{ key: string; name: string; description?: string; icon?: string }[]>([])
 const printTemplateOpts = ref<{ label: string; value: string }[]>([])
@@ -696,10 +704,16 @@ async function loadBuiltinTemplates() {
 
 async function load() {
   loading.value = true
-  const res = await api.get<ApiResponse<Record<string, unknown>[]>>('/forms/definitions')
-  if (res.data.ok) rows.value = res.data.data
-  syncListPaginationTotal()
-  loading.value = false
+  try {
+    const res = await api.get<ApiResponse<Record<string, unknown>[]>>('/forms/definitions')
+    if (res.data.ok) rows.value = res.data.data
+    syncListPaginationTotal()
+  } catch (e) {
+    // 加载失败要提示，否则列表空白会被误认为「没有表单」
+    Message.error(e instanceof Error ? e.message : t('studio.load_failed'))
+  } finally {
+    loading.value = false
+  }
 }
 
 async function archiveForm(id: number) {
@@ -928,11 +942,16 @@ function payload() {
 }
 
 async function loadSectors() {
-  const res = await api.get('/workflow/business-sectors') as {
-    data: ApiResponse<{ id: number; name: string }[]>
-  }
-  if (res.data.ok) {
-    sectorOpts.value = res.data.data.map((s) => ({ label: s.name, value: s.id }))
+  try {
+    const res = await api.get('/workflow/business-sectors') as {
+      data: ApiResponse<{ id: number; name: string }[]>
+    }
+    if (res.data.ok) {
+      sectorOpts.value = res.data.data.map((s) => ({ label: s.name, value: s.id }))
+    }
+  } catch (e) {
+    // 业务板块下拉加载失败不阻断设计器，但要给出提示
+    Message.error(e instanceof Error ? e.message : t('studio.load_failed'))
   }
 }
 
@@ -1034,7 +1053,9 @@ async function saveAll(silent = false): Promise<boolean> {
 }
 
 async function publishAll() {
-  await saveAll()
+  // 保存失败必须中止发布，否则会把旧版本发布出去并提示成功
+  const saved = await saveAll(true)
+  if (!saved) return
   if (!formMeta.id) return
   publishing.value = true
   try {
@@ -1134,9 +1155,9 @@ onMounted(() => {
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e5e6eb;
+  gap: var(--app-space-12) var(--app-space-16);
+  padding-bottom: var(--app-space-10);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -1148,22 +1169,22 @@ onMounted(() => {
 
 .editor-meta-table th {
   width: 72px;
-  padding: 3px 8px 3px 0;
+  padding: var(--app-space-3) var(--app-space-8) var(--app-space-3) 0;
   text-align: right;
   font-weight: 500;
-  font-size: 12px;
-  color: var(--text-secondary, #86909c);
+  font-size: var(--app-font-xs);
+  color: var(--text-secondary, #5b6066);
   white-space: nowrap;
   vertical-align: middle;
 }
 
 .editor-meta-table th.align-top {
-  padding-top: 7px;
+  padding-top: var(--app-space-8);
   vertical-align: top;
 }
 
 .editor-meta-table td {
-  padding: 3px 12px 3px 0;
+  padding: var(--app-space-3) var(--app-space-12) var(--app-space-3) 0;
   vertical-align: middle;
 }
 
@@ -1187,32 +1208,32 @@ onMounted(() => {
 .icon-cell {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .toolbar-actions-col {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: var(--app-space-6);
 }
 
 .form-version-line {
   margin: 0;
-  font-size: 12px;
-  color: var(--text-secondary, #86909c);
+  font-size: var(--app-font-xs);
+  color: var(--text-secondary, #5b6066);
   line-height: 1.4;
   text-align: right;
 }
 
 .form-version-unpublished {
-  color: var(--text-tertiary, #c9cdd4);
+  color: var(--text-tertiary, #7a7f85);
 }
 
 .form-desc-hint {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: var(--text-tertiary, #86909c);
+  margin: var(--app-space-4) 0 0;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary, #7a7f85);
   line-height: 1.4;
 }
 
@@ -1221,7 +1242,7 @@ onMounted(() => {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  margin-top: 8px;
+  margin-top: var(--app-space-8);
 }
 
 :deep(.studio-tabs) {
@@ -1267,10 +1288,10 @@ onMounted(() => {
 }
 
 .device-frame {
-  background: #fff;
-  border: 1px solid #e5e6eb;
-  border-radius: 8px;
-  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--app-space-lg);
   margin: 0 auto;
 }
 

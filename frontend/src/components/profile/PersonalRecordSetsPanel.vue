@@ -4,7 +4,7 @@
       此处维护您在填表时保存的个人常用数据（如个人收款账号）。公司级配置由管理员在系统设置中维护；个人级配置表仅显示本人数据。
     </p>
     <a-form layout="vertical" class="mb-3" :model="filterForm">
-      <a-form-item label="控件配置表">
+      <a-form-item field="selectedCode" label="控件配置表">
         <a-select
           v-model="selectedCode"
           :options="setOpts"
@@ -45,7 +45,7 @@
         </template>
       </a-table>
     </template>
-    <a-empty v-else description="请先选择控件配置表" />
+    <a-empty v-else :description="t('settings.rec_pick_first')" />
 
     <a-modal
       v-model:visible="rowModal"
@@ -57,7 +57,7 @@
       <a-form layout="vertical" :model="rowEdit">
         <a-row :gutter="[12, 8]">
           <a-col v-for="c in columns" :key="c.field_key" :span="columnSpan(c)">
-            <a-form-item :label="c.label" required>
+            <a-form-item :field="`data.${c.field_key}`" :label="c.label" required>
               <a-input v-model="rowEdit.data[c.field_key]" :placeholder="`请输入${c.label}`" />
             </a-form-item>
           </a-col>
@@ -69,6 +69,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import {
   clearRecordSetCache,
@@ -81,6 +82,8 @@ import {
   type RecordSetRow,
 } from '@/composables/useRecordSets'
 import { recordSetColumnSpan } from '@/utils/recordSetLayout'
+
+const { t } = useI18n()
 
 const overview = ref<MyRecordSetOverview[]>([])
 const filterForm = {}
@@ -148,16 +151,16 @@ async function saveRow() {
     data[c.field_key] = String(rowEdit.data[c.field_key] || '').trim()
   }
   if (!Object.values(data).some(Boolean)) {
-    Message.warning('请至少填写一个字段')
+    Message.warning(t('profile.fill_one_field'))
     return false
   }
   const res = await saveMyRecord(code, { row_code: rowEdit.row_code || undefined, data })
   if (!res.ok) {
-    Message.error(res.message || '保存失败')
+    Message.error(res.message || t('common.save_failed'))
     return false
   }
   clearRecordSetCache()
-  Message.success('已保存')
+  Message.success(t('profile.saved'))
   rowModal.value = false
   await loadOverview()
   await loadDetail()
@@ -169,11 +172,11 @@ async function removeRow(rowCode: string) {
   const res = await deleteMyRecord(code, rowCode)
   if (res.data.ok) {
     clearRecordSetCache()
-    Message.success('已删除')
+    Message.success(t('profile.deleted'))
     await loadOverview()
     await loadDetail()
   } else {
-    Message.error(res.data.message || '删除失败')
+    Message.error(res.data.message || t('common.delete_failed'))
   }
 }
 
@@ -184,9 +187,9 @@ onMounted(async () => {
 
 <style scoped>
 .hint-text {
-  font-size: 13px;
-  color: #86909c;
-  margin: 0 0 12px;
+  font-size: var(--app-font-sm);
+  color: var(--text-tertiary);
+  margin: 0 0 var(--app-space-12);
   line-height: 1.5;
 }
 </style>

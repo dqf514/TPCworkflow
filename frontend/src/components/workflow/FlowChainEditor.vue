@@ -1,8 +1,13 @@
 <template>
-  <div class="flow-chain">
+  <div class="flow-chain" role="list" aria-label="流程节点链">
+    <!-- 空数据时给出明确提示，避免只渲染一片空白画布 -->
+    <div v-if="!chain.length" class="flow-chain-empty" role="status">
+      {{ t('workflow.flow_chain_empty') }}
+    </div>
     <template v-for="(row, ri) in layoutRows" :key="row.key">
       <div
         class="flow-row-wrap"
+        role="listitem"
         :class="{ 'is-condition': row.units[0]?.kind === 'condition-block' }"
       >
         <div class="flow-row">
@@ -72,11 +77,14 @@
 
 <script setup lang="ts">
 import { toRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 import FlowConditionLanes from '@/components/workflow/FlowConditionLanes.vue'
 import FlowConnector from '@/components/workflow/FlowConnector.vue'
 import FlowNodeCard from '@/components/workflow/FlowNodeCard.vue'
 import { useFlowSnakeLayout } from '@/composables/useFlowSnakeLayout'
 import type { FlowChain, FlowSegment } from '@/utils/workflowFlowGraph'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   chain: FlowChain
@@ -115,11 +123,25 @@ function showConnectorAfter(seg: FlowSegment, idx: number) {
 
 <style scoped>
 .flow-chain {
+  /* 节点卡高度令牌：窄屏统一收敛，避免 375px 视口横向溢出 */
+  --flow-node-height: 120px;
   width: 100%;
   max-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+}
+
+.flow-chain-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 1.5rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-tertiary);
+  font-size: var(--app-font-md);
 }
 
 .flow-row-wrap {
@@ -130,10 +152,12 @@ function showConnectorAfter(seg: FlowSegment, idx: number) {
 .flow-row {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
+  /* 窄屏允许换行，避免一行 5 个节点（≈750px）在手机上溢出 */
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
   min-height: 140px;
+  row-gap: var(--app-space-8);
 }
 
 .condition-block {
@@ -141,7 +165,7 @@ function showConnectorAfter(seg: FlowSegment, idx: number) {
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .flow-row-break {
@@ -149,7 +173,8 @@ function showConnectorAfter(seg: FlowSegment, idx: number) {
   flex-direction: column;
   align-items: flex-start;
   height: 28px;
-  margin-left: 75px;
+  /* 折返连接线的横向偏移跟随节点高度令牌，窄屏不再错位 */
+  margin-left: calc(var(--flow-node-height) * 0.5);
 }
 
 .break-vert {
@@ -162,5 +187,15 @@ function showConnectorAfter(seg: FlowSegment, idx: number) {
   width: 48px;
   height: 2px;
   background: #c9cdd4;
+}
+
+@media (max-width: 767px) {
+  .flow-chain {
+    --flow-node-height: 88px;
+  }
+
+  .flow-row {
+    min-height: 112px;
+  }
 }
 </style>

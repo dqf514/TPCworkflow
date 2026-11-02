@@ -15,8 +15,14 @@ export const useWorkflowBadgesStore = defineStore('workflowBadges', () => {
   const loading = ref(false)
   let inflight: Promise<void> | null = null
 
-  async function refresh(force = false) {
-    if (loading.value && inflight && !force) return inflight
+  /**
+   * 刷新待办徽标。
+   * 注意：inflight 去重是无条件的 —— 之前 `force` 参数可以绕过它，
+   * 导致 AppLayout / TasksView 等处一次交互触发多次重复请求。
+   * 语义上「刷新」本来就意味着拉最新数据，不需要额外的 force。
+   */
+  async function refresh() {
+    if (inflight) return inflight
     loading.value = true
     inflight = (async () => {
       try {

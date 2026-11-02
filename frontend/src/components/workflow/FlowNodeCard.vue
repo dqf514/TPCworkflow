@@ -1,11 +1,18 @@
 <template>
+  <!-- 节点卡可点击：补 role/tabindex/键盘事件，让键盘用户也能打开节点配置。
+       卡片内含删除按钮，不能改成 <button>（会形成嵌套 button，HTML 无效）。 -->
   <div
     class="flow-node-card"
     :class="[
       `type-${displayType}`,
       { clickable: canEdit, [`state-${previewState}`]: !!previewState },
     ]"
+    :role="canEdit ? 'button' : undefined"
+    :tabindex="canEdit ? 0 : undefined"
+    :aria-label="canEdit ? `${headerTitle}：${title}` : undefined"
     @click="canEdit && emit('edit')"
+    @keydown.enter.prevent="canEdit && emit('edit')"
+    @keydown.space.prevent="canEdit && emit('edit')"
   >
     <div class="card-header" :style="{ background: meta.header }">
       <span class="card-type">{{ headerTitle }}</span>
@@ -16,7 +23,13 @@
         :popup-container="popupContainer"
         @ok="emit('remove')"
       >
-        <a-button size="mini" type="text" class="card-del" @click.stop>
+        <a-button
+          size="mini"
+          type="text"
+          class="card-del"
+          :aria-label="t('flowDesign.delete_node')"
+          @click.stop
+        >
           ×
         </a-button>
       </a-popconfirm>
@@ -94,7 +107,7 @@ const conditionLines = computed(() => {
   const sorted = [...props.segment.branches].sort((a, b) => a.priority - b.priority)
   return sorted.map(
     (br, i) =>
-      `${br.expr === 'default' ? '默认' : `优先级${br.priority || i + 1}`}：${br.label || formatConditionExpr(br.expr, props.fieldLabelMap)}`,
+      `${br.expr === 'default' ? t('flowDesign.branch_default_label') : t('flowDesign.branch_priority', { n: br.priority || i + 1 })}：${br.label || formatConditionExpr(br.expr, props.fieldLabelMap)}`,
   )
 })
 
@@ -112,17 +125,17 @@ const canDelete = computed(() => {
 
 <style scoped>
 .flow-node-card {
-  --flow-node-height: 120px;
-  height: var(--flow-node-height);
-  width: calc(var(--flow-node-height) * 1.25);
+  /* 节点高度由外层 .flow-chain 提供（--flow-node-height），窄屏可统一收敛 */
+  height: var(--flow-node-height, 120px);
+  width: calc(var(--flow-node-height, 120px) * 1.25);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid #e5e6eb;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
   transition:
     box-shadow 0.25s,
     border-color 0.25s,
@@ -131,19 +144,19 @@ const canDelete = computed(() => {
 
 .flow-node-card.type-condition {
   height: auto;
-  min-height: var(--flow-node-height);
+  min-height: var(--flow-node-height, 120px);
   max-height: 168px;
-  width: calc(var(--flow-node-height) * 1.25);
+  width: calc(var(--flow-node-height, 120px) * 1.25);
 }
 
 .flow-node-card.state-done {
-  border-color: #00b42a;
+  border-color: var(--success);
   opacity: 0.92;
 }
 
 .flow-node-card.state-current {
-  border-color: #165dff;
-  box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.2);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 20%, transparent);
   animation: flow-node-pulse 2.2s ease-in-out infinite;
 }
 
@@ -154,10 +167,10 @@ const canDelete = computed(() => {
 @keyframes flow-node-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.18);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 18%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(22, 93, 255, 0.32);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand) 32%, transparent);
   }
 }
 
@@ -166,7 +179,13 @@ const canDelete = computed(() => {
 }
 
 .flow-node-card.clickable:hover {
-  box-shadow: 0 4px 14px rgba(22, 93, 255, 0.12);
+  box-shadow: var(--shadow-md);
+}
+
+/* 键盘焦点可见（与 main.css 的焦点环保持一致） */
+.flow-node-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 16%, transparent);
 }
 
 .card-header {
@@ -174,9 +193,9 @@ const canDelete = computed(() => {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  padding: 6px 10px;
+  padding: var(--app-space-6) var(--app-space-10);
   color: #fff;
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   font-weight: 600;
 }
 
@@ -187,7 +206,7 @@ const canDelete = computed(() => {
 .card-body {
   flex: 1;
   min-height: 0;
-  padding: 8px 10px;
+  padding: var(--app-space-8) var(--app-space-10);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -200,10 +219,10 @@ const canDelete = computed(() => {
 }
 
 .card-title {
-  font-size: 13px;
+  font-size: var(--app-font-sm);
   font-weight: 600;
-  color: #1d2129;
-  margin-bottom: 2px;
+  color: var(--text);
+  margin-bottom: var(--app-space-2);
   line-height: 1.35;
   word-break: break-word;
   display: -webkit-box;
@@ -213,8 +232,8 @@ const canDelete = computed(() => {
 }
 
 .card-sub {
-  font-size: 11px;
-  color: #86909c;
+  font-size: var(--app-font-2xs);
+  color: var(--text-tertiary);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -223,15 +242,15 @@ const canDelete = computed(() => {
 }
 
 .cond-lines {
-  margin-top: 6px;
+  margin-top: var(--app-space-6);
 }
 
 .cond-line {
-  font-size: 12px;
-  color: #4e5969;
+  font-size: var(--app-font-xs);
+  color: var(--text-secondary);
   line-height: 1.6;
-  padding: 4px 0;
-  border-top: 1px dashed #e5e6eb;
+  padding: var(--app-space-xs) 0;
+  border-top: 1px dashed var(--border);
 }
 
 .cond-line:first-child {

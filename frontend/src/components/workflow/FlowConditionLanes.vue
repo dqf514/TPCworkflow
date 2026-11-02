@@ -64,7 +64,7 @@
 
             :popup-container="popupContainer"
 
-            @ok="emit('remove-branch', bi)"
+            @ok="emit('remove-branch', branchIndex(br))"
 
           >
 
@@ -84,7 +84,7 @@
 
             direction="horizontal"
 
-            @add="(type) => emit('insert', { path: branchPath(bi), index: -1, type })"
+            @add="(type) => emit('insert', { path: branchPath(branchIndex(br)), index: -1, type })"
 
           />
 
@@ -92,7 +92,7 @@
 
             :chain="br.chain"
 
-            :base-path="branchPath(bi)"
+            :base-path="branchPath(branchIndex(br))"
 
             :field-label-map="fieldLabelMap"
 
@@ -164,6 +164,8 @@ import {
 
   type FlowConditionBlock,
 
+  type FlowConditionBranch,
+
 } from '@/utils/workflowFlowGraph'
 
 
@@ -213,6 +215,18 @@ const sortedBranches = computed(() =>
 
 )
 
+/**
+ * 排序后的下标不能直接当数组下标使用：
+ * 泳道按 priority 排序显示，而增删分支用的是原始数组下标，需按 id 回查。
+ */
+function branchIndex(br: FlowConditionBranch): number {
+
+  const idx = props.block.branches.findIndex((b) => b.id === br.id)
+
+  return idx >= 0 ? idx : 0
+
+}
+
 
 
 function branchPath(bi: number) {
@@ -231,17 +245,17 @@ function branchPath(bi: number) {
 
   width: 100%;
 
-  margin: 4px 0 8px;
+  margin: var(--app-space-xs) 0 var(--app-space-sm);
 
-  padding: 12px 16px 16px;
+  padding: var(--app-space-md) var(--app-space-lg) var(--app-space-lg);
 
-  background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+  background: linear-gradient(180deg, var(--surface-muted) 0%, var(--surface) 100%);
 
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--border);
 
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: var(--shadow-xs);
 
 }
 
@@ -255,9 +269,9 @@ function branchPath(bi: number) {
 
   justify-content: center;
 
-  gap: 8px;
+  gap: var(--app-space-8);
 
-  margin-bottom: 12px;
+  margin-bottom: var(--app-space-12);
 
 }
 
@@ -271,7 +285,7 @@ function branchPath(bi: number) {
 
   height: 2px;
 
-  background: linear-gradient(90deg, transparent, #c9cdd4 20%, #c9cdd4 80%, transparent);
+  background: linear-gradient(90deg, transparent, var(--border-strong) 20%, var(--border-strong) 80%, transparent);
 
 }
 
@@ -289,15 +303,15 @@ function branchPath(bi: number) {
 
   justify-content: center;
 
-  font-size: 16px;
+  font-size: var(--app-font-lg);
 
-  color: #86909c;
+  color: var(--text-tertiary);
 
-  background: #f2f3f5;
+  background: var(--surface-muted);
 
-  border: 2px solid #c9cdd4;
+  border: 2px solid var(--border-strong);
 
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 
   transform: rotate(45deg);
 
@@ -313,7 +327,7 @@ function branchPath(bi: number) {
 
   justify-content: center;
 
-  margin-bottom: 12px;
+  margin-bottom: var(--app-space-12);
 
 }
 
@@ -325,7 +339,7 @@ function branchPath(bi: number) {
 
   flex-direction: column;
 
-  gap: 12px;
+  gap: var(--app-space-12);
 
   width: 100%;
 
@@ -341,21 +355,21 @@ function branchPath(bi: number) {
 
   align-items: stretch;
 
-  gap: 12px;
+  gap: var(--app-space-12);
 
   width: 100%;
 
   min-height: 132px;
 
-  padding: 10px 12px;
+  padding: var(--app-space-10) var(--app-space-12);
 
-  background: #f7f8fa;
+  background: var(--surface-muted);
 
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--border);
 
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 
-  border-left: 4px solid #86909c;
+  border-left: 4px solid var(--text-tertiary);
 
 }
 
@@ -363,7 +377,7 @@ function branchPath(bi: number) {
 
 .branch-row:has(.branch-badge.is-default) {
 
-  border-left-color: #165dff;
+  border-left-color: var(--brand);
 
 }
 
@@ -377,13 +391,13 @@ function branchPath(bi: number) {
 
   flex-direction: column;
 
-  gap: 4px;
+  gap: var(--app-space-xs);
 
   position: relative;
 
-  padding-right: 8px;
+  padding-right: var(--app-space-sm);
 
-  border-right: 1px dashed #e5e6eb;
+  border-right: 1px dashed var(--border);
 
 }
 
@@ -393,17 +407,17 @@ function branchPath(bi: number) {
 
   display: inline-block;
 
-  font-size: 11px;
+  font-size: var(--app-font-2xs);
 
   font-weight: 700;
 
-  color: #fff;
+  color: var(--brand-contrast);
 
-  background: #86909c;
+  background: var(--text-tertiary);
 
-  padding: 2px 8px;
+  padding: var(--app-space-2) var(--app-space-8);
 
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 
   width: fit-content;
 
@@ -413,7 +427,7 @@ function branchPath(bi: number) {
 
 .branch-badge.is-default {
 
-  background: #165dff;
+  background: var(--brand);
 
 }
 
@@ -421,11 +435,11 @@ function branchPath(bi: number) {
 
 .branch-title {
 
-  font-size: 13px;
+  font-size: var(--app-font-sm);
 
   font-weight: 600;
 
-  color: #1d2129;
+  color: var(--text);
 
   line-height: 1.4;
 
@@ -435,9 +449,9 @@ function branchPath(bi: number) {
 
 .branch-expr {
 
-  font-size: 12px;
+  font-size: var(--app-font-xs);
 
-  color: #4e5969;
+  color: var(--text-secondary);
 
   line-height: 1.45;
 
@@ -449,7 +463,7 @@ function branchPath(bi: number) {
 
   align-self: flex-start;
 
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 
 }
 
@@ -471,7 +485,7 @@ function branchPath(bi: number) {
 
   overflow-y: hidden;
 
-  padding: 4px 0;
+  padding: var(--app-space-4) 0;
 
 }
 
@@ -495,11 +509,11 @@ function branchPath(bi: number) {
 
   justify-content: center;
 
-  gap: 12px;
+  gap: var(--app-space-12);
 
-  margin-top: 12px;
+  margin-top: var(--app-space-12);
 
-  padding-top: 8px;
+  padding-top: var(--app-space-8);
 
 }
 
@@ -513,7 +527,7 @@ function branchPath(bi: number) {
 
   height: 2px;
 
-  background: linear-gradient(90deg, transparent, #c9cdd4 30%, #c9cdd4 70%, transparent);
+  background: linear-gradient(90deg, transparent, var(--border-strong) 30%, var(--border-strong) 70%, transparent);
 
 }
 
@@ -521,9 +535,9 @@ function branchPath(bi: number) {
 
 .merge-label {
 
-  font-size: 11px;
+  font-size: var(--app-font-2xs);
 
-  color: #86909c;
+  color: var(--text-tertiary);
 
   white-space: nowrap;
 

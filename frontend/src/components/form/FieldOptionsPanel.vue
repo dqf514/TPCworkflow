@@ -1,6 +1,6 @@
 <template>
   <div class="field-options-panel">
-    <a-form-item :label="t('designer.option_source')">
+    <a-form-item field="optionSource" :label="t('designer.option_source')">
       <a-radio-group v-model="optionSource" type="button" size="small">
         <a-radio value="manual">{{ t('designer.option_manual') }}</a-radio>
         <a-radio value="option_set">{{ t('designer.option_set') }}</a-radio>
@@ -8,7 +8,7 @@
     </a-form-item>
 
     <template v-if="optionSource === 'option_set'">
-      <a-form-item :label="t('designer.pick_option_set')">
+      <a-form-item field="optionSetCode" :label="t('designer.pick_option_set')">
         <a-select
           v-model="optionSetCode"
           :options="setOpts"
@@ -192,14 +192,14 @@ onMounted(async () => {
 .manual-toolbar {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 6px;
+  margin-bottom: var(--app-space-6);
 }
 
 .manual-row {
   display: flex;
-  gap: 4px;
+  gap: var(--app-space-4);
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: var(--app-space-6);
 }
 
 .manual-name {
@@ -215,14 +215,14 @@ onMounted(async () => {
 .preview-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
+  gap: var(--app-space-4);
+  margin-top: var(--app-space-8);
 }
 
 .hint-text {
-  font-size: 12px;
-  color: #86909c;
-  margin: 4px 0 0;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
+  margin: var(--app-space-4) 0 0;
   line-height: 1.5;
 }
 </style>

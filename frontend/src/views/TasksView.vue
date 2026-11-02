@@ -364,7 +364,10 @@ async function loadTodo() {
       const valid = new Set(todoRows.value.map((r) => r.task_id))
       selectedTodoKeys.value = selectedTodoKeys.value.filter((k) => valid.has(Number(k)))
     }
-    void badges.refresh(true)
+    void badges.refresh()
+  } catch (e) {
+    // 加载失败必须提示，否则空列表会被误认为「没有待办」
+    Message.error(e instanceof Error ? e.message : t('common.todo_list_load_failed'))
   } finally {
     loadingTodo.value = false
   }
@@ -388,6 +391,9 @@ async function loadDone() {
       donePage.value = res.data.data.page
       doneLoaded.value = true
     }
+  } catch (e) {
+    // 加载失败必须提示，否则空列表会被误认为「没有已办」
+    Message.error(e instanceof Error ? e.message : t('common.done_list_load_failed'))
   } finally {
     loadingDone.value = false
   }
@@ -453,14 +459,14 @@ async function completeTask(taskId: number, action: 'approve' | 'reject', commen
     })
     if (res.data.ok) {
       Message.success(res.data.message || t('common.success'))
-      void badges.refresh(true)
+      void badges.refresh()
       await loadTodo()
       return true
     }
-    Message.error(res.data.message || '操作失败')
+    Message.error(res.data.message || t('common.operation_failed'))
     return false
   } catch (e) {
-    Message.error(e instanceof Error ? e.message : '操作失败')
+    Message.error(e instanceof Error ? e.message : t('common.operation_failed'))
     return false
   } finally {
     actingTaskId.value = null
@@ -537,14 +543,14 @@ async function confirmBatchApprove() {
       }
       selectedTodoKeys.value = []
       batchModalOpen.value = false
-      void badges.refresh(true)
+      void badges.refresh()
       await loadTodo()
       return true
     }
-    Message.error(res.data.message || '操作失败')
+    Message.error(res.data.message || t('common.operation_failed'))
     return false
   } catch (e) {
-    Message.error(e instanceof Error ? e.message : '操作失败')
+    Message.error(e instanceof Error ? e.message : t('common.operation_failed'))
     return false
   } finally {
     batchLoading.value = false
@@ -570,7 +576,7 @@ watch(activeTab, (tab) => {
 .tab-title-with-badge {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--app-space-2);
 }
 
 .tasks-workspace {
@@ -594,15 +600,15 @@ watch(activeTab, (tab) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin: 12px 0 12px;
+  gap: var(--app-space-10);
+  margin: var(--app-space-12) 0 var(--app-space-12);
   flex-wrap: wrap;
 }
 
 .tasks-toolbar-filters {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-space-8);
   flex: 1 1 auto;
   min-width: 0;
   flex-wrap: wrap;
@@ -611,7 +617,7 @@ watch(activeTab, (tab) => {
 .tasks-toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-space-8);
   flex: 0 0 auto;
 }
 
@@ -675,14 +681,14 @@ watch(activeTab, (tab) => {
 }
 
 .tasks-mobile-node {
-  margin-top: 4px;
-  font-size: 13px;
+  margin-top: var(--app-space-4);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
 }
 
 .tasks-batch-hint {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 var(--app-space-12);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
 }
 </style>

@@ -55,6 +55,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import {
   clearRecordSetCache,
@@ -68,6 +69,8 @@ import {
 } from '@/composables/useRecordSets'
 import type { DeviceMode } from '@/types/form'
 import { recordSetColumnSpan } from '@/utils/recordSetLayout'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -188,7 +191,7 @@ async function savePersonal() {
     data[c.field_key] = String(editData[c.field_key] || '').trim()
   })
   if (!Object.values(data).some(Boolean)) {
-    Message.warning('请至少填写一个字段')
+    Message.warning(t('common.record_set_fill_one_field'))
     return
   }
   savingPersonal.value = true
@@ -197,11 +200,11 @@ async function savePersonal() {
       sourceKind.value === 'personal' && pickedRowCode.value ? pickedRowCode.value : undefined
     const res = await saveMyRecord(code, { row_code: rowCode, data })
     if (!res.ok) {
-      Message.error(res.message || '保存失败')
+      Message.error(res.message || t('common.save_failed'))
       return
     }
     clearRecordSetCache()
-    Message.success('已保存到个人配置')
+    Message.success(t('common.record_set_saved'))
     manualDirty.value = false
     await load()
     const saved = res.data
@@ -216,7 +219,7 @@ async function savePersonal() {
       }
     }
   } catch (e: unknown) {
-    Message.error(e instanceof Error ? e.message : '保存失败')
+    Message.error(e instanceof Error ? e.message : t('common.save_failed'))
   } finally {
     savingPersonal.value = false
   }
@@ -398,10 +401,10 @@ onMounted(() => {
 }
 
 .record-edit {
-  padding: 12px 14px;
-  background: #fafbfc;
-  border-radius: 8px;
-  border: 1px solid #e5e6eb;
+  padding: var(--app-space-12) var(--app-space-14);
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
 }
 
 .record-field-item {
@@ -409,47 +412,47 @@ onMounted(() => {
 }
 
 .record-edit-label {
-  margin-bottom: 6px;
-  font-size: 13px;
+  margin-bottom: var(--app-space-6);
+  font-size: var(--app-font-sm);
   font-weight: 500;
-  color: #646a73;
+  color: var(--text-secondary);
 }
 
 .source-hint {
-  margin: 8px 0 0;
-  font-size: 13px;
-  color: #646a73;
+  margin: var(--app-space-8) 0 0;
+  font-size: var(--app-font-sm);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .record-save-row {
-  margin-top: 10px;
+  margin-top: var(--app-space-10);
   display: flex;
   justify-content: flex-end;
 }
 
 .record-detail {
-  padding: 12px 14px;
-  background: #fafbfc;
-  border-radius: 8px;
-  border: 1px solid #e5e6eb;
+  padding: var(--app-space-12) var(--app-space-14);
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
 }
 
 .record-detail-item {
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--app-font-md);
   line-height: 1.5715;
 }
 
 .record-detail-label {
-  color: #646a73;
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: var(--app-font-sm);
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: var(--app-space-4);
 }
 
 .record-detail-value {
-  color: #1f2329;
+  color: var(--text);
   word-break: break-all;
   line-height: 1.5715;
 }

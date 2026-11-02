@@ -73,9 +73,9 @@ const { t } = useI18n()
   background: #fff;
   box-sizing: border-box;
   padding: var(--wf-print-margin, 12mm);
-  max-width: 210mm;
+  max-width: var(--wf-print-page-width, 210mm);
   margin: 0 auto;
-  min-height: calc(297mm - var(--wf-print-margin, 12mm) * 2);
+  min-height: calc(var(--wf-print-page-height, 297mm) - var(--wf-print-margin, 12mm) * 2);
   display: flex;
   flex-direction: column;
 }
@@ -83,22 +83,22 @@ const { t } = useI18n()
 .wf-print-att-hd {
   border: 1px solid #000;
   border-bottom: none;
-  padding: 10px 12px 8px;
+  padding: var(--app-space-10) var(--app-space-12) var(--app-space-8);
 }
 
 .wf-print-att-hd-top {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--app-space-6);
   font-size: 9pt;
   color: #222;
-  margin-bottom: 6px;
+  margin-bottom: var(--app-space-6);
 }
 
 .wf-print-att-badge {
   display: inline-block;
-  padding: 1px 8px;
+  padding: 1px var(--app-space-8);
   border: 1px solid #000;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -121,7 +121,7 @@ const { t } = useI18n()
 .wf-print-att-field {
   font-weight: 700;
   font-size: 11pt;
-  margin-bottom: 2px;
+  margin-bottom: var(--app-space-2);
 }
 
 .wf-print-att-name {
@@ -138,7 +138,7 @@ const { t } = useI18n()
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: 4px;
+  padding: var(--app-space-4);
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -178,11 +178,11 @@ const { t } = useI18n()
 .wf-print-att-ft {
   border: 1px solid #000;
   border-top: none;
-  padding: 6px 12px;
+  padding: var(--app-space-6) var(--app-space-12);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: var(--app-space-12);
   flex-wrap: wrap;
   font-size: 8.5pt;
   color: #333;

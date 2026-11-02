@@ -4,11 +4,11 @@
     <a-card class="rounded-xl mb-4">
       <a-form :model="createForm" layout="vertical" @submit-success="createUser">
         <a-row :gutter="12">
-          <a-col :xs="24" :sm="8"><a-form-item label="用户名" required><a-input v-model="createForm.username" /></a-form-item></a-col>
-          <a-col :xs="24" :sm="8"><a-form-item label="显示名"><a-input v-model="createForm.display_name" /></a-form-item></a-col>
-          <a-col :xs="24" :sm="8"><a-form-item label="邮箱"><a-input v-model="createForm.email" /></a-form-item></a-col>
-          <a-col :xs="24" :sm="8"><a-form-item label="手机"><a-input v-model="createForm.phone" /></a-form-item></a-col>
-          <a-col :xs="24" :sm="8"><a-form-item label="密码"><a-input-password v-model="createForm.password" /></a-form-item></a-col>
+          <a-col :xs="24" :sm="8"><a-form-item field="username" label="用户名" required><a-input v-model="createForm.username" /></a-form-item></a-col>
+          <a-col :xs="24" :sm="8"><a-form-item field="display_name" label="显示名"><a-input v-model="createForm.display_name" /></a-form-item></a-col>
+          <a-col :xs="24" :sm="8"><a-form-item field="email" label="邮箱"><a-input v-model="createForm.email" /></a-form-item></a-col>
+          <a-col :xs="24" :sm="8"><a-form-item field="phone" label="手机"><a-input v-model="createForm.phone" /></a-form-item></a-col>
+          <a-col :xs="24" :sm="8"><a-form-item field="password" label="密码"><a-input-password v-model="createForm.password" /></a-form-item></a-col>
         </a-row>
         <a-button type="primary" html-type="submit">创建用户</a-button>
       </a-form>
@@ -40,25 +40,25 @@
 
     <a-modal v-model:visible="editVisible" title="编辑用户" :width="520" @ok="saveUser">
       <a-form :model="editForm" layout="vertical">
-        <a-form-item label="用户名">
+        <a-form-item field="username" label="用户名">
           <a-input :model-value="editForm.username" disabled />
         </a-form-item>
-        <a-form-item label="显示名">
+        <a-form-item field="display_name" label="显示名">
           <a-input v-model="editForm.display_name" />
         </a-form-item>
-        <a-form-item label="邮箱">
+        <a-form-item field="email" label="邮箱">
           <a-input v-model="editForm.email" />
         </a-form-item>
-        <a-form-item label="手机">
+        <a-form-item field="phone" label="手机">
           <a-input v-model="editForm.phone" />
         </a-form-item>
-        <a-form-item label="新密码">
+        <a-form-item field="password" label="新密码">
           <a-input-password v-model="editForm.password" placeholder="留空则不修改" />
         </a-form-item>
-        <a-form-item label="系统管理员">
+        <a-form-item field="is_system_admin" label="系统管理员">
           <a-switch v-model="editForm.is_system_admin" />
         </a-form-item>
-        <a-form-item label="账号启用">
+        <a-form-item field="is_active" label="账号启用">
           <a-switch v-model="editForm.is_active" />
         </a-form-item>
       </a-form>
@@ -131,13 +131,13 @@ async function saveUser() {
   if (editForm.password) body.password = editForm.password
   await api.put(`/users/${editForm.id}`, body)
   editVisible.value = false
-  Message.success('已保存')
+  Message.success(t('admin.saved'))
   await load()
 }
 
 async function deleteUser(id: number) {
   await api.delete(`/users/${id}`)
-  Message.success('用户已停用')
+  Message.success(t('admin.user_deactivated'))
   await load()
 }
 

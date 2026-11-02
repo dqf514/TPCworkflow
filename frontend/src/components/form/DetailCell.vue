@@ -408,9 +408,9 @@ function emitVal(v: unknown) {
 
 .detail-readonly-time {
 
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
 
-  color: var(--color-text-2, #4e5969);
+  color: var(--text-secondary);
 
 }
 

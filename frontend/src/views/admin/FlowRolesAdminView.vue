@@ -64,22 +64,22 @@
             </template>
           </a-table>
         </a-card>
-        <a-empty v-else class="mt-8" description="请选择左侧流程角色" />
+        <a-empty v-else class="mt-8" :description="t('flowRole.pick_role')" />
       </a-col>
     </a-row>
 
     <a-modal v-model:visible="roleModal" title="编辑流程角色" @ok="saveRole">
       <a-form :model="roleEdit" layout="vertical">
-        <a-form-item label="编码">
+        <a-form-item field="code" label="编码">
           <a-input :model-value="roleEdit.code" disabled />
         </a-form-item>
-        <a-form-item label="名称" required>
+        <a-form-item field="name" label="名称" required>
           <a-input v-model="roleEdit.name" />
         </a-form-item>
-        <a-form-item label="说明">
+        <a-form-item field="description" label="说明">
           <a-textarea v-model="roleEdit.description" />
         </a-form-item>
-        <a-form-item label="启用">
+        <a-form-item field="is_active" label="启用">
           <a-switch v-model="roleEdit.is_active" />
         </a-form-item>
       </a-form>
@@ -156,7 +156,7 @@ async function selectRole(id: number) {
 
 async function addRole() {
   if (!newRole.code || !newRole.name) {
-    Message.warning('请填写编码与名称')
+    Message.warning(t('flowRole.code_name_required'))
     return
   }
   await api.post('/admin/flow-roles', newRole)
@@ -182,13 +182,13 @@ async function saveRole() {
     is_active: roleEdit.is_active,
   })
   roleModal.value = false
-  Message.success('已保存')
+  Message.success(t('flowRole.saved'))
   await load()
 }
 
 async function deleteRole(id: number) {
   await api.delete(`/admin/flow-roles/${id}`)
-  Message.success('角色已停用')
+  Message.success(t('flowRole.deactivated'))
   if (selectedRoleId.value === id) {
     selectedRoleId.value = undefined
     members.value = []
@@ -198,21 +198,21 @@ async function deleteRole(id: number) {
 
 async function addMember() {
   if (!selectedRoleId.value || !newMember.user_id) {
-    Message.warning('请选择用户')
+    Message.warning(t('flowRole.select_user'))
     return
   }
   await api.post(`/admin/flow-roles/${selectedRoleId.value}/members`, {
     user_id: newMember.user_id,
   })
   newMember.user_id = undefined
-  Message.success('已添加')
+  Message.success(t('flowRole.member_added'))
   await selectRole(selectedRoleId.value)
 }
 
 async function removeMember(memberId: number) {
   if (!selectedRoleId.value) return
   await api.delete(`/admin/flow-roles/${selectedRoleId.value}/members/${memberId}`)
-  Message.success('已移除')
+  Message.success(t('flowRole.member_removed'))
   await selectRole(selectedRoleId.value)
 }
 

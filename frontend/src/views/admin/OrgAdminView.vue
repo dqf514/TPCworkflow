@@ -37,10 +37,13 @@
                       class="tree-node-icon"
                     />
                     <span class="tree-node-label">
-                      <span class="tree-node-name">{{ nodeData?.name || nodeData?.title }}</span>
+                      <span class="tree-node-name" :title="nodeData?.name || nodeData?.title">
+                        {{ nodeData?.name || nodeData?.title }}
+                      </span>
                       <span
                         v-if="nodeData?.manager?.display_name && nodeData?.nodeType !== 'company'"
                         class="tree-node-manager"
+                        :title="t('org.manager_label', { name: nodeData.manager.display_name })"
                       >
                         {{ t('org.manager_label', { name: nodeData.manager.display_name }) }}
                       </span>
@@ -172,8 +175,8 @@
 
     <a-modal v-model:visible="deptModal" :title="deptEdit.id ? t('org.edit_dept_title') : t('org.new_dept_title')" @ok="saveDept">
       <a-form :model="deptEdit" layout="vertical">
-        <a-form-item :label="t('org.dept_name')" required><a-input v-model="deptEdit.name" /></a-form-item>
-        <a-form-item :label="t('org.parent_dept')">
+        <a-form-item field="name" :label="t('org.dept_name')" required><a-input v-model="deptEdit.name" /></a-form-item>
+        <a-form-item field="parent_id" :label="t('org.parent_dept')">
           <a-tree-select
             v-model="deptEdit.parent_id"
             :data="deptTreeForSelect"
@@ -202,10 +205,10 @@
         </a-tab-pane>
         <a-tab-pane key="new" :title="t('org.tab_new_user')">
           <a-form :model="newUserForm" layout="vertical">
-            <a-form-item :label="t('org.username')" required><a-input v-model="newUserForm.username" /></a-form-item>
-            <a-form-item :label="t('org.email')" required><a-input v-model="newUserForm.email" /></a-form-item>
-            <a-form-item :label="t('org.display_name')"><a-input v-model="newUserForm.display_name" /></a-form-item>
-            <a-form-item :label="t('org.password')"><a-input-password v-model="newUserForm.password" /></a-form-item>
+            <a-form-item field="username" :label="t('org.username')" required><a-input v-model="newUserForm.username" /></a-form-item>
+            <a-form-item field="email" :label="t('org.email')" required><a-input v-model="newUserForm.email" /></a-form-item>
+            <a-form-item field="display_name" :label="t('org.display_name')"><a-input v-model="newUserForm.display_name" /></a-form-item>
+            <a-form-item field="password" :label="t('org.password')"><a-input-password v-model="newUserForm.password" /></a-form-item>
             <a-form-item :label="t('org.depts_optional')">
               <a-tree-select
                 v-model="newUserDeptIds"
@@ -222,22 +225,22 @@
         </a-tab-pane>
       </a-tabs>
       <a-form v-if="memberAddTab === 'exist'" :model="memberForm" layout="vertical" class="mt-3">
-        <a-form-item :label="t('org.dept_role')">
+        <a-form-item field="role_in_dept" :label="t('org.dept_role')">
           <a-radio-group v-model="memberForm.role_in_dept">
             <a-radio value="member">{{ t('org.role_member') }}</a-radio>
             <a-radio value="manager">{{ t('org.role_manager') }}</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item :label="t('org.job_title')"><a-input v-model="memberForm.job_title" /></a-form-item>
+        <a-form-item field="job_title" :label="t('org.job_title')"><a-input v-model="memberForm.job_title" /></a-form-item>
       </a-form>
       <a-form v-else :model="memberForm" layout="vertical" class="mt-3">
-        <a-form-item :label="t('org.first_dept_role')">
+        <a-form-item field="role_in_dept" :label="t('org.first_dept_role')">
           <a-radio-group v-model="memberForm.role_in_dept">
             <a-radio value="member">{{ t('org.role_member') }}</a-radio>
             <a-radio value="manager">{{ t('org.role_manager') }}</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item :label="t('org.job_title')"><a-input v-model="memberForm.job_title" /></a-form-item>
+        <a-form-item field="job_title" :label="t('org.job_title')"><a-input v-model="memberForm.job_title" /></a-form-item>
       </a-form>
     </a-modal>
 
@@ -282,7 +285,7 @@
 
     <a-modal v-model:visible="userModal" :title="t('org.edit_user')" @ok="saveUser">
       <a-form :model="userEdit" layout="vertical">
-        <a-form-item :label="t('org.display_name')"><a-input v-model="userEdit.display_name" /></a-form-item>
+        <a-form-item field="display_name" :label="t('org.display_name')"><a-input v-model="userEdit.display_name" /></a-form-item>
         <a-form-item :label="t('org.contact_email')">
           <div class="admin-mail-field">
             <input
@@ -297,9 +300,9 @@
             <span class="text-xs text-gray-500">{{ t('org.email_admin_hint') }}</span>
           </template>
         </a-form-item>
-        <a-form-item :label="t('org.phone')"><a-input v-model="userEdit.phone" /></a-form-item>
-        <a-form-item :label="t('org.job_title')"><a-input v-model="userEdit.job_title" :placeholder="t('org.job_ph')" /></a-form-item>
-        <a-form-item :label="t('org.holiday_regions')">
+        <a-form-item field="phone" :label="t('org.phone')"><a-input v-model="userEdit.phone" /></a-form-item>
+        <a-form-item field="job_title" :label="t('org.job_title')"><a-input v-model="userEdit.job_title" :placeholder="t('org.job_ph')" /></a-form-item>
+        <a-form-item field="holiday_regions" :label="t('org.holiday_regions')">
           <a-select
             v-model="userEdit.holiday_regions"
             :options="holidayRegionOpts"
@@ -310,8 +313,8 @@
           />
           <template #extra>{{ t('org.holiday_regions_hint') }}</template>
         </a-form-item>
-        <a-form-item :label="t('org.new_password')"><a-input-password v-model="userEdit.password" :placeholder="t('org.password_keep')" /></a-form-item>
-        <a-form-item :label="t('org.membership_role')">
+        <a-form-item field="password" :label="t('org.new_password')"><a-input-password v-model="userEdit.password" :placeholder="t('org.password_keep')" /></a-form-item>
+        <a-form-item field="role_in_dept" :label="t('org.membership_role')">
           <a-radio-group v-model="userEdit.role_in_dept">
             <a-radio value="member">{{ t('org.role_member') }}</a-radio>
             <a-radio value="manager">{{ t('org.role_manager') }}</a-radio>
@@ -1028,16 +1031,16 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: var(--app-space-10);
+  margin-bottom: var(--app-space-12);
 }
 
 .toolbar-company-name {
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--app-font-md);
   padding: 0.35rem 0.75rem;
   background: var(--brand-soft);
-  color: var(--brand);
+  color: var(--brand-text);
   border-radius: var(--radius-sm);
 }
 
@@ -1061,61 +1064,86 @@ onMounted(async () => {
   flex: 0 0 330px;
   max-width: 42%;
   min-width: 272px;
-  border-right: 1px solid var(--border, #e5e6eb);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  background: var(--surface-muted, #fafbfc);
+  background: var(--surface-muted);
 }
 
 .tree-spin {
   flex: 1;
   min-height: 0;
-  padding: 12px 10px;
+  padding: var(--app-space-12) var(--app-space-10);
   overflow: auto;
 }
 
 .tree-spin :deep(.arco-tree-node-title) {
   flex: 1;
   min-width: 0;
+  /* 裁掉超出面板宽度的部分，避免节点文字被面板边缘硬切 */
+  overflow: hidden;
+}
+
+/* Arco 的标题文本容器默认按内容宽度撑开（会横向溢出树面板被裁掉半个字），
+   这里让它占满剩余宽度并配合 ellipsis 省略。 */
+.tree-spin :deep(.arco-tree-node-title-text) {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .tree-node-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--app-space-sm);
   flex-wrap: nowrap;
   line-height: 1.5;
   max-width: 100%;
+  min-width: 0;
 }
 
 .tree-node-icon {
   flex-shrink: 0;
-  font-size: 15px;
-  color: #86909c;
+  font-size: var(--app-font-lg);
+  color: var(--text-tertiary);
 }
 
 .tree-node-label {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--app-space-xs);
+  overflow: hidden;
+}
+
+/* 部门名称是树的主信息，字号与颜色都应强于「负责人 / 人数」等辅助信息 */
+.tree-node-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.tree-node-name {
-  font-weight: 500;
-  color: #1d2129;
-}
-
 .tree-node-manager {
-  margin-left: 6px;
-  font-size: 12px;
+  /* 收缩权重高于部门名且最多占 40%：空间不足时先省略「负责人」，
+     保证部门名（主信息）尽量完整，辅助信息退居其次。 */
+  flex: 0 4 auto;
+  min-width: 0;
+  max-width: 40%;
+  font-size: var(--app-font-xs);
   font-weight: normal;
-  color: #86909c;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tree-node-count {
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 .structure-main-panel {
@@ -1126,26 +1154,26 @@ onMounted(async () => {
 }
 
 .panel-head {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e6eb;
-  background: #f7f8fa;
+  padding: var(--app-space-md) var(--app-space-lg);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
 }
 
 .panel-head-title {
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--app-space-sm);
 }
 
 .dept-path-label {
   font-weight: 600;
-  color: #1d2129;
+  color: var(--text);
 }
 
 .dept-member-count {
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   font-weight: 400;
-  color: #86909c;
+  color: var(--text-tertiary);
 }
 
 .panel-body {
@@ -1159,22 +1187,22 @@ onMounted(async () => {
 }
 
 .company-overview {
-  padding: 16px;
+  padding: var(--app-space-16);
 }
 
 .company-facts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  gap: var(--app-space-12);
 }
 
 .company-fact {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
-  background: var(--surface-muted, #f7f8fa);
-  border-radius: var(--radius-md, 8px);
+  gap: var(--app-space-xs);
+  padding: var(--app-space-md);
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
   min-width: 0;
 }
 
@@ -1183,20 +1211,20 @@ onMounted(async () => {
 }
 
 .company-fact-label {
-  font-size: var(--app-font-xs, 12.5px);
-  color: var(--text-tertiary, #86909c);
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
 }
 
 .company-fact-value {
-  font-size: var(--app-font-base, 15px);
+  font-size: var(--app-font-base);
   font-weight: 500;
-  color: var(--text, #1d2129);
+  color: var(--text);
   word-break: break-word;
 }
 
 .company-fact-value--muted {
   font-weight: 400;
-  color: var(--text-secondary, #4e5969);
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -1216,7 +1244,7 @@ onMounted(async () => {
     width: 100%;
     max-height: 42vh;
     border-right: none;
-    border-bottom: 1px solid #e5e6eb;
+    border-bottom: 1px solid var(--border);
   }
 }
 
@@ -1228,24 +1256,25 @@ onMounted(async () => {
   display: block;
   width: 100%;
   height: 32px;
-  padding: 0 12px;
-  font-size: 14px;
+  padding: 0 var(--app-space-md);
+  font-size: var(--app-font-md);
   line-height: 1.5715;
-  color: var(--color-text-1, #1d2129);
-  background-color: var(--color-fill-2, #f2f3f5);
+  color: var(--text);
+  background-color: var(--surface-muted);
   border: 1px solid transparent;
-  border-radius: var(--border-radius-small, 4px);
+  border-radius: var(--radius-sm);
   box-sizing: border-box;
-  outline: none;
   font-family: inherit;
 }
 
 .admin-mail-input:hover {
-  background-color: var(--color-fill-3, #e5e6eb);
+  background-color: var(--surface-sunken);
 }
 
 .admin-mail-input:focus {
-  background-color: var(--color-bg-2, #fff);
-  border-color: rgb(var(--primary-6, 22 93 255));
+  background-color: var(--surface);
+  border-color: var(--brand);
+  /* 与全站输入控件一致的焦点环 */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 16%, transparent);
 }
 </style>

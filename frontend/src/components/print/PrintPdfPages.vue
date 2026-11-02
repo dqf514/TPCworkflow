@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { encodeUrlPath } from '@/utils/pdfRender'
+import { encodeUrlPath } from '@/utils/pdfUrl'
 import { printT } from '@/utils/printI18n'
 
 const props = defineProps<{

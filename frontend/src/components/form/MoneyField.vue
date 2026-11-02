@@ -173,7 +173,7 @@ onMounted(async () => {
 .money-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .money-field--compact .money-grid {
@@ -184,7 +184,7 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: 112px 88px 64px 80px;
   align-items: center;
-  gap: 6px;
+  gap: var(--app-space-6);
 }
 
 .money-field--inline .money-cell {
@@ -219,25 +219,30 @@ onMounted(async () => {
 
 .money-label {
   display: block;
-  font-size: 13px;
-  color: #646a73;
-  margin-bottom: 4px;
+  font-size: var(--app-font-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--app-space-4);
   font-weight: 500;
 }
 
 .money-cell-rmb :deep(.arco-input-number) {
-  background: #f5f6f7 !important;
-  border-color: #e5e6eb !important;
+  background: var(--surface-muted) !important;
+  border-color: var(--border) !important;
 }
 
 .money-hint {
-  margin: 8px 0 0;
-  font-size: 13px;
-  color: #646a73;
+  margin: var(--app-space-8) 0 0;
+  font-size: var(--app-font-sm);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
-.money-field--readonly :deep(.arco-input-number-input) {
+/* Arco 各版本 InputNumber 内层 input 的类名不一致（部分版本是 .arco-input-number-input，
+   2.57 直接用 .arco-input），两种都命中，避免右对齐与等宽数字失效。 */
+.money-field--readonly :deep(.arco-input-number-input),
+.money-field--readonly :deep(input.arco-input) {
   text-align: right;
+  /* 金额列需要等宽数字才能对齐小数点 */
+  font-variant-numeric: tabular-nums;
 }
 </style>

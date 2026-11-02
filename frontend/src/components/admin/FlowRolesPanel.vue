@@ -4,7 +4,7 @@
       {{ t('flowRole.usage_hint') }}
     </a-alert>
 
-    <a-form layout="inline" class="mb-4 flex flex-wrap gap-2">
+    <a-form :model="newRole" layout="inline" class="mb-4 flex flex-wrap gap-2">
       <a-input v-model="newRole.code" :placeholder="t('flowRole.code_ph')" class="w-36" />
       <a-input v-model="newRole.name" :placeholder="t('flowRole.name_ph')" class="w-40" />
       <a-button type="primary" @click="addRole">{{ t('flowRole.add') }}</a-button>
@@ -54,8 +54,8 @@
           </a-alert>
 
           <template v-else>
-            <a-form layout="vertical" class="member-form">
-              <a-form-item :label="t('flowRole.batch_add_label')">
+            <a-form :model="{ batchUserIds }" layout="vertical" class="member-form">
+              <a-form-item field="batchUserIds" :label="t('flowRole.batch_add_label')">
                 <a-select
                   v-model="batchUserIds"
                   :options="availableUserOpts"
@@ -99,10 +99,10 @@
 
     <a-modal v-model:visible="roleModal" :title="t('flowRole.edit_title')" @ok="saveRole">
       <a-form :model="roleEdit" layout="vertical">
-        <a-form-item :label="t('flowRole.code')"><a-input :model-value="roleEdit.code" disabled /></a-form-item>
-        <a-form-item :label="t('flowRole.name')"><a-input v-model="roleEdit.name" /></a-form-item>
-        <a-form-item :label="t('flowRole.description')"><a-textarea v-model="roleEdit.description" /></a-form-item>
-        <a-form-item :label="t('flowRole.enabled')"><a-switch v-model="roleEdit.is_active" /></a-form-item>
+        <a-form-item field="code" :label="t('flowRole.code')"><a-input :model-value="roleEdit.code" disabled /></a-form-item>
+        <a-form-item field="name" :label="t('flowRole.name')"><a-input v-model="roleEdit.name" /></a-form-item>
+        <a-form-item field="description" :label="t('flowRole.description')"><a-textarea v-model="roleEdit.description" /></a-form-item>
+        <a-form-item field="is_active" :label="t('flowRole.enabled')"><a-switch v-model="roleEdit.is_active" /></a-form-item>
       </a-form>
     </a-modal>
   </div>
@@ -203,7 +203,7 @@ async function addRole() {
   }
   const res = await api.post<ApiResponse<unknown>>('/admin/flow-roles', newRole)
   if (!res.data.ok) {
-    Message.error(res.data.message || '创建失败')
+    Message.error(res.data.message || t('common.create_failed'))
     return
   }
   newRole.code = ''
@@ -226,7 +226,7 @@ function openRoleEdit(record: FlowRoleRow) {
 async function saveRole() {
   const res = await api.put<ApiResponse<unknown>>(`/admin/flow-roles/${roleEdit.id}`, roleEdit)
   if (!res.data.ok) {
-    Message.error(res.data.message || '保存失败')
+    Message.error(res.data.message || t('common.save_failed'))
     return false
   }
   roleModal.value = false
@@ -252,7 +252,7 @@ async function saveMembersBatch() {
     { user_ids: batchUserIds.value },
   )
   if (!res.data.ok) {
-    Message.error(res.data.message || '保存失败')
+    Message.error(res.data.message || t('common.save_failed'))
     return
   }
   Message.success(t('flowRole.save_members_ok'))
@@ -282,15 +282,15 @@ onMounted(async () => {
 }
 
 .mb-3 {
-  margin-bottom: 12px;
+  margin-bottom: var(--app-space-12);
 }
 
 .mt-3 {
-  margin-top: 12px;
+  margin-top: var(--app-space-12);
 }
 
 .member-form :deep(.arco-form-item) {
-  margin-bottom: 8px;
+  margin-bottom: var(--app-space-8);
 }
 
 :deep(.flow-role-row-selected > .arco-table-td) {

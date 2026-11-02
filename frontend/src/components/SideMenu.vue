@@ -10,9 +10,28 @@
       @menu-item-click="onMenuClick"
     >
       <a-menu-item v-for="item in primaryItems" :key="item.key">
-        <template #icon><component :is="item.icon" /></template>
+        <template #icon>
+          <span class="side-menu-icon-wrap">
+            <component :is="item.icon" />
+            <!-- 折叠态也要给出未读提示（视觉为圆点，读屏可播报） -->
+            <span
+              v-if="props.collapsed && item.badge"
+              class="side-menu-badge-dot"
+              role="status"
+              :aria-label="`${item.label}：${item.badge} 条待办`"
+            >
+              <span class="side-menu-badge-dot-inner" aria-hidden="true" />
+            </span>
+          </span>
+        </template>
         {{ item.label }}
-        <NavBadge v-if="!props.collapsed && item.badge" :count="item.badge" inline class="side-menu-badge" />
+        <NavBadge
+          v-if="!props.collapsed && item.badge"
+          :count="item.badge"
+          inline
+          class="side-menu-badge"
+          :aria-label="`${item.label}：${item.badge} 条待办`"
+        />
       </a-menu-item>
 
       <a-sub-menu v-if="showStatsGroup" key="group-stats">
@@ -250,7 +269,7 @@ function onAdminItemClick(key: string) {
 .side-menu :deep(.arco-menu-item),
 .side-menu :deep(.arco-menu-inline-header) {
   border-radius: var(--radius-sm);
-  margin-bottom: 2px;
+  margin-bottom: var(--app-space-2);
   line-height: 1.35;
 }
 
@@ -260,22 +279,22 @@ function onAdminItemClick(key: string) {
 
 .side-menu-footer {
   flex-shrink: 0;
-  padding: 6px 4px 2px;
+  padding: var(--app-space-6) var(--app-space-4) var(--app-space-2);
   border-top: 1px solid var(--divider);
 }
 
 .side-menu-admin-trigger {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--app-space-10);
   width: 100%;
   height: 36px;
-  padding: 0 10px;
+  padding: 0 var(--app-space-10);
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: var(--app-font-md);
   text-align: left;
   cursor: pointer;
   transition:
@@ -291,12 +310,12 @@ function onAdminItemClick(key: string) {
 
 .side-menu-admin-trigger.is-active {
   background: var(--brand-soft);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .side-menu-admin-icon {
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: var(--app-font-lg);
 }
 
 .side-menu-admin-label {
@@ -309,12 +328,12 @@ function onAdminItemClick(key: string) {
 
 .side-menu-admin-caret {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 
 .side-menu-wrap--collapsed .side-menu-footer {
-  padding: 6px 4px 2px;
+  padding: var(--app-space-6) var(--app-space-4) var(--app-space-2);
 }
 
 .side-menu-wrap--collapsed .side-menu-admin-trigger {
@@ -326,13 +345,13 @@ function onAdminItemClick(key: string) {
 .side-menu-admin-pop {
   width: 210px;
   max-height: min(62vh, 520px);
-  padding: 4px;
+  padding: var(--app-space-4);
   overflow-y: auto;
 }
 
 .side-menu-admin-group {
-  padding: 8px 8px 4px;
-  font-size: 11px;
+  padding: var(--app-space-8) var(--app-space-8) var(--app-space-4);
+  font-size: var(--app-font-2xs);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--text-tertiary);
@@ -341,12 +360,12 @@ function onAdminItemClick(key: string) {
 .side-menu-admin-item {
   display: block;
   width: 100%;
-  padding: 7px 8px;
+  padding: 7px var(--app-space-8);
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text);
-  font-size: 13.5px;
+  font-size: var(--app-font-13);
   line-height: 1.35;
   text-align: left;
   cursor: pointer;
@@ -361,17 +380,44 @@ function onAdminItemClick(key: string) {
 
 .side-menu-admin-item.is-active {
   background: var(--brand-soft);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .side-menu-admin-divider {
   height: 1px;
-  margin: 6px 4px;
+  margin: var(--app-space-6) var(--app-space-4);
   background: var(--divider);
 }
 
 .side-menu-badge {
   margin-left: auto;
+}
+
+/* 折叠态的未读提示点 */
+.side-menu-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-menu-badge-dot {
+  position: absolute;
+  top: -3px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: #f53f3f;
+  box-shadow: 0 0 0 1.5px var(--surface);
+  pointer-events: none;
+}
+
+.side-menu-badge-dot-inner {
+  display: none;
 }
 
 :global(.side-menu-admin-dropdown .arco-dropdown-list-wrapper) {

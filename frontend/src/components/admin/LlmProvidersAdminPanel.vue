@@ -74,30 +74,30 @@
       @ok="save"
       @cancel="modalVisible = false"
     >
-      <a-form layout="vertical">
-        <a-form-item :label="t('settings.llm_name')">
+      <a-form :model="edit" layout="vertical">
+        <a-form-item field="name" :label="t('settings.llm_name')">
           <a-input v-model="edit.name" :placeholder="t('settings.llm_name_ph')" allow-clear />
         </a-form-item>
-        <a-form-item :label="t('settings.llm_type')" required>
+        <a-form-item field="provider_type" :label="t('settings.llm_type')" required>
           <a-select v-model="edit.provider_type" :options="providerOpts" />
         </a-form-item>
-        <a-form-item :label="t('settings.llm_base_url')" required>
+        <a-form-item field="base_url" :label="t('settings.llm_base_url')" required>
           <a-input v-model="edit.base_url" :placeholder="baseUrlPlaceholder" allow-clear />
           <template #extra>
             <span class="text-xs text-gray-500">{{ baseUrlHint }}</span>
           </template>
         </a-form-item>
-        <a-form-item :label="t('settings.llm_api_key')">
+        <a-form-item field="api_key" :label="t('settings.llm_api_key')">
           <a-input-password
             v-model="edit.api_key"
             :placeholder="edit.has_api_key ? t('settings.llm_api_key_keep') : t('settings.llm_api_key_ph')"
             allow-clear
           />
         </a-form-item>
-        <a-form-item :label="t('settings.llm_model')">
+        <a-form-item field="model_name" :label="t('settings.llm_model')">
           <a-input v-model="edit.model_name" :placeholder="modelPlaceholder" allow-clear />
         </a-form-item>
-        <a-form-item :label="t('settings.llm_enabled')">
+        <a-form-item field="is_active" :label="t('settings.llm_enabled')">
           <a-switch v-model="edit.is_active" />
         </a-form-item>
         <a-space wrap>
@@ -337,31 +337,31 @@ onMounted(load)
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--app-space-12);
+  margin-bottom: var(--app-space-12);
   align-items: flex-start;
 }
 
 .llm-hint {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--app-font-md);
   color: var(--text-secondary);
   flex: 1;
   min-width: 200px;
 }
 
 .llm-test-time {
-  font-size: 11px;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
-  margin-top: 2px;
+  margin-top: var(--app-space-2);
 }
 
 .ml-1 {
-  margin-left: 4px;
+  margin-left: var(--app-space-4);
 }
 
 .mt-3 {
-  margin-top: 12px;
+  margin-top: var(--app-space-12);
 }
 
 .text-gray-400 {
@@ -377,7 +377,7 @@ onMounted(load)
 }
 
 .text-xs {
-  font-size: 12px;
+  font-size: var(--app-font-xs);
 }
 
 .text-gray-500 {
@@ -385,6 +385,6 @@ onMounted(load)
 }
 
 .text-sm {
-  font-size: 0.875rem;
+  font-size: var(--app-font-md);
 }
 </style>

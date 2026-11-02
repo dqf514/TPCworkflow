@@ -78,16 +78,16 @@ const height = computed({
   <div>
     <div class="props-section-title">{{ t('designer.leave_calendar_props') }}</div>
     <p class="hint-text">{{ t('designer.leave_calendar_hint') }}</p>
-    <a-form-item :label="t('designer.leave_calendar_form_keys')" class="props-item">
+    <a-form-item field="formKeysText" :label="t('designer.leave_calendar_form_keys')" class="props-item">
       <a-input v-model="formKeysText" :placeholder="t('designer.leave_calendar_form_keys_ph')" />
     </a-form-item>
-    <a-form-item :label="t('designer.leave_calendar_period_keys')" class="props-item">
+    <a-form-item field="periodKeysText" :label="t('designer.leave_calendar_period_keys')" class="props-item">
       <a-input v-model="periodKeysText" :placeholder="t('designer.leave_calendar_period_keys_ph')" />
     </a-form-item>
-    <a-form-item :label="t('designer.leave_calendar_type_key')" class="props-item">
+    <a-form-item field="leaveTypeFieldKey" :label="t('designer.leave_calendar_type_key')" class="props-item">
       <a-input v-model="leaveTypeFieldKey" />
     </a-form-item>
-    <a-form-item :label="t('designer.leave_calendar_height')" class="props-item">
+    <a-form-item field="height" :label="t('designer.leave_calendar_height')" class="props-item">
       <a-input-number v-model="height" :min="320" :max="900" :step="20" />
     </a-form-item>
     <div class="props-switches">

@@ -70,22 +70,22 @@
       <a-form layout="vertical" :model="form">
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="方案名称" required>
+            <a-form-item field="name" label="方案名称" required>
               <a-input v-model="form.name" placeholder="如：财务报销凭证" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="分录模式">
+            <a-form-item field="line_mode" label="分录模式">
               <a-select v-model="form.line_mode" :options="lineModeOpts" />
             </a-form-item>
           </a-col>
         </a-row>
 
-        <a-form-item label="说明">
+        <a-form-item field="description" label="说明">
           <a-textarea v-model="form.description" :auto-size="{ minRows: 2, maxRows: 4 }" />
         </a-form-item>
 
-        <a-form-item label="适用流程（可多选）">
+        <a-form-item field="definition_ids" label="适用流程（可多选）">
           <a-select
             v-model="form.definition_ids"
             :options="definitionOpts"
@@ -98,12 +98,12 @@
 
         <a-row v-if="form.line_mode === 'expense_detail'" :gutter="16">
           <a-col :span="12">
-            <a-form-item label="明细字段 key">
+            <a-form-item field="detail_key" label="明细字段 key">
               <a-input v-model="form.detail_key" placeholder="如 expense_items" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="金额列 key">
+            <a-form-item field="amount_source_key" label="金额列 key">
               <a-input v-model="form.amount_source_key" placeholder="如 amount" />
             </a-form-item>
           </a-col>
@@ -114,6 +114,7 @@
           <a-form-item
             v-for="opt in exportOptionRows"
             :key="opt.key"
+            :field="`export_options.${opt.key}`"
             :label="opt.label"
             class="export-option-item"
           >
@@ -206,7 +207,7 @@
           </template>
         </a-table>
 
-        <a-form-item label="启用" class="mt-4">
+        <a-form-item field="is_active" label="启用" class="mt-4">
           <a-switch v-model="form.is_active" />
         </a-form-item>
 
@@ -240,8 +241,11 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import { api, type ApiResponse } from '@/api/client'
+
+const { t } = useI18n()
 
 interface ColumnMapping {
   _uid?: string
@@ -511,7 +515,7 @@ async function cloneFromBuiltin(profileId: string) {
     params: { sector_id: props.sectorId },
   })) as { data: ApiResponse<Partial<MappingRow>> }
   if (!res.data.ok) {
-    Message.error(res.data.message || '加载模板失败')
+    Message.error(res.data.message || t('common.load_template_failed'))
     return
   }
   resetForm(res.data.data as MappingRow)
@@ -538,11 +542,11 @@ function serializeForm() {
 
 async function saveMapping() {
   if (!props.sectorId) {
-    Message.warning('请先选择业务板块')
+    Message.warning(t('finance.select_sector_ph'))
     return false
   }
   if (!form.name.trim()) {
-    Message.warning('请填写方案名称')
+    Message.warning(t('finance.mapping_name_ph'))
     return false
   }
   saving.value = true
@@ -559,12 +563,12 @@ async function saveMapping() {
       }
       if (!res.data.ok) throw new Error(res.data.message || '创建失败')
     }
-    Message.success('映射方案已保存')
+    Message.success(t('finance.mapping_saved'))
     editorVisible.value = false
     await loadMappings()
     return true
   } catch (err) {
-    Message.error(err instanceof Error ? err.message : '保存失败')
+    Message.error(err instanceof Error ? err.message : t('common.save_failed'))
     return false
   } finally {
     saving.value = false
@@ -576,10 +580,10 @@ async function removeMapping(id: number) {
     data: ApiResponse<unknown>
   }
   if (!res.data.ok) {
-    Message.error(res.data.message || '删除失败')
+    Message.error(res.data.message || t('common.delete_failed'))
     return
   }
-  Message.success('已删除')
+  Message.success(t('finance.deleted'))
   await loadMappings()
 }
 
@@ -622,16 +626,16 @@ void loadMeta()
 }
 
 .lookup-hint {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 var(--app-space-12);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
 }
 
 .lookup-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-8);
 }
 
 .lookup-arrow {
@@ -640,18 +644,18 @@ void loadMeta()
 }
 
 .mt-2 {
-  margin-top: 8px;
+  margin-top: var(--app-space-8);
 }
 
 .mt-4 {
-  margin-top: 16px;
+  margin-top: var(--app-space-16);
 }
 
 .drawer-footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: 16px;
-  margin-top: 8px;
+  padding-top: var(--app-space-16);
+  margin-top: var(--app-space-8);
   border-top: 1px solid var(--border);
 }
 </style>

@@ -1,3 +1,14 @@
+/* 打印容器共享的纸张设置。
+   主打印稿、附件页、关联申请单页都挂在 .wf-print-mount 下，
+   页边距/纸张宽高在这里统一声明，子组件通过 var() 继承，不再各自写死 12mm。 */
+.wf-print-mount {
+  --wf-print-page-size: A4;
+  --wf-print-orientation: portrait;
+  --wf-print-margin: 12mm;
+  --wf-print-page-width: 210mm;
+  --wf-print-page-height: 297mm;
+}
+
 /* 屏幕：打印稿置于视口外，不占据页面布局 */
 .wf-print-offscreen {
   position: absolute;
@@ -25,8 +36,8 @@ body.wf-print-view .app-password-alert {
 }
 
 body.wf-print-view .app-content-inner {
-  padding-top: 12px !important;
-  padding-bottom: 24px !important;
+  padding-top: var(--app-space-12) !important;
+  padding-bottom: var(--app-space-24) !important;
 }
 
 .page-shell.is-print-view .wf-print-mount,
@@ -54,40 +65,41 @@ body.wf-print-view .app-content-inner {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.96);
-  border-top: 1px solid #e5e6eb;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+  gap: var(--app-space-md);
+  padding: var(--app-space-md) var(--app-space-lg)
+    calc(var(--app-space-md) + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
 }
 
 .wfp-toolbar-btn {
   min-width: 96px;
   height: 36px;
-  padding: 0 20px;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 0 var(--app-space-20);
+  border-radius: var(--radius-md);
+  font-size: var(--app-font-md);
   font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', sans-serif;
   cursor: pointer;
-  border: 1px solid #c9cdd4;
-  background: #fff;
-  color: #1d2129;
+  border: 1px solid var(--border-input);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .wfp-toolbar-btn:hover:not(:disabled) {
-  border-color: #86909c;
-  background: #f7f8fa;
+  border-color: var(--text-tertiary);
+  background: var(--surface-muted);
 }
 
 .wfp-toolbar-btn-primary {
-  border-color: #165dff;
-  background: #165dff;
-  color: #fff;
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-contrast);
 }
 
 .wfp-toolbar-btn-primary:hover:not(:disabled) {
-  border-color: #4080ff;
-  background: #4080ff;
+  border-color: var(--brand-hover);
+  background: var(--brand-hover);
 }
 
 .wfp-toolbar-btn:disabled {
@@ -96,6 +108,8 @@ body.wf-print-view .app-content-inner {
 }
 
 @media print {
+  /* 默认纸张设置。实际打印时由 utils/printPageSetup.ts 按打印容器上的 CSS 变量
+     动态注入一条更靠后的 @page 规则（覆盖本条），表单/模板配置的纸张与页边距才会生效。 */
   @page {
     size: A4 portrait;
     margin: 12mm;

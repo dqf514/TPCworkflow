@@ -54,7 +54,7 @@ const fallbackLetter = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--brand, #5034ff);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
@@ -63,23 +63,23 @@ const fallbackLetter = computed(() => {
 .brand-logo--sm {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .brand-logo--md {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .brand-logo--lg {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .brand-logo:has(.brand-logo-img) {
-  background: var(--surface, #fff);
+  background: var(--surface, #ffffff);
   box-shadow: none;
   border: 1px solid var(--border, #e8e7e2);
 }
@@ -92,18 +92,19 @@ const fallbackLetter = computed(() => {
 }
 
 .brand-logo-fallback {
-  color: #fff;
+  /* 暗色下品牌底色偏亮，用 --brand-contrast 取深色前景保证对比度 */
+  color: var(--brand-contrast, #ffffff);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.02em;
 }
 
 .brand-logo--sm .brand-logo-fallback {
-  font-size: 0.85rem;
+  font-size: var(--app-font-sm);
 }
 
 .brand-logo--md .brand-logo-fallback {
-  font-size: 1rem;
+  font-size: var(--app-font-lg);
 }
 
 .brand-logo--lg .brand-logo-fallback {

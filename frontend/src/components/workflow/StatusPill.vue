@@ -1,5 +1,9 @@
 <template>
-  <span class="status-pill" :class="[`status-pill--${tone}`, { 'status-pill--dot': dot }]">
+  <span
+    class="status-pill"
+    :class="[`status-pill--${tone}`, { 'status-pill--dot': dot }]"
+    :title="label"
+  >
     <span v-if="dot" class="status-pill-dot" aria-hidden="true" />
     {{ label }}
   </span>
@@ -7,6 +11,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -34,18 +39,40 @@ const toneByStatus: Record<string, 'success' | 'danger' | 'info' | 'warning' | '
 }
 
 const tone = computed(() => props.tone || toneByStatus[props.status || ''] || 'neutral')
-const label = computed(() => props.label || props.status || '')
+
+/** 内部状态枚举 → 中文词条；调用方未传 label 时不能把英文枚举直接渲染到界面上 */
+const STATUS_LABEL_KEY: Record<string, string> = {
+  approved: 'workflow.status_approved',
+  completed: 'workflow.status_completed',
+  running: 'workflow.status_running',
+  pending: 'workflow.status_pending',
+  rejected: 'workflow.status_rejected',
+  reject: 'workflow.status_rejected',
+  cancelled: 'workflow.status_cancelled',
+  draft: 'workflow.status_draft',
+  withdraw: 'workflow.status_withdraw',
+  withdrawn: 'workflow.status_withdraw',
+  transfer: 'workflow.status_transfer',
+}
+
+const { t } = useI18n()
+
+const label = computed(() => {
+  if (props.label) return props.label
+  const key = props.status ? STATUS_LABEL_KEY[props.status] : ''
+  return key ? t(key) : props.status || ''
+})
 </script>
 
 <style scoped>
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--app-space-4);
   max-width: 100%;
-  padding: 2px 9px;
+  padding: var(--app-space-2) 9px;
   border-radius: var(--radius-pill);
-  font-size: 11.5px;
+  font-size: var(--app-font-2xs);
   font-weight: 500;
   line-height: 1.4;
   white-space: nowrap;

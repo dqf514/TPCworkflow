@@ -295,53 +295,53 @@ function onRefPick(value: string | number | boolean | Record<string, unknown> | 
 
 <style scoped>
 .formula-designer {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 }
 
 .formula-toolbar {
-  margin-bottom: 10px;
+  margin-bottom: var(--app-space-10);
 }
 
 .formula-toolbar-label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: var(--color-text-3);
+  margin-bottom: var(--app-space-6);
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
 }
 
 .formula-field {
-  margin-bottom: 10px;
+  margin-bottom: var(--app-space-10);
 }
 
 .formula-label {
   display: block;
-  margin-bottom: 4px;
-  font-size: 12px;
-  color: var(--color-text-2);
+  margin-bottom: var(--app-space-4);
+  font-size: var(--app-font-xs);
+  color: var(--text-secondary);
 }
 
 .formula-expr :deep(textarea) {
   font-family: 'Consolas', 'Ubuntu Mono', 'Courier New', monospace;
-  font-size: 13px;
+  font-size: var(--app-font-sm);
 }
 
 .formula-meta {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 }
 
 .formula-preview {
   min-height: 32px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  background: var(--color-fill-2);
+  padding: var(--app-space-6) var(--app-space-10);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
   font-family: 'Consolas', 'Ubuntu Mono', 'Courier New', monospace;
-  font-size: 13px;
+  font-size: var(--app-font-sm);
   line-height: 1.4;
   word-break: break-all;
 }
 
 .formula-preview.empty {
-  color: var(--color-text-3);
+  color: var(--text-tertiary);
 }
 
 .formula-preview.error {
@@ -350,30 +350,30 @@ function onRefPick(value: string | number | boolean | Record<string, unknown> | 
 }
 
 .formula-syntax {
-  margin-top: 8px;
-  padding: 8px 10px;
-  border-radius: 4px;
-  background: var(--color-fill-1);
-  border: 1px solid var(--color-border-2);
+  margin-top: var(--app-space-8);
+  padding: var(--app-space-8) var(--app-space-10);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
 }
 
 .formula-syntax-title {
-  margin-bottom: 6px;
-  font-size: 12px;
+  margin-bottom: var(--app-space-6);
+  font-size: var(--app-font-xs);
   font-weight: 600;
-  color: var(--color-text-2);
+  color: var(--text-secondary);
 }
 
 .formula-syntax-list {
   margin: 0;
-  padding-left: 18px;
-  font-size: 12px;
+  padding-left: var(--app-space-18);
+  font-size: var(--app-font-xs);
   line-height: 1.6;
-  color: var(--color-text-3);
+  color: var(--text-tertiary);
 }
 
 .hint-warn {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
   color: rgb(var(--warning-6));
 }
 </style>

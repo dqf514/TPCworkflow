@@ -39,23 +39,23 @@
       @ok="save"
       @cancel="modalVisible = false"
     >
-      <a-form layout="vertical">
+      <a-form :model="edit" layout="vertical">
         <a-row :gutter="12">
           <a-col :span="12">
-            <a-form-item :label="t('settings.opt_code')" required>
+            <a-form-item field="code" :label="t('settings.opt_code')" required>
               <a-input v-model="edit.code" :placeholder="t('settings.opt_code_ph')" :disabled="!!edit.id" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item :label="t('settings.opt_name')" required>
+            <a-form-item field="name" :label="t('settings.opt_name')" required>
               <a-input v-model="edit.name" :placeholder="t('settings.opt_name_ph')" />
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item :label="t('settings.opt_description')">
+        <a-form-item field="description" :label="t('settings.opt_description')">
           <a-input v-model="edit.description" />
         </a-form-item>
-        <a-form-item :label="t('settings.opt_enabled')">
+        <a-form-item field="is_active" :label="t('settings.opt_enabled')">
           <a-switch v-model="edit.is_active" />
         </a-form-item>
         <a-divider>{{ t('settings.opt_list_divider') }}</a-divider>
@@ -212,13 +212,13 @@ onMounted(load)
 <style scoped>
 .item-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-8);
 }
 
 .hint-text {
-  font-size: 12px;
-  color: #86909c;
-  margin: 0 0 8px;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
+  margin: 0 0 var(--app-space-8);
 }
 </style>

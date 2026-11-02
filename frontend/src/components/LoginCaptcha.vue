@@ -1,5 +1,5 @@
 <template>
-  <a-form-item hide-label class="login-captcha-field">
+  <a-form-item field="captchaCode" hide-label class="login-captcha-field">
     <div class="login-captcha">
       <a-input
         :model-value="modelValue"
@@ -110,13 +110,13 @@ onMounted(refresh)
   justify-content: center;
   width: 118px;
   height: 44px;
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 
 .login-captcha-tip {
   margin: 0.35rem 0 0;
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 

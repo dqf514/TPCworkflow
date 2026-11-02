@@ -10,7 +10,7 @@
         <span v-if="schema.print?.showCompany !== false && printMeta.company" class="ml-4">
           公司：{{ printMeta.company }}
         </span>
-        <span v-if="schema.print?.showPrintTime !== false" class="ml-4">打印时间：{{ printMeta.time }}</span>
+        <span v-if="schema.print?.showPrintTime !== false" class="ml-4">打印时间：{{ printMeta.time ? formatDateTime(printMeta.time) : '' }}</span>
       </div>
     </div>
 
@@ -21,7 +21,8 @@
         :key="sec.id"
         class="form-section"
       >
-        <div v-if="sec.title" class="section-title">{{ sec.title }}</div>
+        <!-- 分区标题改用语义化标题标签，读屏可按标题层级导航 -->
+        <h3 v-if="sec.title" class="section-title">{{ sec.title }}</h3>
         <a-row :gutter="rowGutter">
           <template v-for="field in visibleFields(sec)" :key="field.id">
             <a-col v-if="shouldShow(field)" :span="colSpan(field)">
@@ -51,6 +52,7 @@
               </template>
               <a-form-item
                 v-else
+                :field="field.key || undefined"
                 :label="field.label"
                 :required="isFieldRequired(field)"
                 :extra="field.description"
@@ -139,6 +141,7 @@
                   v-model="model[field.key]"
                   :options="optionList(field)"
                   :disabled="isFieldReadonly(field)"
+                  :loading="optionsLoading"
                   allow-clear
                   :placeholder="field.placeholder"
                 />
@@ -147,6 +150,7 @@
                   v-model="model[field.key]"
                   :options="optionList(field)"
                   :disabled="isFieldReadonly(field)"
+                  :loading="optionsLoading"
                   multiple
                   allow-clear
                 />
@@ -277,17 +281,19 @@
 
     <div v-if="printMode && schema.print?.showApprovalHistory !== false && timeline?.length" class="print-timeline mt-6">
       <h3 class="font-semibold mb-2">审批记录</h3>
+      <!-- 审批记录表：带 <caption> 与 th scope，读屏可正确播报表头 -->
       <table class="w-full text-sm border-collapse">
+        <caption class="a11y-table-caption">审批记录</caption>
         <thead>
           <tr class="border-b">
-            <th class="text-left py-1">操作</th>
-            <th class="text-left py-1">意见</th>
-            <th class="text-left py-1">时间</th>
+            <th scope="col" class="text-left py-1">操作</th>
+            <th scope="col" class="text-left py-1">意见</th>
+            <th scope="col" class="text-left py-1">时间</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="t in timeline" :key="t.id" class="border-b">
-            <td class="py-1">{{ t.action }}</td>
+            <td class="py-1">{{ timelineActionLabel(t.action) }}</td>
             <td class="py-1">{{ t.comment }}</td>
             <td class="py-1">{{ formatDateTime(t.created_at) }}</td>
           </tr>
@@ -299,9 +305,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, provide, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, provide, reactive, ref, toRaw, watch } from 'vue'
 import { api, type ApiResponse } from '@/api/client'
-import LeaveCalendarField from '@/components/form/LeaveCalendarField.vue'
+// 日历控件带 FullCalendar（约 200KB），只有表单里真的有请假字段时才加载
+const LeaveCalendarField = defineAsyncComponent(() => import('@/components/form/LeaveCalendarField.vue'))
 import DateRangeField from '@/components/form/DateRangeField.vue'
 import { loadFormFillerContext, type FormFillerContext } from '@/composables/useFormFillerDefaults'
 import {
@@ -335,6 +342,7 @@ import {
 } from '@/composables/useFieldLinkage'
 import { getSpan, isDetailRowArray } from '@/types/form'
 import { formatDate, formatDateTime } from '@/utils/dateTime'
+import { timelineActionLabel } from '@/utils/printFormat'
 import {
   autoDaysKeyOf,
   buildDateRangeValue,
@@ -380,7 +388,11 @@ const props = withDefaults(
   },
 )
 
-const emit = defineEmits<{ 'update:modelValue': [Record<string, unknown>] }>()
+const emit = defineEmits<{
+  'update:modelValue': [Record<string, unknown>]
+  /** 默认值回填完成后通知父组件：父组件据此重置「未保存修改」的基准快照 */
+  'defaults-applied': [Record<string, unknown>]
+}>()
 
 const model = reactive<Record<string, unknown>>({ ...(props.modelValue || {}) })
 const userOpts = ref<{ label: string; value: number }[]>([])
@@ -637,21 +649,44 @@ function optionDisplayLabel(field: FormFieldDef, raw: unknown) {
   return resolveOptionLabel(raw, opts)
 }
 
+/** 选项下拉预取中：预取完成前下拉显示 loading，避免用户看到空列表 */
+const optionsLoading = ref(false)
+
 async function preloadFieldOptions() {
   const map: Record<string, FieldOptionItem[]> = {}
+  const jobs: Promise<void>[] = []
+  const pushJob = (id: string, target: FormFieldDef) => {
+    jobs.push(
+      resolveFieldOptions(target)
+        .then((opts) => {
+          map[id] = opts
+        })
+        .catch(() => {
+          // 单个选项集加载失败不影响其它字段，留空列表即可
+          map[id] = []
+        }),
+    )
+  }
   for (const sec of props.schema.sections || []) {
     for (const field of sec.fields || []) {
-      if (['select', 'multi_select', 'radio', 'checkbox_group'].includes(field.type)) {
-        map[field.id] = await resolveFieldOptions(field)
-      }
+      if (isOptionField(field.type)) pushJob(field.id, field)
       if (field.type === 'detail') {
         for (const col of (field.props?.columns as FormFieldDef[]) || []) {
-          if (['select', 'multi_select', 'radio', 'checkbox_group'].includes(col.type)) {
-            map[col.id] = await resolveFieldOptions(col)
-          }
+          if (isOptionField(col.type)) pushJob(col.id, col)
         }
       }
     }
+  }
+  if (!jobs.length) {
+    fieldOptionsMap.value = map
+    return
+  }
+  // 改为并发预取：原来逐个 await 会让选项越多首屏等待越久
+  optionsLoading.value = true
+  try {
+    await Promise.all(jobs)
+  } finally {
+    optionsLoading.value = false
   }
   fieldOptionsMap.value = map
 }
@@ -787,12 +822,29 @@ function recalcFormulas() {
   syncFormFormulas(props.schema, model)
 }
 
+/**
+ * 抑制「外部回灌」引起的自触发。
+ *
+ * 原本 model 与 props.modelValue 双向 deep watch：
+ * model 变化 → emit → 父组件更新 props → Object.assign 回 model → model 再次变化。
+ * 长表单里每次击键都会触发全表浅拷贝 + 公式重算 + 联动清理，
+ * 且存在无限回环风险。用 applyingExternal 标记外部回灌窗口，
+ * 窗口内的 model 变化不再向外 emit。
+ */
+let applyingExternal = false
+
+/** 最近一次 emit 出去的载荷：父组件回灌的就是它，可直接跳过重复重算 */
+const emittedPayloads = new WeakSet<object>()
+
 watch(
   model,
   () => {
+    if (applyingExternal) return
     clearHiddenFieldValues(props.schema, model, linkageCtx.value)
     recalcFormulas()
-    emit('update:modelValue', { ...model })
+    const payload = { ...model }
+    emittedPayloads.add(payload)
+    emit('update:modelValue', payload)
   },
   { deep: true },
 )
@@ -807,7 +859,19 @@ watch(
 watch(
   () => props.modelValue,
   async (v) => {
-    if (v) Object.assign(model, v)
+    if (!v) return
+    // 自己刚 emit 出去的数据被父组件原样送回：内容已是最新，
+    // 再跑一遍 Object.assign + 公式重算纯属浪费（每次击键都会命中）。
+    // 父组件多包一层 reactive，所以要同时比对原始对象。
+    if (typeof v === 'object' && (emittedPayloads.has(v) || emittedPayloads.has(toRaw(v)))) return
+    applyingExternal = true
+    try {
+      Object.assign(model, v)
+    } finally {
+      // watch 回调默认在 pre-flush 队列执行，这里要等本轮刷新跑完再解除标记
+      await nextTick()
+      applyingExternal = false
+    }
     ensureModelDefaults()
     recalcFormulas()
     await enrichDeptOptsFromModel()
@@ -820,6 +884,8 @@ onMounted(async () => {
   recalcFormulas()
   await preloadFieldOptions()
   await reloadPickerData()
+  // 默认值（含人员/部门默认回填）已全部落位：通知父组件重置「未保存修改」基准
+  emit('defaults-applied', { ...model })
 })
 
 watch(
@@ -827,6 +893,7 @@ watch(
   async () => {
     ensureModelDefaults()
     await reloadPickerData()
+    emit('defaults-applied', { ...model })
   },
   { deep: true },
 )
@@ -876,7 +943,7 @@ watch(
 .form-renderer.device-mobile :deep(.money-field--inline .money-grid) {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .form-renderer.device-mobile :deep(.money-field--inline .money-label) {
@@ -919,20 +986,21 @@ watch(
 }
 
 .form-renderer.is-print {
-  padding: 12px;
-  background: #fff;
+  padding: var(--app-space-md);
+  background: var(--surface);
 }
 
 .print-head h1 {
-  font-size: 1.25rem;
+  font-size: var(--app-font-xl);
   font-weight: 700;
-  margin: 0 0 8px;
+  margin: 0 0 var(--app-space-8);
 }
 
 .section-title {
   font-weight: 600;
   font-size: var(--app-font-base, 16px);
-  margin-bottom: 10px;
+  margin: 0 0 var(--app-space-10);
+  line-height: 1.4;
 }
 
 @media print {

@@ -3,11 +3,11 @@
     <p class="i18n-panel-desc">{{ t('settings.i18n_panel_desc') }}</p>
     <p class="i18n-coverage-hint">{{ t('settings.i18n_coverage_hint') }}</p>
 
-    <a-form layout="inline" class="i18n-filter-form">
-      <a-form-item :label="t('settings.i18n_locale')">
+    <a-form :model="filter" layout="inline" class="i18n-filter-form">
+      <a-form-item field="locale" :label="t('settings.i18n_locale')">
         <a-select v-model="filter.locale" :options="localeOpts" style="width: 140px" @change="onLocaleChange" />
       </a-form-item>
-      <a-form-item :label="t('settings.i18n_namespace')">
+      <a-form-item field="namespace" :label="t('settings.i18n_namespace')">
         <a-select
           v-model="filter.namespace"
           :options="namespaceOpts"
@@ -18,10 +18,10 @@
           @change="onNamespaceChange"
         />
       </a-form-item>
-      <a-form-item :label="t('settings.i18n_search')">
+      <a-form-item field="q" :label="t('settings.i18n_search')">
         <a-input v-model="filter.q" allow-clear :placeholder="t('settings.i18n_search_ph')" style="width: 200px" />
       </a-form-item>
-      <a-form-item>
+      <a-form-item field="emptyOnly">
         <a-checkbox v-model="filter.emptyOnly">{{ t('settings.i18n_empty_only') }}</a-checkbox>
       </a-form-item>
       <a-form-item>
@@ -104,15 +104,15 @@
       @ok="submitModal"
       @cancel="modalVisible = false"
     >
-      <a-form layout="vertical">
-        <a-form-item :label="t('settings.i18n_lang')" required>
+      <a-form :model="editForm" layout="vertical">
+        <a-form-item field="locale" :label="t('settings.i18n_lang')" required>
           <a-select
             v-model="editForm.locale"
             :options="localeOpts"
             :disabled="!!editForm.id"
           />
         </a-form-item>
-        <a-form-item :label="t('settings.i18n_namespace')" required>
+        <a-form-item field="namespace" :label="t('settings.i18n_namespace')" required>
           <a-select
             v-model="editForm.namespace"
             :options="namespaceOpts"
@@ -123,7 +123,7 @@
             @change="loadKeyOptions"
           />
         </a-form-item>
-        <a-form-item :label="t('settings.i18n_pick_key')" required>
+        <a-form-item field="msg_key" :label="t('settings.i18n_pick_key')" required>
           <a-select
             v-if="!editForm.id"
             v-model="editForm.msg_key"
@@ -139,14 +139,14 @@
             disabled
           />
         </a-form-item>
-        <a-form-item :label="t('settings.i18n_col_value')">
+        <a-form-item field="msg_value" :label="t('settings.i18n_col_value')">
           <a-textarea
             v-model="editForm.msg_value"
             :auto-size="{ minRows: 2, maxRows: 6 }"
             :placeholder="t('settings.i18n_value_ph')"
           />
         </a-form-item>
-        <a-form-item :label="t('settings.i18n_desc_optional')">
+        <a-form-item field="description" :label="t('settings.i18n_desc_optional')">
           <a-input v-model="editForm.description" :placeholder="t('settings.i18n_desc_ph')" />
         </a-form-item>
       </a-form>
@@ -158,8 +158,8 @@
       :width="720"
       unmount-on-close
     >
-      <a-form layout="inline" class="keys-drawer-filter">
-        <a-form-item :label="t('settings.i18n_namespace')">
+      <a-form :model="catalogFilter" layout="inline" class="keys-drawer-filter">
+        <a-form-item field="namespace" :label="t('settings.i18n_namespace')">
           <a-select
             v-model="catalogFilter.namespace"
             :options="namespaceOpts"
@@ -170,7 +170,7 @@
             @change="loadCatalog"
           />
         </a-form-item>
-        <a-form-item :label="t('settings.i18n_search')">
+        <a-form-item field="q" :label="t('settings.i18n_search')">
           <a-input
             v-model="catalogFilter.q"
             allow-clear
@@ -276,6 +276,9 @@ const DEFAULT_NAMESPACES = [
   'flowRole',
   'flowDesign',
   'wfSettings',
+  'print',
+  'profile',
+  'finance',
 ]
 
 const { t, locale } = useI18n()
@@ -560,14 +563,14 @@ onMounted(async () => {
 <style scoped>
 .i18n-panel-desc {
   margin: 0 0 0.5rem;
-  font-size: 0.9375rem;
+  font-size: var(--app-font-md);
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .i18n-coverage-hint {
   margin: 0 0 1rem;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   color: var(--text-tertiary);
   line-height: 1.5;
 }
@@ -588,7 +591,7 @@ onMounted(async () => {
 }
 
 .i18n-desc {
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   color: var(--text-tertiary);
 }
 
@@ -596,12 +599,12 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
 }
 
 .ref-locale {
   color: var(--text-tertiary);
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
 }
 
 .ref-text {
@@ -620,12 +623,12 @@ onMounted(async () => {
 
 .catalog-count {
   margin: 0 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   color: var(--text-tertiary);
 }
 
 .seed-text {
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;

@@ -1,7 +1,7 @@
 <template>
   <a-drawer
     :visible="visible"
-    :width="520"
+    :width="'min(520px, 100vw)'"
     :popup-container="drawerPopupContainer"
     unmount-on-close
     :title="drawerTitle"
@@ -23,13 +23,18 @@
         :title="assigneeTabTitle"
       >
         <a-form layout="vertical" size="small">
-          <a-form-item :label="t('flowDesign.node_title')">
+          <a-form-item field="title" :label="t('flowDesign.node_title')">
             <a-input v-model="localConfig.title" :placeholder="t('flowDesign.node_title_ph')" />
           </a-form-item>
 
           <template v-if="isTaskNode">
-            <a-form-item :label="t('flowDesign.approve_mode')">
-              <a-radio-group v-model="localConfig.apv_rel" type="button" size="small">
+            <a-form-item field="apv_rel" :label="t('flowDesign.approve_mode')">
+              <a-radio-group
+                v-model="localConfig.apv_rel"
+                type="button"
+                size="small"
+                :aria-label="t('flowDesign.approve_mode')"
+              >
                 <a-radio value="or">{{ t('flowDesign.mode_or') }}</a-radio>
                 <a-radio value="and">{{ t('flowDesign.mode_and') }}</a-radio>
                 <a-radio value="sequential">{{ t('flowDesign.mode_seq') }}</a-radio>
@@ -37,8 +42,13 @@
             </a-form-item>
           </template>
 
-          <a-form-item :label="t('flowDesign.assignee_type')">
-            <a-radio-group v-model="localConfig.assignee_type" direction="vertical" class="assignee-radio-group">
+          <a-form-item field="assignee_type" :label="t('flowDesign.assignee_type')">
+            <a-radio-group
+              v-model="localConfig.assignee_type"
+              direction="vertical"
+              class="assignee-radio-group"
+              :aria-label="t('flowDesign.assignee_type')"
+            >
               <a-radio value="initiator_dept_manager">{{ t('flowDesign.assignee_dept_mgr') }}</a-radio>
               <a-radio value="parent_dept_manager">{{ t('flowDesign.assignee_parent_mgr') }}</a-radio>
               <a-radio value="dept_chain">{{ t('flowDesign.assignee_dept_chain') }}</a-radio>
@@ -60,31 +70,46 @@
             {{ t('flowDesign.flow_role_hint') }}
           </a-alert>
 
-          <a-form-item v-if="localConfig.assignee_type === 'flow_role'" :label="t('flowDesign.role_code')">
+          <a-form-item
+            v-if="localConfig.assignee_type === 'flow_role'"
+            field="flow_role_code"
+            :label="t('flowDesign.role_code')"
+          >
             <a-select
               v-model="localConfig.flow_role_code"
               :options="flowRoleOpts"
               allow-search
               :placeholder="t('flowDesign.pick_role')"
+              :aria-label="t('flowDesign.role_code')"
             />
           </a-form-item>
 
-          <a-form-item v-if="localConfig.assignee_type === 'fixed_users'" :label="t('flowDesign.pick_users')">
+          <a-form-item
+            v-if="localConfig.assignee_type === 'fixed_users'"
+            field="user_ids"
+            :label="t('flowDesign.pick_users')"
+          >
             <a-select
               v-model="localConfig.user_ids"
               :options="userOpts"
               multiple
               allow-search
               :max-tag-count="3"
+              :aria-label="t('flowDesign.pick_users')"
             />
           </a-form-item>
 
-          <a-form-item v-if="localConfig.assignee_type === 'dept_manager'" :label="t('flowDesign.pick_dept')">
+          <a-form-item
+            v-if="localConfig.assignee_type === 'dept_manager'"
+            field="department_id"
+            :label="t('flowDesign.pick_dept')"
+          >
             <a-tree-select
               v-model="localConfig.department_id"
               :data="deptTree"
               :placeholder="t('flowDesign.pick_dept')"
               allow-search
+              :aria-label="t('flowDesign.pick_dept')"
               :field-names="{ key: 'id', title: 'name', children: 'children' }"
             />
           </a-form-item>
@@ -93,6 +118,8 @@
 
       <a-tab-pane v-if="nodeType === 'condition'" key="condition" :title="t('flowDesign.tab_condition')">
         <p class="hint">{{ t('flowDesign.condition_hint') }}</p>
+        <!-- 空数据提示：只有默认分支时给出说明，而不是一片空白 -->
+        <p v-if="!localBranches.length" class="branch-empty" role="status">{{ t('flowDesign.no_branch') }}</p>
         <div v-for="(br, bi) in localBranches" :key="bi" class="branch-card">
           <div class="branch-head">
             <span>{{ br.expr === 'default' ? t('flowDesign.default_branch') : t('flowDesign.branch_n', { n: bi + 1 }) }}</span>
@@ -100,15 +127,26 @@
               v-if="br.expr !== 'default'"
               size="mini"
               status="danger"
+              :aria-label="`删除${t('flowDesign.branch_n', { n: bi + 1 })}`"
               @click="removeBranch(bi)"
             >
-              删除
+              {{ t('flowDesign.branch_delete') }}
             </a-button>
           </div>
-          <a-form-item v-if="br.expr !== 'default'" :label="t('flowDesign.branch_label')" class="!mb-2">
+          <a-form-item
+            v-if="br.expr !== 'default'"
+            :field="`branch_label_${bi}`"
+            :label="t('flowDesign.branch_label')"
+            class="!mb-2"
+          >
             <a-input v-model="branchLabels[bi]" :placeholder="t('flowDesign.branch_label_ph')" />
           </a-form-item>
-          <a-form-item v-if="br.expr !== 'default'" :label="t('flowDesign.branch_priority')" class="!mb-2">
+          <a-form-item
+            v-if="br.expr !== 'default'"
+            :field="`branch_priority_${bi}`"
+            :label="t('flowDesign.branch_priority')"
+            class="!mb-2"
+          >
             <a-input-number v-model="branchPriorities[bi]" :min="1" :max="98" />
           </a-form-item>
           <template v-if="br.expr !== 'default'">
@@ -117,19 +155,22 @@
                 v-model="branchExprs[bi].field"
                 :options="formFieldOpts"
                 :placeholder="t('flowDesign.pick_field')"
+                :aria-label="t('flowDesign.pick_field')"
                 allow-search
                 @change="onBranchFieldChange(bi)"
               />
               <a-select
                 v-model="branchExprs[bi].op"
                 :options="opOptsForBranch(bi)"
-                style="width: 108px"
+                :aria-label="t('flowDesign.compare_op')"
+                class="branch-op"
               />
               <a-select
                 v-if="fieldTypeForBranch(bi) === 'switch'"
                 v-model="branchExprs[bi].value"
                 :options="switchCondOpts"
-                style="min-width: 108px"
+                :aria-label="t('flowDesign.cond_value')"
+                class="branch-value"
               />
               <a-select
                 v-else-if="['select', 'radio'].includes(fieldTypeForBranch(bi) || '')"
@@ -138,27 +179,40 @@
                 :loading="isFieldOptionLoading(bi)"
                 allow-search
                 :placeholder="t('flowDesign.cond_value')"
-                style="min-width: 140px"
+                :aria-label="t('flowDesign.cond_value')"
+                class="branch-value"
               />
               <a-input-number
                 v-else-if="isNumericBranchField(bi)"
                 v-model="branchNumericValues[bi]"
                 :placeholder="t('flowDesign.cond_value')"
-                style="width: 140px"
+                :aria-label="t('flowDesign.cond_value')"
+                class="branch-value"
               />
               <a-input
                 v-else
                 v-model="branchExprs[bi].value"
                 :placeholder="t('flowDesign.cond_value')"
+                :aria-label="t('flowDesign.cond_value')"
               />
             </div>
             <p class="branch-preview">{{ previewExpr(bi) }}</p>
             <p v-if="fieldTypeForBranch(bi) === 'switch'" class="branch-type-hint">
-              开关字段请使用「等于 / 不等于」配合「开启 / 关闭」。
+              {{ t('flowDesign.switch_field_hint') }}
             </p>
           </template>
-          <a-form-item v-if="!visualMode" :label="t('flowDesign.goto_node')" class="!mb-0 mt-2">
-            <a-select v-model="br.target" :options="targetOpts" allow-search />
+          <a-form-item
+            v-if="!visualMode"
+            field="goto_node"
+            :label="t('flowDesign.goto_node')"
+            class="!mb-0 mt-2"
+          >
+            <a-select
+              v-model="br.target"
+              :options="targetOpts"
+              allow-search
+              :aria-label="t('flowDesign.goto_node')"
+            />
           </a-form-item>
           <p v-else-if="br.expr !== 'default'" class="visual-hint">{{ t('flowDesign.branch_path_visual') }}</p>
         </div>
@@ -171,12 +225,16 @@
         :title="t('flowDesign.tab_permissions')"
       >
         <p class="hint">{{ t('flowDesign.perm_hint') }}</p>
+        <!-- 空数据提示：没有表单字段时给出说明，而不是只渲染一张空表头 -->
+        <p v-if="!permRows.length" class="branch-empty" role="status">{{ t('flowDesign.no_perm_fields') }}</p>
         <a-table
+          v-else
           :data="permRows"
           :pagination="false"
           size="small"
           row-key="key"
           :scroll="{ y: 360 }"
+          :data-caption="t('flowDesign.perm_hint')"
         >
           <template #columns>
             <a-table-column :title="t('flowDesign.perm_field')" data-index="label" :width="148">
@@ -190,6 +248,7 @@
                   :model-value="localConfig.field_permissions![record.key]"
                   type="button"
                   size="mini"
+                  :aria-label="t('flowDesign.perm_aria', { label: record.label })"
                   @change="(v: string | number | boolean) => onPermChange(record.key, String(v) as FieldPermMode)"
                 >
                   <a-radio value="hidden">{{ t('flowDesign.perm_hidden') }}</a-radio>
@@ -203,6 +262,7 @@
                 <a-checkbox
                   :model-value="!!localConfig.field_node_required?.[record.key]"
                   :disabled="localConfig.field_permissions![record.key] !== 'edit'"
+                  :aria-label="`${record.label}：${t('flowDesign.perm_node_required')}`"
                   @change="(checked: boolean) => setNodeRequired(record.key, checked)"
                 />
               </template>
@@ -212,6 +272,7 @@
                 <a-checkbox
                   :model-value="!!localConfig.field_must_modify?.[record.key]"
                   :disabled="localConfig.field_permissions![record.key] !== 'edit'"
+                  :aria-label="`${record.label}：${t('flowDesign.perm_must_modify')}`"
                   @change="(checked: boolean) => setMustModify(record.key, checked)"
                 />
               </template>
@@ -236,13 +297,19 @@
             <a-switch
               size="small"
               :model-value="!!localSendEmail.enabled"
+              :aria-label="t('flowDesign.send_email_enable')"
               @update:model-value="setSendEmailEnabled"
             />
           </div>
           <div v-show="localSendEmail.enabled" class="node-drawer-fields">
             <div class="node-drawer-field">
               <div class="node-drawer-label">{{ t('flowDesign.send_email_trigger') }}</div>
-              <a-radio-group v-model="localSendEmail.trigger" type="button" size="small">
+              <a-radio-group
+                v-model="localSendEmail.trigger"
+                type="button"
+                size="small"
+                :aria-label="t('flowDesign.send_email_trigger')"
+              >
                 <a-radio value="on_enter">{{ t('flowDesign.send_email_trigger_enter') }}</a-radio>
                 <a-radio value="on_complete">{{ t('flowDesign.send_email_trigger_complete') }}</a-radio>
               </a-radio-group>
@@ -256,7 +323,11 @@
             </div>
             <div class="node-drawer-field">
               <div class="node-drawer-label">{{ t('flowDesign.send_email_recipient_type') }}</div>
-              <a-radio-group v-model="localSendEmail.recipient_type" direction="vertical">
+              <a-radio-group
+                v-model="localSendEmail.recipient_type"
+                direction="vertical"
+                :aria-label="t('flowDesign.send_email_recipient_type')"
+              >
                 <a-radio value="org_user">{{ t('flowDesign.send_email_org_user') }}</a-radio>
                 <a-radio value="form_field">{{ t('flowDesign.send_email_form_field') }}</a-radio>
               </a-radio-group>
@@ -273,6 +344,7 @@
                 allow-search
                 :max-tag-count="3"
                 :placeholder="t('flowDesign.send_email_pick_users_ph')"
+                :aria-label="t('flowDesign.send_email_pick_users')"
               />
             </div>
             <div v-else class="node-drawer-field">
@@ -282,6 +354,7 @@
                 :options="emailFieldOpts"
                 allow-search
                 :placeholder="t('flowDesign.send_email_pick_field_ph')"
+                :aria-label="t('flowDesign.send_email_pick_field')"
               />
               <p v-if="!emailFieldOpts.length" class="hint mt-1">{{ t('flowDesign.send_email_no_field') }}</p>
             </div>
@@ -292,6 +365,7 @@
               <a-input
                 v-model="localSendEmail.subject"
                 :placeholder="t('flowDesign.send_email_subject_ph')"
+                :aria-label="t('flowDesign.send_email_subject')"
               />
             </div>
             <div class="node-drawer-field">
@@ -300,6 +374,7 @@
                 v-model="localSendEmail.body"
                 :auto-size="{ minRows: 5, maxRows: 12 }"
                 :placeholder="t('flowDesign.send_email_body_ph')"
+                :aria-label="t('flowDesign.send_email_body')"
               />
             </div>
             <p v-if="isZhLocale" class="hint hint-vars" v-pre>可用占位符：{{flow_name}}、{{display_no}}、{{initiator_name}}、{{node_name}}、{{recipient_name}}、{{detail_url}}、{{form_summary}}</p>
@@ -320,6 +395,7 @@
             <a-switch
               size="small"
               :model-value="!!localNotifyApplicant.enabled"
+              :aria-label="t('flowDesign.notify_applicant_enable')"
               @update:model-value="setNotifyApplicantEnabled"
             />
           </div>
@@ -329,6 +405,7 @@
               <a-input
                 v-model="localNotifyApplicant.subject"
                 :placeholder="t('flowDesign.notify_applicant_subject_ph')"
+                :aria-label="t('flowDesign.notify_applicant_subject')"
               />
             </div>
             <div class="node-drawer-field">
@@ -337,6 +414,7 @@
                 v-model="localNotifyApplicant.body"
                 :auto-size="{ minRows: 6, maxRows: 12 }"
                 :placeholder="t('flowDesign.notify_applicant_body_ph')"
+                :aria-label="t('flowDesign.notify_applicant_body')"
               />
             </div>
             <p v-if="isZhLocale" class="hint hint-vars" v-pre>可用占位符：{{flow_name}}、{{display_no}}、{{initiator_name}}、{{detail_url}}、{{handler_node_name}}</p>
@@ -347,7 +425,7 @@
 
       <a-tab-pane v-if="nodeType === 'start'" key="start" :title="t('flowDesign.tab_start')">
         <a-alert type="info">{{ t('flowDesign.start_hint') }}</a-alert>
-        <a-form-item class="mt-3" :label="t('flowDesign.node_title')">
+        <a-form-item field="title" class="mt-3" :label="t('flowDesign.node_title')">
           <a-input v-model="localConfig.title" />
         </a-form-item>
       </a-tab-pane>
@@ -363,7 +441,9 @@
         </a-popconfirm>
         <a-space>
           <a-button @click="emit('close')">{{ t('common.cancel') }}</a-button>
-          <a-button type="primary" @click="onConfirm">{{ t('common.ok') }}</a-button>
+          <a-button type="primary" :loading="saving" :disabled="saving" @click="onConfirm">
+            {{ t('common.ok') }}
+          </a-button>
         </a-space>
       </div>
     </template>
@@ -373,6 +453,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Message } from '@arco-design/web-vue'
 import { api, type ApiResponse } from '@/api/client'
 import {
   fieldOptionsToSelectOpts,
@@ -415,6 +496,8 @@ const props = withDefaults(
     branches?: ConditionBranch[]
     formSchema?: FormSchema
     targetNodeIds: string[]
+    /** 节点 id → 可读标题，供「跳转目标」下拉展示 */
+    targetNodeLabels?: Record<string, string>
     /** 垂直流程模式：分支路径由画布维护，不手动选跳转节点 */
     visualMode?: boolean
     /** 全屏时将抽屉挂载到该容器内，避免被全屏层遮挡 */
@@ -451,6 +534,8 @@ const localNotifyApplicant = reactive<NodeNotifyApplicantConfig>({
   body: '',
 })
 const localBranches = ref<ConditionBranch[]>([])
+/** 保存中（防止重复提交） */
+const saving = ref(false)
 const branchExprs = ref<{ field: string; op: string; value: string }[]>([])
 const branchNumericValues = ref<(number | undefined)[]>([])
 const branchLabels = ref<string[]>([])
@@ -509,7 +594,8 @@ const emailFieldOpts = computed(() =>
 const targetOpts = computed(() =>
   props.targetNodeIds
     .filter((id) => id !== props.nodeId)
-    .map((id) => ({ label: id, value: id })),
+    // 展示节点的可读标题，而不是内部 node id
+    .map((id) => ({ label: props.targetNodeLabels?.[id] || id, value: id })),
 )
 
 const opOpts = computed(() =>
@@ -776,21 +862,23 @@ function addBranch() {
       ? 'true'
       : staticFieldOptionItems(findFormFieldDef(props.formSchema, fieldKeyFromConditionPath(firstField)))[0]
           ?.value || ''
-  localBranches.value.splice(localBranches.value.length - 1, 0, {
+  // 插入位置必须在改动数组长度之前算好，否则后续 splice 会用到已变更的长度
+  const insertAt = localBranches.value.length - 1
+  localBranches.value.splice(insertAt, 0, {
     expr: { field: firstField, op: defaultOp, value: defaultValue },
     target: '',
-    label: `条件 ${pri}`,
+    label: t('flowDesign.branch_label_new', { n: pri }),
     priority: pri,
   })
-  branchExprs.value.splice(branchExprs.value.length - 1, 0, {
+  branchExprs.value.splice(insertAt, 0, {
     field: firstField,
     op: defaultOp,
     value: defaultValue,
   })
-  branchNumericValues.value.splice(branchExprs.value.length - 1, 0, undefined)
-  branchLabels.value.splice(branchLabels.value.length - 1, 0, `条件 ${pri}`)
-  branchPriorities.value.splice(branchPriorities.value.length - 1, 0, pri)
-  const newBi = branchExprs.value.length - 2
+  branchNumericValues.value.splice(insertAt, 0, undefined)
+  branchLabels.value.splice(insertAt, 0, t('flowDesign.branch_label_new', { n: pri }))
+  branchPriorities.value.splice(insertAt, 0, pri)
+  const newBi = insertAt
   if (newBi >= 0 && ['select', 'radio'].includes(firstType || '')) {
     void ensureFieldOptions(firstField, true).then(() => {
       const opts = fieldOptionOpts(newBi)
@@ -813,7 +901,7 @@ function buildBranches(): ConditionBranch[] {
       return {
         expr: 'default',
         target: br.target,
-        label: branchLabels.value[bi] || '默认条件',
+        label: branchLabels.value[bi] || t('flowDesign.default_condition'),
         priority: 99,
       }
     }
@@ -842,6 +930,9 @@ function setAllPerm(mode: FieldPermMode) {
 }
 
 function onConfirm() {
+  // 防止重复提交
+  if (saving.value) return
+  saving.value = true
   applySendEmailToConfig()
   applyNotifyApplicantToConfig()
   const payload: { config: WorkflowNodeConfig; branches?: ConditionBranch[] } = {
@@ -854,29 +945,46 @@ function onConfirm() {
   emit('close')
 }
 
+// 抽屉关闭后复位保存状态，允许再次打开时保存
+watch(
+  () => props.visible,
+  (v) => {
+    if (!v) saving.value = false
+  },
+)
+
 async function loadOptions() {
-  const [roles, users] = await Promise.all([
+  // 选项加载失败时不能抛出未捕获异常：下拉会退化为空，但要有明确提示
+  const [roles, users] = await Promise.allSettled([
     api.get<ApiResponse<{ code: string; name: string }[]>>('/admin/flow-roles'),
     api.get<ApiResponse<{ id: number; display_name: string; username: string }[]>>('/workflow/users/options'),
   ])
-  if (roles.data.ok) {
-    flowRoleOpts.value = roles.data.data.map((r) => ({
+  if (roles.status === 'fulfilled' && roles.value.data.ok) {
+    flowRoleOpts.value = roles.value.data.data.map((r) => ({
       label: `${r.name}（${r.code}）`,
       value: r.code,
     }))
+  } else {
+    Message.warning(t('flowDesign.role_load_failed'))
   }
-  if (users.data.ok) {
-    userOpts.value = users.data.data.map((u) => ({
+  if (users.status === 'fulfilled' && users.value.data.ok) {
+    userOpts.value = users.value.data.data.map((u) => ({
       label: u.display_name || u.username,
       value: u.id,
     }))
+  } else {
+    Message.warning(t('flowDesign.user_load_failed'))
   }
-  const primary = await api.get<ApiResponse<{ id: number }>>('/org/primary')
-  if (primary.data.ok?.id) {
-    const st = await api.get<ApiResponse<{ departments: Record<string, unknown>[] }>>(
-      `/org/companies/${primary.data.data.id}/structure`,
-    )
-    if (st.data.ok) deptTree.value = (st.data.data.tree as Record<string, unknown>[]) || []
+  try {
+    const primary = await api.get<ApiResponse<{ id: number }>>('/org/primary')
+    if (primary.data.ok?.id) {
+      const st = await api.get<ApiResponse<{ departments: Record<string, unknown>[] }>>(
+        `/org/companies/${primary.data.data.id}/structure`,
+      )
+      if (st.data.ok) deptTree.value = (st.data.data.tree as Record<string, unknown>[]) || []
+    }
+  } catch {
+    Message.warning(t('flowDesign.dept_load_failed'))
   }
 }
 
@@ -924,22 +1032,22 @@ watch(
 
 <style scoped>
 .hint {
-  font-size: 12px;
-  color: #86909c;
-  margin: 0 0 12px;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
+  margin: 0 0 var(--app-space-md);
   line-height: 1.5;
 }
 
 .assignee-radio-group :deep(.arco-radio) {
-  margin-bottom: 6px;
+  margin-bottom: var(--app-space-6);
 }
 
 .branch-card {
-  border: 1px solid #e5e6eb;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--app-space-10);
+  margin-bottom: var(--app-space-10);
+  background: var(--surface-muted);
 }
 
 .branch-head {
@@ -947,33 +1055,59 @@ watch(
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
-  font-size: 12px;
-  margin-bottom: 8px;
+  font-size: var(--app-font-xs);
+  margin-bottom: var(--app-space-sm);
 }
 
 .branch-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) 108px minmax(0, 1fr);
-  gap: 8px;
+  /* 固定 108px / 140px 在窄屏放不下，统一用 minmax(0,1fr) 自适应 */
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 108px) minmax(0, 1fr);
+  gap: var(--app-space-8);
+}
+
+/* 窄屏：条件行改为单列堆叠，避免横向溢出 */
+@media (max-width: 640px) {
+  .branch-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 空数据提示 */
+.branch-empty {
+  margin: 0 0 var(--app-space-10);
+  padding: var(--app-space-14) var(--app-space-10);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-tertiary);
+  font-size: var(--app-font-xs);
+  text-align: center;
+}
+
+/* 条件行内的下拉填满所在栅格列 */
+.branch-op,
+.branch-value {
+  width: 100%;
+  min-width: 0;
 }
 
 .branch-preview {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: #165dff;
+  margin: var(--app-space-6) 0 0;
+  font-size: var(--app-font-xs);
+  color: var(--brand-text);
 }
 
 .branch-type-hint {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #86909c;
+  margin: var(--app-space-xs) 0 0;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
   line-height: 1.45;
 }
 
 .visual-hint {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #86909c;
+  margin: var(--app-space-sm) 0 0;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
 }
 
 .drawer-footer {
@@ -1000,32 +1134,32 @@ watch(
 .node-config-drawer-tabs :deep(.arco-tabs-pane) {
   height: auto !important;
   overflow: visible;
-  padding-top: 4px;
+  padding-top: var(--app-space-4);
 }
 
 .node-drawer-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--app-space-12);
 }
 
 .node-drawer-fields {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--app-space-12);
 }
 
 .node-drawer-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--app-space-6);
 }
 
 .node-drawer-field--switch {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--app-space-12);
 }
 
 .node-drawer-field--switch .node-drawer-label {
@@ -1041,8 +1175,8 @@ watch(
 }
 
 .node-drawer-label {
-  font-size: 13px;
-  color: var(--color-text-2, #4e5969);
+  font-size: var(--app-font-sm);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 

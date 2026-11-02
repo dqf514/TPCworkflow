@@ -19,7 +19,7 @@
                 readonly
                 :device="formDevice"
               />
-              <a-empty v-else description="无表单数据" />
+              <a-empty v-else :description="t('workflow.no_form_data')" />
             </div>
           </main>
 
@@ -193,7 +193,7 @@ onMounted(async () => {
       inst.value = res.data.data as typeof inst.value
       const fs = res.data.data.form_schema as FormSchema
       if (!fs?.sections) inst.value!.form_schema = DEFAULT_FORM_SCHEMA()
-      void badges.refresh(true)
+      void badges.refresh()
     }
   } catch {
     inst.value = null
@@ -211,7 +211,7 @@ onMounted(async () => {
 .instance-detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--app-space-16);
   align-items: start;
 }
 
@@ -231,13 +231,13 @@ onMounted(async () => {
 }
 
 .instance-detail-card {
-  padding: 18px 20px 20px;
+  padding: var(--app-space-18) var(--app-space-20) var(--app-space-20);
 }
 
 .instance-detail-rail {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--app-space-12);
   min-width: 0;
 }
 
@@ -252,7 +252,7 @@ onMounted(async () => {
 
 @media (max-width: 767px) {
   .instance-detail-card {
-    padding: 14px;
+    padding: var(--app-space-14);
   }
 }
 </style>

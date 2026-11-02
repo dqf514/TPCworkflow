@@ -43,8 +43,8 @@ const { t } = useI18n()
 <style scoped>
 .unsaved-message {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--app-font-md);
   line-height: 1.6;
-  color: var(--text-secondary, #4e5969);
+  color: var(--text-secondary, #5b6066);
 }
 </style>

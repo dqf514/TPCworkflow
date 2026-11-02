@@ -4,7 +4,9 @@
     :class="[`page-${pageSize}`, `orient-${orientation}`]"
     :style="pageStyle"
   >
-    <table class="wf-pt wf-pt-title">
+    <!-- 单据头信息表为纯版式表格（label/value 排布），标记为 presentation 避免读屏误读为数据表 -->
+    <table class="wf-pt wf-pt-title" role="presentation">
+      <caption class="a11y-table-caption">{{ title }}</caption>
       <colgroup>
         <col class="wf-pt-col-label" />
         <col class="wf-pt-col-value" />
@@ -43,8 +45,10 @@
       </tbody>
     </table>
 
-    <template v-for="(block, bi) in sections" :key="bi">
-      <table class="wf-pt wf-pt-section">
+    <template v-for="block in sections" :key="block.id">
+      <!-- 分区信息表同样是纯版式表格 -->
+      <table class="wf-pt wf-pt-section" role="presentation">
+        <caption class="a11y-table-caption">{{ block.title }}</caption>
         <colgroup>
           <col class="wf-pt-col-label" />
           <col class="wf-pt-col-value" />
@@ -55,7 +59,10 @@
           <tr>
             <td colspan="4" class="wf-pt-section-head">{{ block.title }}</td>
           </tr>
-          <template v-for="(pair, pi) in pairPrintRows(block.rows)" :key="pi">
+          <template
+            v-for="(pair, pi) in pairPrintRows(block.rows)"
+            :key="pair.left?.key || pair.right?.key || `pair-${pi}`"
+          >
             <tr v-if="pair.left?.fullWidth" class="wf-pt-row-full">
               <th class="wf-pt-th">{{ pair.left.label }}</th>
               <td
@@ -86,27 +93,27 @@
         </tbody>
       </table>
 
-      <div v-for="(tb, ti) in block.textBlocks" :key="`tb-${bi}-${ti}`" class="wf-pt-text-block">
+      <div v-for="tb in block.textBlocks" :key="tb.id" class="wf-pt-text-block">
         <div v-if="tb.label" class="wf-pt-text-label">{{ tb.label }}</div>
         <div class="wf-pt-text-body">{{ tb.content }}</div>
       </div>
 
       <table
-        v-for="(dt, di) in block.details"
-        :key="`dt-${bi}-${di}`"
+        v-for="dt in block.details"
+        :key="dt.id"
         class="wf-pt wf-pt-detail"
       >
         <caption class="wf-pt-detail-caption">{{ dt.title }}</caption>
         <thead>
           <tr>
-            <th v-for="col in dt.columns" :key="col.key" class="wf-pt-th">{{ col.label }}</th>
+            <th v-for="col in dt.columns" :key="col.key" scope="col" class="wf-pt-th">{{ col.label }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="!dt.rows.length">
             <td :colspan="dt.columns.length || 1" class="wf-pt-td wf-pt-muted">{{ t('print.no_detail') }}</td>
           </tr>
-          <tr v-for="(row, ri) in dt.rows" :key="ri">
+          <tr v-for="(row, ri) in dt.rows" :key="dt.rowKeys?.[ri] ?? ri">
             <td
               v-for="col in dt.columns"
               :key="col.key"
@@ -116,7 +123,7 @@
               {{ row[col.key] }}
             </td>
           </tr>
-          <tr v-for="(sum, si) in dt.summaryRows || []" :key="`s-${si}`" class="wf-pt-summary-row">
+          <tr v-for="(sum, si) in dt.summaryRows || []" :key="sum.key || sum.label || `s-${si}`" class="wf-pt-summary-row">
             <td
               :colspan="dt.columns.length || 1"
               class="wf-pt-td wf-pt-pre"
@@ -135,7 +142,7 @@
         <col class="wf-pt-col-actor" />
         <col class="wf-pt-col-record" />
       </colgroup>
-      <tbody>
+      <thead>
         <tr>
           <td colspan="3" class="wf-pt-section-head">
             {{ t('print.approval_flow') }} — {{ instanceStatusLabel(meta.status) }}
@@ -146,6 +153,8 @@
           <th class="wf-pt-th wf-pt-th-actor">{{ t('print.handler') }}</th>
           <th class="wf-pt-th wf-pt-th-record">{{ t('print.operation_record') }}</th>
         </tr>
+      </thead>
+      <tbody>
         <tr v-for="item in timeline" :key="item.id">
           <td class="wf-pt-td wf-pt-td-node">{{ timelineNodeLabel(item) }}</td>
           <td class="wf-pt-td wf-pt-td-actor">
@@ -263,6 +272,7 @@ const pageSize = computed(() => (props.schema.print?.pageSize || 'A4').toLowerCa
 const orientation = computed(() => props.schema.print?.orientation || 'portrait')
 const marginMm = computed(() => props.schema.print?.marginMm ?? 12)
 
+// 页边距写在打印稿自身作用域；纸张尺寸/方向/页面宽高由打印容器（.wf-print-mount）统一提供
 const pageStyle = computed(() => ({
   '--wf-print-margin': `${marginMm.value}mm`,
 }))
@@ -303,7 +313,7 @@ defineExpose({
   background: #fff;
   box-sizing: border-box;
   padding: var(--wf-print-margin, 12mm);
-  max-width: 210mm;
+  max-width: var(--wf-print-page-width, 210mm);
   margin: 0 auto;
 }
 
@@ -311,7 +321,7 @@ defineExpose({
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  margin: 0 0 10px;
+  margin: 0 0 var(--app-space-10);
 }
 
 .wf-pt col.wf-pt-col-label {
@@ -325,7 +335,7 @@ defineExpose({
 .wf-pt th,
 .wf-pt td {
   border: 1px solid #000;
-  padding: 5px 8px;
+  padding: 5px var(--app-space-8);
   vertical-align: top;
   word-break: break-word;
 }
@@ -335,7 +345,7 @@ defineExpose({
   font-size: 10pt;
   font-weight: 600;
   color: #333;
-  padding: 6px 8px !important;
+  padding: var(--app-space-6) var(--app-space-8) !important;
   border: 1px solid #000 !important;
   border-bottom: none !important;
   background: #f7f7f7 !important;
@@ -346,7 +356,7 @@ defineExpose({
   font-size: 16pt;
   font-weight: 700;
   letter-spacing: 0.12em;
-  padding: 10px 8px 12px !important;
+  padding: var(--app-space-10) var(--app-space-8) var(--app-space-12) !important;
   border: 1px solid #000 !important;
 }
 
@@ -355,7 +365,7 @@ defineExpose({
   font-weight: 700;
   font-size: 11pt;
   background: #fff !important;
-  padding: 6px 8px !important;
+  padding: var(--app-space-6) var(--app-space-8) !important;
 }
 
 .wf-pt-col-head .wf-pt-th {
@@ -408,7 +418,7 @@ defineExpose({
 }
 
 .wf-pt-detail {
-  margin-bottom: 12px;
+  margin-bottom: var(--app-space-12);
 }
 
 .wf-pt-detail-caption {
@@ -416,7 +426,7 @@ defineExpose({
   text-align: left;
   font-weight: 700;
   font-size: 10.5pt;
-  padding: 4px 0 6px;
+  padding: var(--app-space-4) 0 var(--app-space-6);
 }
 
 .wf-pt-detail .wf-pt-th {
@@ -436,14 +446,14 @@ defineExpose({
 
 .wf-pt-text-block {
   border: 1px solid #000;
-  margin: 0 0 10px;
-  padding: 6px 8px;
+  margin: 0 0 var(--app-space-10);
+  padding: var(--app-space-6) var(--app-space-8);
   page-break-inside: avoid;
 }
 
 .wf-pt-text-label {
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: var(--app-space-4);
 }
 
 .wf-pt-text-body {
@@ -451,7 +461,7 @@ defineExpose({
 }
 
 .wf-pt-actor {
-  margin-bottom: 4px;
+  margin-bottom: var(--app-space-4);
 }
 
 .wf-pt-sign {
@@ -463,7 +473,7 @@ defineExpose({
 }
 
 .wf-pt-time {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
   font-size: 9pt;
   color: #222;
 }
@@ -484,7 +494,7 @@ defineExpose({
 .wf-pt-approval .wf-pt-td-node {
   width: 14%;
   font-size: 9pt;
-  padding: 3px 6px;
+  padding: var(--app-space-3) var(--app-space-6);
   word-break: keep-all;
   white-space: nowrap;
 }
@@ -493,17 +503,19 @@ defineExpose({
 .wf-pt-approval .wf-pt-td-actor {
   width: 10%;
   font-size: 9pt;
-  padding: 3px 4px;
+  padding: var(--app-space-3) var(--app-space-4);
 }
 
 .wf-pt-approval .wf-pt-th-record,
 .wf-pt-approval .wf-pt-td-record {
   width: 76%;
-  padding: 3px 6px;
+  padding: var(--app-space-3) var(--app-space-6);
 }
 
 .wf-pt-approval .wf-pt-td-record {
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .wf-pt-record-text {
@@ -517,12 +529,12 @@ defineExpose({
 }
 
 .wf-pt-approval .wf-pt-actor {
-  margin-bottom: 2px;
+  margin-bottom: var(--app-space-2);
 }
 
 .wf-pt-footer {
-  margin-top: 14px;
-  padding-top: 8px;
+  margin-top: var(--app-space-14);
+  padding-top: var(--app-space-8);
   border-top: 1px solid #000;
   font-size: 9pt;
   page-break-inside: avoid;
@@ -532,7 +544,7 @@ defineExpose({
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 12px;
+  gap: var(--app-space-12);
   flex-wrap: wrap;
 }
 
@@ -549,7 +561,7 @@ defineExpose({
   margin-left: auto;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--app-space-12);
 }
 
 .wf-pt-footer-printer {
@@ -557,7 +569,7 @@ defineExpose({
 }
 
 .wf-pt-footer-note {
-  margin-top: 6px;
+  margin-top: var(--app-space-6);
   color: #333;
 }
 
@@ -572,8 +584,16 @@ defineExpose({
     page-break-after: avoid;
   }
 
-  .wf-pt-section,
+  .wf-pt-section {
+    page-break-inside: avoid;
+  }
+
+  /* 审批记录表允许跨页，<thead> 会在每页自动重复表头 */
   .wf-pt-approval {
+    page-break-inside: auto;
+  }
+
+  .wf-pt-approval tr {
     page-break-inside: avoid;
   }
 

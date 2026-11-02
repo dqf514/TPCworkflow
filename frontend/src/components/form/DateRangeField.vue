@@ -207,7 +207,7 @@ watch(
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  gap: 8px 10px;
+  gap: var(--app-space-8) var(--app-space-10);
 }
 
 .date-range-side {
@@ -215,7 +215,7 @@ watch(
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--app-space-6);
 }
 
 .date-range-picker {
@@ -224,8 +224,8 @@ watch(
 
 .date-range-sep {
   align-self: center;
-  color: var(--color-text-3, #86909c);
-  font-size: 13px;
+  color: var(--text-tertiary);
+  font-size: var(--app-font-sm);
   flex: 0 0 auto;
 }
 
@@ -242,16 +242,16 @@ watch(
 }
 
 .date-range-days {
-  margin-top: 8px;
-  font-size: 13px;
+  margin-top: var(--app-space-8);
+  font-size: var(--app-font-sm);
   font-weight: 600;
-  color: var(--color-text-2, #4e5969);
+  color: var(--text-secondary);
 }
 
 .date-range-error {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--color-danger-6, #f53f3f);
+  margin-top: var(--app-space-8);
+  font-size: var(--app-font-sm);
+  color: var(--danger);
 }
 
 @media (max-width: 640px) {

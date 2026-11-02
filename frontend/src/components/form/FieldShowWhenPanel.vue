@@ -5,7 +5,7 @@
       <a-switch v-model="enabled" size="small" />
     </label>
     <template v-if="enabled">
-      <a-form-item :label="t('designer.show_when_source')" class="props-item">
+      <a-form-item field="fieldKey" :label="t('designer.show_when_source')" class="props-item">
         <a-select
           v-model="rule.fieldKey"
           :options="sourceFieldOpts"
@@ -14,7 +14,7 @@
           @change="onSourceChange"
         />
       </a-form-item>
-      <a-form-item :label="t('designer.show_when_values')" class="props-item">
+      <a-form-item field="values" :label="t('designer.show_when_values')" class="props-item">
         <a-select
           v-model="rule.values"
           :options="sourceValueOpts"
@@ -26,6 +26,7 @@
       </a-form-item>
       <a-form-item
         v-if="sourceFieldType === 'multi_select' || sourceFieldType === 'checkbox_group'"
+        field="match"
         :label="t('designer.show_when_match')"
         class="props-item"
       >
@@ -207,14 +208,14 @@ function onSourceChange() {
 
 <style scoped>
 .field-show-when-panel {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 }
 
 .props-switch-cell {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 13px;
+  margin-bottom: var(--app-space-8);
+  font-size: var(--app-font-sm);
 }
 </style>

@@ -185,7 +185,7 @@ defineProps<{ type: string }>()
 .field-type-icon {
   width: 22px;
   height: 22px;
-  color: #4e5969;
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 </style>

@@ -189,17 +189,17 @@ function removeRule(uid: string) {
 
 <style scoped>
 .field-linkage-panel {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 }
 
 .hint-text {
-  margin: 0 0 8px;
-  font-size: 12px;
+  margin: 0 0 var(--app-space-8);
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
   line-height: 1.5;
 }
 
 .mt-2 {
-  margin-top: 8px;
+  margin-top: var(--app-space-8);
 }
 </style>

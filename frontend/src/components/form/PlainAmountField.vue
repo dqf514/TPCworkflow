@@ -42,7 +42,12 @@ function onInput(val: number | undefined) {
 </script>
 
 <style scoped>
-.plain-amount-field :deep(.arco-input-number-input) {
+/* Arco 各版本 InputNumber 内层 input 的类名不一致（部分版本是 .arco-input-number-input，
+   2.57 直接用 .arco-input），两种都命中，避免右对齐与等宽数字失效。 */
+.plain-amount-field :deep(.arco-input-number-input),
+.plain-amount-field :deep(input.arco-input) {
   text-align: right;
+  /* 金额列需要等宽数字才能对齐小数点 */
+  font-variant-numeric: tabular-nums;
 }
 </style>

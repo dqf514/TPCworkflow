@@ -1,6 +1,6 @@
 <template>
   <div class="workflow-settings-panel">
-    <a-form layout="vertical" class="w-full">
+    <a-form layout="vertical" class="w-full" :model="settingsFormModel">
       <a-card :title="t('wfSettings.apply_visibility')" class="mb-4 rounded-lg">
         <p class="text-sm text-gray-500 mb-3">{{ t('wfSettings.apply_visibility_hint') }}</p>
         <a-radio-group v-model="model.apply_visibility_mode" direction="vertical">
@@ -15,7 +15,11 @@
           >
             {{ t('wfSettings.apply_empty_warn') }}
           </a-alert>
-          <a-form-item :label="t('wfSettings.visible_departments')" class="mt-4 !mb-2">
+          <a-form-item
+            field="visible_department_ids"
+            :label="t('wfSettings.visible_departments')"
+            class="mt-4 !mb-2"
+          >
             <a-select
               v-model="model.visible_department_ids"
               :options="deptOpts"
@@ -26,7 +30,7 @@
               class="w-full max-w-2xl"
             />
           </a-form-item>
-          <a-form-item :label="t('wfSettings.visible_users')" class="!mb-0">
+          <a-form-item field="visible_user_ids" :label="t('wfSettings.visible_users')" class="!mb-0">
             <a-select
               v-model="model.visible_user_ids"
               :options="userOpts"
@@ -61,7 +65,7 @@
       </a-card>
 
       <a-card :title="t('wfSettings.approver_exception')" class="mb-4 rounded-lg">
-        <a-form-item :label="t('wfSettings.empty_member')">
+        <a-form-item field="approver_empty_action" :label="t('wfSettings.empty_member')">
           <a-radio-group v-model="model.approver_empty_action" direction="vertical">
             <a-radio value="auto_approve">{{ t('wfSettings.auto_approve_opt') }}</a-radio>
             <a-radio value="transfer">{{ t('wfSettings.transfer') }}</a-radio>
@@ -76,7 +80,7 @@
             class="mt-2 w-full max-w-md"
           />
         </a-form-item>
-        <a-form-item :label="t('wfSettings.left_member')">
+        <a-form-item field="approver_resigned_action" :label="t('wfSettings.left_member')">
           <a-radio-group v-model="model.approver_resigned_action" direction="vertical">
             <a-radio value="auto_transfer">{{ t('wfSettings.auto_transfer') }}</a-radio>
             <a-radio value="admin_handover">{{ t('wfSettings.admin_manual') }}</a-radio>
@@ -93,7 +97,7 @@
       </a-card>
 
       <a-card :title="t('wfSettings.handler_exception')" class="mb-4 rounded-lg">
-        <a-form-item :label="t('wfSettings.empty_member')">
+        <a-form-item field="handler_empty_action" :label="t('wfSettings.empty_member')">
           <a-radio-group v-model="model.handler_empty_action" direction="vertical">
             <a-radio value="auto_approve">{{ t('wfSettings.auto_approve_opt') }}</a-radio>
             <a-radio value="transfer">{{ t('wfSettings.transfer') }}</a-radio>
@@ -108,7 +112,7 @@
             class="mt-2 w-full max-w-md"
           />
         </a-form-item>
-        <a-form-item :label="t('wfSettings.left_member')">
+        <a-form-item field="handler_resigned_action" :label="t('wfSettings.left_member')">
           <a-radio-group v-model="model.handler_resigned_action" direction="vertical">
             <a-radio value="auto_transfer">{{ t('wfSettings.auto_transfer') }}</a-radio>
             <a-radio value="admin_handover">{{ t('wfSettings.admin_manual') }}</a-radio>
@@ -134,7 +138,7 @@
         </p>
         <a-checkbox v-model="model.document_delivery.enabled">审批通过后自动发送邮件</a-checkbox>
         <template v-if="model.document_delivery.enabled">
-          <a-form-item label="打印模板编码" class="mt-3">
+          <a-form-item field="document_delivery.template_code" label="打印模板编码" class="mt-3">
             <a-select
               v-model="model.document_delivery.template_code"
               :options="printTemplateOpts"
@@ -142,16 +146,16 @@
               placeholder="选择与打印 Tab 一致的模板"
             />
           </a-form-item>
-          <a-form-item label="收件人邮箱字段">
+          <a-form-item field="document_delivery.recipient_email_field" label="收件人邮箱字段">
             <a-select v-model="model.document_delivery.recipient_email_field" :options="fieldOpts" allow-search />
           </a-form-item>
-          <a-form-item label="收件人姓名字段">
+          <a-form-item field="document_delivery.recipient_name_field" label="收件人姓名字段">
             <a-select v-model="model.document_delivery.recipient_name_field" :options="fieldOpts" allow-search />
           </a-form-item>
-          <a-form-item label="邮件语言字段">
+          <a-form-item field="document_delivery.email_language_field" label="邮件语言字段">
             <a-select v-model="model.document_delivery.email_language_field" :options="fieldOpts" allow-search />
           </a-form-item>
-          <a-form-item label="抄送邮箱字段">
+          <a-form-item field="document_delivery.cc_email_field" label="抄送邮箱字段">
             <a-select v-model="model.document_delivery.cc_email_field" :options="fieldOpts" allow-search />
           </a-form-item>
         </template>
@@ -166,7 +170,7 @@
           {{ t('wfSettings.allow_add_sign') }}
         </a-checkbox>
         <a-divider />
-        <a-form-item :label="t('wfSettings.scope')">
+        <a-form-item field="scopeType" :label="t('wfSettings.scope')">
           <a-select v-model="scopeType" class="w-48">
             <a-option value="global">{{ t('wfSettings.scope_global') }}</a-option>
             <a-option value="company">{{ t('wfSettings.scope_company') }}</a-option>
@@ -203,6 +207,15 @@ const scopeType = defineModel<string>('scopeType', { default: 'global' })
 const userOpts = ref<{ label: string; value: number }[]>([])
 const deptOpts = ref<{ label: string; value: number }[]>([])
 const printTemplateOpts = ref<{ label: string; value: string }[]>([])
+
+/**
+ * 表单 model：workflow settings + 独立的 scopeType。
+ * Arco 需要 model 才能让 a-form-item 的 field 路径取到值。
+ */
+const settingsFormModel = computed(() => ({
+  ...(model.value as Record<string, unknown>),
+  scopeType: scopeType.value,
+}))
 
 const showDocumentDelivery = computed(
   () => props.formSchema?.print?.templateMode === 'custom' && !!props.formSchema?.print?.templateCode,
@@ -270,7 +283,7 @@ watch(
 
 <style scoped>
 .workflow-settings-panel {
-  padding: 8px 4px;
+  padding: var(--app-space-8) var(--app-space-4);
   overflow: auto;
   max-height: calc(100vh - 200px);
 }

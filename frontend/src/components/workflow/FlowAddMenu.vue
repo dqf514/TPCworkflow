@@ -51,56 +51,56 @@ function pick(type: string) {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid #c9cdd4;
-  background: #fff;
-  color: #4e5969;
-  font-size: 18px;
+  border: 1px solid var(--border-input);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: var(--app-font-18);
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
   transition: all 0.15s;
 }
 
 .flow-add-btn:hover {
-  border-color: #165dff;
-  color: #165dff;
+  border-color: var(--brand);
+  color: var(--brand-text);
   transform: scale(1.05);
 }
 
 .add-menu {
   display: flex;
-  gap: 8px;
-  padding: 4px;
+  gap: var(--app-space-8);
+  padding: var(--app-space-4);
 }
 
 .add-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--app-space-6);
   min-width: 72px;
-  padding: 10px 8px;
-  border: 1px solid #e5e6eb;
-  border-radius: 8px;
-  background: #fff;
+  padding: var(--app-space-10) var(--app-space-8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   cursor: pointer;
-  font-size: 12px;
-  color: #1d2129;
+  font-size: var(--app-font-xs);
+  color: var(--text);
 }
 
 .add-item:hover {
-  border-color: #165dff;
-  background: #f7f8fa;
+  border-color: var(--brand);
+  background: var(--surface-muted);
 }
 
 .add-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: var(--app-font-sm);
   font-weight: 600;
   color: #fff;
 }
@@ -118,6 +118,6 @@ function pick(type: string) {
 }
 
 .add-condition .add-icon {
-  background: #86909c;
+  background: var(--text-tertiary);
 }
 </style>

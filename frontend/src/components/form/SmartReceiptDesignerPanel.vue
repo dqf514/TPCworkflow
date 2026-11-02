@@ -4,16 +4,17 @@
     <p class="hint-text">{{ t('designer.smart_receipt_hint') }}</p>
 
     <div class="props-grid cols-2">
-      <a-form-item :label="t('designer.smart_receipt_scene')" class="props-item">
+      <a-form-item field="scene" :label="t('designer.smart_receipt_scene')" class="props-item">
         <a-select v-model="scene" :options="sceneOpts" />
       </a-form-item>
-      <a-form-item :label="t('designer.smart_receipt_fill_mode')" class="props-item">
+      <a-form-item field="fillMode" :label="t('designer.smart_receipt_fill_mode')" class="props-item">
         <a-select v-model="fillMode" :options="fillModeOpts" />
       </a-form-item>
     </div>
 
     <a-form-item
       v-if="fillMode !== 'main_fields'"
+      field="targetDetailKey"
       :label="t('designer.smart_receipt_target_detail')"
       class="props-item"
     >
@@ -25,7 +26,7 @@
       />
     </a-form-item>
 
-    <a-form-item :label="t('designer.smart_receipt_attach')" class="props-item">
+    <a-form-item field="attachToFieldKey" :label="t('designer.smart_receipt_attach')" class="props-item">
       <a-select
         v-model="attachToFieldKey"
         :options="attachFieldOpts"
@@ -225,17 +226,17 @@ function removeMapping(idx: number) {
 
 <style scoped>
 .smart-receipt-designer .hint-text {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: #86909c;
+  margin: 0 0 var(--app-space-8);
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
   line-height: 1.4;
 }
 
 .mapping-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: var(--app-space-6);
+  margin-bottom: var(--app-space-6);
 }
 
 .mapping-col {
@@ -249,6 +250,6 @@ function removeMapping(idx: number) {
 }
 
 .mb-2 {
-  margin-bottom: 8px;
+  margin-bottom: var(--app-space-8);
 }
 </style>

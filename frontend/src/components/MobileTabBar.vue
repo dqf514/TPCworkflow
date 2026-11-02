@@ -1,7 +1,11 @@
 <template>
+  <!-- 断点与 useBreakpoint 的 MOBILE_MEDIA_QUERY（max-width:1023px）保持一致：
+       Tailwind 的 md: 是 768px，会在 768–1023px 平板上把标签栏藏掉，
+       但 AppLayout 仍按 isMobile 预留 56px 底部空白 → 统一用 lg:hidden -->
   <nav
-    class="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 safe-bottom md:hidden"
+    class="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 safe-bottom lg:hidden"
     role="navigation"
+    aria-label="主导航"
   >
     <div class="mobile-tab-bar__inner">
       <button
@@ -62,18 +66,18 @@ function go(name: string) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: var(--app-space-3);
   padding: 0 0.25rem;
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--app-font-2xs);
   cursor: pointer;
   transition: color var(--dur-fast) var(--ease-out);
 }
 
 .mobile-tab.is-active {
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .tab-icon-wrap {

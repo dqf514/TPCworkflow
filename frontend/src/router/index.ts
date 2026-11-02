@@ -3,9 +3,17 @@ import { useAuthStore } from '@/stores/auth'
 import { clearPrintBodyClasses } from '@/utils/printDocument'
 import { resetSessionRedirectFlag } from '@/utils/sessionRedirect'
 import { ensureEmbedDesktopQuery, isEmbedDesktopActive } from '@/utils/embedDesktop'
+import { resetAppScroll } from '@/utils/appScroll'
 
 const router = createRouter({
   history: createWebHistory(),
+  // 滚动容器是 .app-content（overflow-y:auto）而非 window，
+  // vue-router 默认只复位 window，必须显式复位应用内容区。
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    resetAppScroll()
+    return { top: 0, left: 0 }
+  },
   routes: [
     {
       path: '/login',

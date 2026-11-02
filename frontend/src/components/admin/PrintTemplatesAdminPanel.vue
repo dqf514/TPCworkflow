@@ -52,30 +52,30 @@
     >
       <a-tabs v-model:active-key="editTab">
         <a-tab-pane key="basic" title="基本设置">
-          <a-form layout="vertical">
+          <a-form :model="edit" layout="vertical">
             <a-row :gutter="12">
               <a-col :span="8">
-                <a-form-item label="模板编码" required>
+                <a-form-item field="code" label="模板编码" required>
                   <a-input v-model="edit.code" :disabled="!!edit.id && edit.is_builtin" placeholder="debit_note_imc" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="模板名称" required>
+                <a-form-item field="name" label="模板名称" required>
                   <a-input v-model="edit.name" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="启用">
+                <a-form-item field="is_active" label="启用">
                   <a-switch v-model="edit.is_active" />
                 </a-form-item>
               </a-col>
             </a-row>
-            <a-form-item label="说明">
+            <a-form-item field="description" label="说明">
               <a-input v-model="edit.description" />
             </a-form-item>
             <a-row :gutter="12">
               <a-col :span="8">
-                <a-form-item label="纸张">
+                <a-form-item field="schema.page.size" label="纸张">
                   <a-select v-model="edit.schema.page!.size">
                     <a-option value="A4">A4</a-option>
                     <a-option value="A3">A3</a-option>
@@ -83,7 +83,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="方向">
+                <a-form-item field="schema.page.orientation" label="方向">
                   <a-select v-model="edit.schema.page!.orientation">
                     <a-option value="portrait">纵向</a-option>
                     <a-option value="landscape">横向</a-option>
@@ -91,7 +91,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="边距 (mm)">
+                <a-form-item field="schema.page.marginMm" label="边距 (mm)">
                   <a-input-number v-model="edit.schema.page!.marginMm" :min="5" :max="30" />
                 </a-form-item>
               </a-col>
@@ -102,20 +102,20 @@
         <a-tab-pane key="assets" title="图片资源">
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="Logo 路径/URL">
+              <a-form-item field="schema.assets.logo.url" label="Logo 路径/URL">
                 <a-input v-model="edit.schema.assets!.logo!.url" placeholder="uploads/attachments/xxx.png 或 /api/v1/files/..." />
               </a-form-item>
-              <a-form-item label="Logo 宽度 (mm)">
+              <a-form-item field="schema.assets.logo.widthMm" label="Logo 宽度 (mm)">
                 <a-input-number v-model="edit.schema.assets!.logo!.widthMm" :min="10" :max="80" />
               </a-form-item>
               <input ref="logoInput" type="file" accept="image/*" class="hidden" @change="onLogoFile" />
               <a-button size="small" :loading="logoUploading" @click="logoInput?.click()">上传 Logo</a-button>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="公章 路径/URL">
+              <a-form-item field="schema.assets.seal.url" label="公章 路径/URL">
                 <a-input v-model="edit.schema.assets!.seal!.url" placeholder="uploads/attachments/seal.png" />
               </a-form-item>
-              <a-form-item label="公章 宽度 (mm)">
+              <a-form-item field="schema.assets.seal.widthMm" label="公章 宽度 (mm)">
                 <a-input-number v-model="edit.schema.assets!.seal!.widthMm" :min="10" :max="80" />
               </a-form-item>
               <input ref="sealInput" type="file" accept="image/*" class="hidden" @change="onSealFile" />
@@ -183,14 +183,14 @@
             <a-radio value="en">English</a-radio>
             <a-radio value="zh">中文</a-radio>
           </a-radio-group>
-          <a-form layout="vertical">
-            <a-form-item label="邮件主题">
+          <a-form :model="edit" layout="vertical">
+            <a-form-item :field="`schema.emailTemplates.${emailLang}.subject`" label="邮件主题">
               <a-input v-model="currentEmail.subject" placeholder="Debit Note {{debit_note_no}}" />
             </a-form-item>
-            <a-form-item label="称呼">
+            <a-form-item :field="`schema.emailTemplates.${emailLang}.greeting`" label="称呼">
               <a-input v-model="currentEmail.greeting" placeholder="Dear {{recipient_name}}," />
             </a-form-item>
-            <a-form-item label="正文">
+            <a-form-item :field="`schema.emailTemplates.${emailLang}.body`" label="正文">
               <a-textarea v-model="currentEmail.body" :auto-size="{ minRows: 6, maxRows: 12 }" />
             </a-form-item>
             <a-alert type="info">
@@ -212,11 +212,11 @@
     </a-modal>
 
     <a-modal v-model:visible="cloneVisible" title="克隆模板" @ok="doClone">
-      <a-form layout="vertical">
-        <a-form-item label="新编码" required>
+      <a-form :model="cloneForm" layout="vertical">
+        <a-form-item field="code" label="新编码" required>
           <a-input v-model="cloneForm.code" />
         </a-form-item>
-        <a-form-item label="新名称" required>
+        <a-form-item field="name" label="新名称" required>
           <a-input v-model="cloneForm.name" />
         </a-form-item>
       </a-form>
@@ -226,11 +226,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import { api, type ApiResponse } from '@/api/client'
 import ConfigurablePrintSheet from '@/components/print/ConfigurablePrintSheet.vue'
 import type { PrintDetailColumn, PrintFieldItem, PrintTemplateRow, PrintTemplateSchema } from '@/types/printTemplate'
 import { DEFAULT_PRINT_TEMPLATE_SCHEMA } from '@/types/printTemplate'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -357,7 +360,7 @@ async function doClone() {
     code: cloneForm.code.trim(),
     name: cloneForm.name.trim(),
   })
-  Message.success('已克隆')
+  Message.success(t('print.template_cloned'))
   cloneVisible.value = false
   await load()
 }
@@ -378,11 +381,11 @@ async function save() {
     } else {
       await api.post('/admin/print-templates', payload)
     }
-    Message.success('已保存')
+    Message.success(t('print.template_saved'))
     modalVisible.value = false
     await load()
   } catch (e) {
-    Message.error(e instanceof Error ? e.message : '保存失败')
+    Message.error(e instanceof Error ? e.message : t('common.save_failed'))
   } finally {
     saving.value = false
   }
@@ -390,7 +393,7 @@ async function save() {
 
 async function removeRow(id: number) {
   await api.delete(`/admin/print-templates/${id}`)
-  Message.success('已删除')
+  Message.success(t('print.template_deleted'))
   await load()
 }
 
@@ -434,10 +437,10 @@ async function uploadImage(file: File, target: 'logo' | 'seal') {
       const path = res.data.data.path || res.data.data.url || ''
       if (target === 'logo') edit.schema.assets!.logo!.url = path
       else edit.schema.assets!.seal!.url = path
-      Message.success('上传成功')
+      Message.success(t('print.upload_success'))
     }
   } catch (e) {
-    Message.error(e instanceof Error ? e.message : '上传失败')
+    Message.error(e instanceof Error ? e.message : t('common.upload_failed'))
   } finally {
     loadingRef.value = false
   }
@@ -473,20 +476,20 @@ onMounted(() => {
 .kv-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-8);
   align-items: center;
 }
 .preview-frame {
-  border: 1px solid #e5e7eb;
-  background: #f3f4f6;
-  padding: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  padding: var(--app-space-12);
   max-height: 70vh;
   overflow: auto;
 }
 .hint {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 8px;
+  font-size: var(--app-font-xs);
+  color: var(--text-secondary);
+  margin-bottom: var(--app-space-8);
 }
 </style>

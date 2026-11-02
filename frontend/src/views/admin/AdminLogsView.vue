@@ -47,7 +47,7 @@
 
     <a-tabs v-model:active-key="tab" type="rounded" class="logs-tabs" @change="onTabChange">
       <a-tab-pane key="auth" :title="t('adminLogs.tab_auth')">
-        <div class="flex flex-wrap gap-2 mb-3">
+        <div class="logs-filters flex flex-wrap gap-2 mb-3">
           <a-select v-model="authCategory" :options="authCategoryOpts" class="w-36" @change="reloadAuth" />
           <a-select v-model="authStatus" :options="statusOpts" class="w-32" @change="reloadAuth" />
           <a-input-search
@@ -149,7 +149,7 @@
       </a-tab-pane>
 
       <a-tab-pane key="workflow" :title="t('adminLogs.tab_workflow')">
-        <div class="flex flex-wrap gap-2 mb-3">
+        <div class="logs-filters flex flex-wrap gap-2 mb-3">
           <a-select v-model="wfAction" :options="wfActionOpts" class="w-36" @change="reloadWf" />
           <a-input-search
             v-model="keyword"
@@ -235,7 +235,7 @@
       </a-tab-pane>
 
       <a-tab-pane key="email" :title="t('adminLogs.tab_email')">
-        <div class="flex flex-wrap gap-2 mb-3">
+        <div class="logs-filters flex flex-wrap gap-2 mb-3">
           <a-select v-model="mailType" :options="mailTypeOpts" class="w-44" @change="reloadMail" />
           <a-select v-model="mailStatus" :options="mailStatusOpts" class="w-32" @change="reloadMail" />
           <a-input-search
@@ -824,19 +824,19 @@ onMounted(async () => {
 .logs-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--app-space-12);
+  margin-bottom: var(--app-space-16);
 }
 
 .logs-stat-label {
-  font-size: 12.5px;
+  font-size: var(--app-font-12);
   color: var(--text-secondary);
 }
 
 .logs-stat-value {
-  margin-top: 4px;
-  font-size: 20px;
-  font-weight: 650;
+  margin-top: var(--app-space-4);
+  font-size: var(--app-font-xl);
+  font-weight: 600;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--text);
@@ -851,18 +851,32 @@ onMounted(async () => {
 }
 
 .logs-stat-sep {
-  margin: 0 4px;
+  margin: 0 var(--app-space-4);
   color: var(--text-tertiary);
 }
 
 .logs-stat-unit {
-  margin-left: 4px;
-  font-size: 11.5px;
+  margin-left: var(--app-space-4);
+  font-size: var(--app-font-10);
   font-weight: 400;
   color: var(--text-tertiary);
 }
 
 .logs-tabs :deep(.arco-tabs-content) {
   padding-top: 0.75rem;
+}
+
+/* 窄屏适配：过滤控件改为整行，统计卡片收紧 */
+@media (max-width: 768px) {
+  .logs-summary {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--app-space-8);
+  }
+
+  .logs-filters :deep(.arco-input-search),
+  .logs-filters :deep(.arco-picker),
+  .logs-filters :deep(.arco-select) {
+    width: 100%;
+  }
 }
 </style>

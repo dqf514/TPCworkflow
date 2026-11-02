@@ -55,25 +55,25 @@
     >
       <a-spin :loading="drawerLoading" class="drawer-spin">
         <template v-if="editUser.id">
-          <a-form layout="vertical" class="user-form">
+          <a-form :model="editUser" layout="vertical" class="user-form">
             <a-row :gutter="12">
               <a-col :span="12">
-                <a-form-item :label="t('org.username')">
+                <a-form-item field="username" :label="t('org.username')">
                   <a-input :model-value="editUser.username" disabled />
                 </a-form-item>
               </a-col>
               <a-col :span="12">
-                <a-form-item :label="t('org.display_name')">
+                <a-form-item field="display_name" :label="t('org.display_name')">
                   <a-input v-model="editUser.display_name" />
                 </a-form-item>
               </a-col>
             </a-row>
             <a-row :gutter="12">
               <a-col :span="12">
-                <a-form-item :label="t('org.contact_email')">
+                <a-form-item field="email" :label="t('org.contact_email')">
                   <div class="admin-mail-field">
                     <input
-                      v-model="editUserMailbox"
+                      v-model="editUser.email"
                       type="text"
                       class="admin-mail-input"
                       :placeholder="EMAIL_PLACEHOLDER"
@@ -83,7 +83,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="12">
-                <a-form-item :label="t('org.phone')">
+                <a-form-item field="phone" :label="t('org.phone')">
                   <a-input v-model="editUser.phone" allow-clear />
                 </a-form-item>
               </a-col>
@@ -91,22 +91,22 @@
             <p class="user-field-hint">{{ t('org.email_admin_hint') }}</p>
             <a-row :gutter="12">
               <a-col :span="8">
-                <a-form-item :label="t('org.account_enabled')">
+                <a-form-item field="is_active" :label="t('org.account_enabled')">
                   <a-switch v-model="editUser.is_active" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item :label="t('org.is_system_admin')">
+                <a-form-item field="is_system_admin" :label="t('org.is_system_admin')">
                   <a-switch v-model="editUser.is_system_admin" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item :label="t('org.locale')">
+                <a-form-item field="locale" :label="t('org.locale')">
                   <a-select v-model="editUser.locale" :options="localeOpts" />
                 </a-form-item>
               </a-col>
             </a-row>
-            <a-form-item :label="t('org.holiday_regions')">
+            <a-form-item field="holiday_regions" :label="t('org.holiday_regions')">
               <a-select
                 v-model="editUser.holiday_regions"
                 :options="holidayRegionOpts"
@@ -244,13 +244,13 @@
 
     <a-modal v-model:visible="createModal" :title="t('org.new_user_btn')" :width="520" @ok="createUser">
       <a-form :model="createForm" layout="vertical">
-        <a-form-item :label="t('org.username')" required><a-input v-model="createForm.username" /></a-form-item>
-        <a-form-item :label="t('org.email')" required><a-input v-model="createForm.email" /></a-form-item>
-        <a-form-item :label="t('org.display_name')"><a-input v-model="createForm.display_name" /></a-form-item>
-        <a-form-item :label="t('org.password')"><a-input-password v-model="createForm.password" /></a-form-item>
-        <a-form-item :label="t('org.depts_optional')">
+        <a-form-item field="username" :label="t('org.username')" required><a-input v-model="createForm.username" /></a-form-item>
+        <a-form-item field="email" :label="t('org.email')" required><a-input v-model="createForm.email" /></a-form-item>
+        <a-form-item field="display_name" :label="t('org.display_name')"><a-input v-model="createForm.display_name" /></a-form-item>
+        <a-form-item field="password" :label="t('org.password')"><a-input-password v-model="createForm.password" /></a-form-item>
+        <a-form-item field="dept_ids" :label="t('org.depts_optional')">
           <a-tree-select
-            v-model="createDeptIds"
+            v-model="createForm.dept_ids"
             :data="deptTree"
             multiple
             tree-checkable
@@ -339,11 +339,11 @@ const savingFlowRoles = ref(false)
 const deptTree = ref<TreeNode[]>([])
 
 /** 独立 ref，避免 reactive.email 与部分浏览器隐私扩展冲突 */
-const editUserMailbox = ref('')
 
 const editUser = reactive({
   id: 0,
   username: '',
+  email: '',
   display_name: '',
   phone: '',
   is_active: true,
@@ -356,12 +356,12 @@ const editUser = reactive({
 const holidayRegionOpts = ref<{ label: string; value: string }[]>([])
 
 const createModal = ref(false)
-const createDeptIds = ref<number[]>([])
 const createForm = reactive({
   username: '',
   email: '',
   display_name: '',
   password: defaultResetPwd,
+  dept_ids: [] as number[],
 })
 
 const localeOpts = [
@@ -481,7 +481,6 @@ function normalizeDeptIds(raw: (number | string)[]): number[] {
 async function openUserDrawer(row: UserRow) {
   drawerVisible.value = true
   drawerLoading.value = true
-  editUserMailbox.value = ''
   newPassword.value = ''
   addDeptId.value = undefined
   addDeptRole.value = 'member'
@@ -493,7 +492,7 @@ async function openUserDrawer(row: UserRow) {
       editUser.id = u.id
       editUser.username = u.username
       editUser.display_name = u.display_name
-      editUserMailbox.value = u.email || ''
+      editUser.email = u.email || ''
       editUser.phone = u.phone || ''
       editUser.is_active = u.is_active
       editUser.is_system_admin = u.is_system_admin
@@ -509,7 +508,7 @@ async function openUserDrawer(row: UserRow) {
 
 async function saveUser() {
   if (!editUser.id) return
-  if (!editUserMailbox.value.trim()) {
+  if (!editUser.email.trim()) {
     Message.warning(t('org.fill_email'))
     return
   }
@@ -517,7 +516,7 @@ async function saveUser() {
   try {
     const body: Record<string, unknown> = {
       display_name: editUser.display_name,
-      email: editUserMailbox.value.trim(),
+      email: editUser.email.trim(),
       phone: editUser.phone,
       is_active: editUser.is_active,
       is_system_admin: editUser.is_system_admin,
@@ -611,7 +610,7 @@ function openCreateUser() {
   createForm.email = ''
   createForm.display_name = ''
   createForm.password = defaultResetPwd
-  createDeptIds.value = []
+  createForm.dept_ids = []
   createModal.value = true
 }
 
@@ -624,7 +623,7 @@ async function createUser() {
     Message.warning(t('org.fill_email'))
     return
   }
-  const deptIds = normalizeDeptIds(createDeptIds.value as (number | string)[])
+  const deptIds = normalizeDeptIds(createForm.dept_ids as (number | string)[])
   const memberships = deptIds.map((department_id, idx) => ({
     department_id,
     role_in_dept: 'member',
@@ -665,20 +664,20 @@ onMounted(async () => {
 
 <style scoped>
 .org-users-panel {
-  padding: 0 2px;
+  padding: 0 var(--app-space-2);
 }
 
 .users-hint {
-  margin: 0 0 12px;
-  font-size: 0.875rem;
+  margin: 0 0 var(--app-space-12);
+  font-size: var(--app-font-md);
   color: var(--text-secondary);
 }
 
 .users-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: var(--app-space-10);
+  margin-bottom: var(--app-space-12);
   align-items: center;
 }
 
@@ -698,8 +697,8 @@ onMounted(async () => {
 }
 
 .user-field-hint {
-  margin: 0 0 12px;
-  font-size: 12px;
+  margin: 0 0 var(--app-space-12);
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
   line-height: 1.4;
 }
@@ -712,33 +711,38 @@ onMounted(async () => {
   display: block;
   width: 100%;
   height: 32px;
-  padding: 0 12px;
-  font-size: 14px;
+  padding: 0 var(--app-space-12);
+  font-size: var(--app-font-md);
   line-height: 1.5715;
-  color: var(--color-text-1, #1d2129);
-  background-color: var(--color-fill-2, #f2f3f5);
+  color: var(--text);
+  background-color: var(--surface-muted);
   border: 1px solid transparent;
   border-radius: var(--border-radius-small, 4px);
   box-sizing: border-box;
-  outline: none;
   font-family: inherit;
 }
 
 .admin-mail-input:hover {
-  background-color: var(--color-fill-3, #e5e6eb);
+  background-color: var(--surface-sunken);
 }
 
 .admin-mail-input:focus {
-  background-color: var(--color-bg-2, #fff);
-  border-color: rgb(var(--primary-6, 22 93 255));
+  background-color: var(--surface);
+  border-color: var(--brand);
+}
+
+/* 焦点可见：与 main.css 的 focus ring 保持一致，键盘用户才能定位输入框 */
+.admin-mail-input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 16%, transparent);
 }
 
 .add-membership-box {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--app-space-8);
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--app-space-16);
 }
 
 .add-dept-select {
@@ -749,9 +753,9 @@ onMounted(async () => {
 .password-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--app-space-8);
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--app-space-24);
 }
 
 .password-input {
@@ -761,7 +765,7 @@ onMounted(async () => {
 .drawer-footer {
   position: sticky;
   bottom: 0;
-  padding-top: 12px;
+  padding-top: var(--app-space-12);
   border-top: 1px solid var(--border);
   background: var(--surface);
 }

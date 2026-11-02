@@ -1,39 +1,41 @@
 <template>
-  <PageChrome title="财务凭证导出" description="按需筛选并勾选流程，生成用友 YonSuite BIP 凭证导入 Excel；可在此板块管理字段映射方案。">
+  <PageChrome :title="t('finance.title')" :description="t('finance.desc')">
     <template #actions>
-      <a-select
-        v-model="sectorId"
-        :options="sectorOpts"
-        placeholder="业务板块"
-        class="w-44"
-        allow-search
-      />
-      <template v-if="activeTab === 'export'">
-      <a-select v-model="statusFilter" :options="statusOpts" class="w-32" />
-      <a-select v-model="timeField" :options="timeFieldOpts" class="w-36" />
-      <a-range-picker
-        v-model="dateRange"
-        class="w-72"
-        format="YYYY-MM-DD"
-        value-format="YYYY-MM-DD"
-        :placeholder="['开始日期', '结束日期']"
-        allow-clear
-      />
-      <a-button @click="refresh">刷新</a-button>
-      <a-button
-        type="primary"
-        :disabled="!selectedKeys.length"
-        @click="exportVisible = true"
-      >
-        导出选中（{{ selectedKeys.length }}）
-      </a-button>
-      </template>
+      <div class="finance-actions">
+        <a-select
+          v-model="sectorId"
+          :options="sectorOpts"
+          :placeholder="t('finance.sector_placeholder')"
+          class="w-44"
+          allow-search
+        />
+        <template v-if="activeTab === 'export'">
+        <a-select v-model="statusFilter" :options="statusOpts" class="w-32" />
+        <a-select v-model="timeField" :options="timeFieldOpts" class="w-36" />
+        <a-range-picker
+          v-model="dateRange"
+          class="w-72"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          :placeholder="[t('finance.date_from'), t('finance.date_to')]"
+          allow-clear
+        />
+        <a-button @click="refresh">{{ t('finance.refresh') }}</a-button>
+        <a-button
+          type="primary"
+          :disabled="!selectedKeys.length"
+          @click="exportVisible = true"
+        >
+          {{ t('finance.export_selected', { count: selectedKeys.length }) }}
+        </a-button>
+        </template>
+      </div>
     </template>
 
     <a-tabs v-model:active-key="activeTab" class="finance-tabs">
-      <a-tab-pane key="export" title="导出流程">
+      <a-tab-pane key="export" :title="t('finance.tab_export')">
         <div class="finance-panel app-card">
-          <a-empty v-if="!loading && !sectorOpts.length" description="暂无可导出的业务板块" />
+          <a-empty v-if="!loading && !sectorOpts.length" :description="t('finance.empty_sector')" />
           <template v-else>
             <div class="finance-toolbar">
               <a-checkbox
@@ -42,10 +44,10 @@
                 :disabled="!rows.length"
                 @change="toggleSelectAll"
               >
-                全选当前列表（{{ rows.length }} 条）
+                {{ t('finance.select_all', { count: rows.length }) }}
               </a-checkbox>
               <span v-if="selectedKeys.length" class="finance-selected-hint">
-                已勾选 {{ selectedKeys.length }} 条
+                {{ t('finance.selected', { count: selectedKeys.length }) }}
               </span>
             </div>
             <WorkflowInstanceList
@@ -68,7 +70,7 @@
           </template>
         </div>
       </a-tab-pane>
-      <a-tab-pane key="mapping" title="映射方案">
+      <a-tab-pane key="mapping" :title="t('finance.tab_mapping')">
         <div class="finance-panel app-card">
           <FinanceMappingManager :sector-id="sectorId" />
         </div>
@@ -131,10 +133,10 @@ const statusOpts = computed(() => [
   { label: t('workflow.status_cancelled'), value: 'cancelled' },
 ])
 
-const timeFieldOpts = [
-  { label: '按提交时间', value: 'started_at' },
-  { label: '按完成时间', value: 'finished_at' },
-]
+const timeFieldOpts = computed(() => [
+  { label: t('finance.by_started_at'), value: 'started_at' },
+  { label: t('finance.by_finished_at'), value: 'finished_at' },
+])
 
 const sectorOpts = computed(() =>
   sectors.value.map((s) => ({
@@ -270,7 +272,7 @@ onMounted(async () => {
 }
 
 .finance-selected-hint {
-  font-size: 13px;
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
 }
 
@@ -282,5 +284,32 @@ onMounted(async () => {
 
 .finance-panel :deep(.arco-table-tr) {
   cursor: pointer;
+}
+
+/* 窄屏适配：工具栏换行、顶部操作区控件整行 */
+@media (max-width: 768px) {
+  .finance-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .finance-actions :deep(.arco-select),
+  .finance-actions :deep(.arco-range-picker) {
+    width: 100%;
+  }
+
+  .finance-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .finance-panel :deep(.arco-select),
+  .finance-panel :deep(.arco-picker),
+  .finance-panel :deep(.arco-range-picker) {
+    width: 100%;
+  }
 }
 </style>

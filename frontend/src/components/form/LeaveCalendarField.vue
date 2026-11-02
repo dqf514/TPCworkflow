@@ -459,10 +459,10 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 280px;
   position: relative;
-  background: #fff;
-  border: 1px solid var(--color-border-2, #e5e6eb);
-  border-radius: 8px;
-  padding: 8px 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--app-space-8) var(--app-space-10) var(--app-space-12);
 }
 
 .leave-calendar-field.is-preview {
@@ -475,8 +475,8 @@ onBeforeUnmount(() => {
   z-index: 2;
   top: 12px;
   right: 16px;
-  font-size: 12px;
-  color: var(--color-text-3, #86909c);
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
 }
 
 .leave-calendar-meta {
@@ -484,29 +484,29 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 16px;
-  margin-bottom: 10px;
+  gap: var(--app-space-8) var(--app-space-16);
+  margin-bottom: var(--app-space-10);
 }
 
 .leave-calendar-hint {
   margin: 0;
-  font-size: 12px;
-  color: var(--color-text-3, #86909c);
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
 }
 
 .cal-legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 14px;
-  font-size: 12px;
-  color: var(--color-text-2, #4e5969);
+  gap: var(--app-space-8) var(--app-space-14);
+  font-size: var(--app-font-xs);
+  color: var(--text-secondary);
 }
 
 .cal-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--app-space-6);
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -521,57 +521,57 @@ onBeforeUnmount(() => {
 
 .cal-legend-item.is-holiday::before {
   background: #fda29b;
-  box-shadow: inset 0 0 0 1px #f04438;
+  box-shadow: inset 0 0 0 1px var(--danger);
 }
 
 .cal-legend-item.is-weekend::before {
-  background: #eaecf0;
-  box-shadow: inset 0 0 0 1px #98a2b3;
+  background: var(--surface-muted);
+  box-shadow: inset 0 0 0 1px var(--text-tertiary);
 }
 
 .cal-legend-item.is-makeup::before {
   background: #fedf89;
-  box-shadow: inset 0 0 0 1px #f79009;
+  box-shadow: inset 0 0 0 1px var(--warning);
 }
 
 .cal-legend-region {
-  color: var(--color-text-3, #86909c);
+  color: var(--text-tertiary);
   font-weight: 500;
 }
 
 .leave-calendar-field :deep(.fc) {
   font-family: 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC', 'Microsoft YaHei',
     'WenQuanYi Micro Hei', 'DejaVu Sans', sans-serif;
-  --fc-border-color: #eaecf0;
-  --fc-today-bg-color: #eff6ff;
+  --fc-border-color: var(--surface-muted);
+  --fc-today-bg-color: var(--brand-softer);
 }
 
 .leave-calendar-field :deep(.fc-toolbar) {
-  margin-bottom: 10px;
+  margin-bottom: var(--app-space-10);
 }
 
 .leave-calendar-field :deep(.fc-toolbar-title) {
-  font-size: 18px;
+  font-size: var(--app-font-18);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #1d2129;
+  color: var(--text);
 }
 
 .leave-calendar-field :deep(.fc-button) {
   font-weight: 600;
-  border-radius: 6px !important;
+  border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
 }
 
 .leave-calendar-field :deep(.fc-col-header-cell) {
-  background: #f8fafc;
-  padding: 8px 0;
+  background: var(--surface-muted);
+  padding: var(--app-space-8) 0;
 }
 
 .leave-calendar-field :deep(.fc-col-header-cell-cushion) {
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   font-weight: 700;
-  color: #475467;
+  color: var(--text-secondary);
   text-transform: none;
 }
 
@@ -583,22 +583,22 @@ onBeforeUnmount(() => {
 .leave-calendar-field :deep(.fc-daygrid-day-top) {
   flex-direction: column;
   align-items: stretch;
-  padding: 6px 7px 2px;
+  padding: var(--app-space-6) 7px var(--app-space-2);
 }
 
 .leave-calendar-field :deep(.cal-day-head) {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 6px;
+  gap: var(--app-space-6);
   min-height: 28px;
 }
 
 .leave-calendar-field :deep(.cal-day-num) {
-  font-size: 13px;
+  font-size: var(--app-font-sm);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #1d2129;
+  color: var(--text);
   line-height: 1.2;
   min-width: 1.25em;
 }
@@ -606,7 +606,7 @@ onBeforeUnmount(() => {
 .leave-calendar-field :deep(.cal-day-tag) {
   flex: 1;
   text-align: right;
-  font-size: 11px;
+  font-size: var(--app-font-2xs);
   font-weight: 600;
   line-height: 1.25;
   max-width: 72%;
@@ -617,8 +617,8 @@ onBeforeUnmount(() => {
 }
 
 .leave-calendar-field :deep(.cal-cell-holiday .fc-daygrid-day-frame) {
-  background: linear-gradient(180deg, #fff5f4 0%, #fff 58%);
-  box-shadow: inset 3px 0 0 #f04438;
+  background: linear-gradient(180deg, var(--danger-soft) 0%, var(--surface) 58%);
+  box-shadow: inset 3px 0 0 var(--danger);
 }
 
 .leave-calendar-field :deep(.cal-cell-holiday .cal-day-tag) {
@@ -626,17 +626,17 @@ onBeforeUnmount(() => {
 }
 
 .leave-calendar-field :deep(.cal-cell-weekend .fc-daygrid-day-frame) {
-  background: #f8fafc;
+  background: var(--surface-muted);
 }
 
 .leave-calendar-field :deep(.cal-cell-weekend .cal-day-num),
 .leave-calendar-field :deep(.cal-cell-weekend .cal-day-tag) {
-  color: #667085;
+  color: var(--text-secondary);
 }
 
 .leave-calendar-field :deep(.cal-cell-makeup .fc-daygrid-day-frame) {
-  background: linear-gradient(180deg, #fffaeb 0%, #fff 58%);
-  box-shadow: inset 3px 0 0 #f79009;
+  background: linear-gradient(180deg, var(--warning-soft) 0%, var(--surface) 58%);
+  box-shadow: inset 3px 0 0 var(--warning);
 }
 
 .leave-calendar-field :deep(.cal-cell-makeup .cal-day-tag) {
@@ -644,15 +644,15 @@ onBeforeUnmount(() => {
 }
 
 .leave-calendar-field :deep(.fc-day-today .fc-daygrid-day-frame) {
-  box-shadow: inset 0 0 0 2px #2f6fed;
+  box-shadow: inset 0 0 0 2px var(--brand);
 }
 
 .leave-calendar-field :deep(.fc-day-today.cal-cell-holiday .fc-daygrid-day-frame) {
-  box-shadow: inset 3px 0 0 #f04438, inset 0 0 0 2px #2f6fed;
+  box-shadow: inset 3px 0 0 var(--danger), inset 0 0 0 2px var(--brand);
 }
 
 .leave-calendar-field :deep(.fc-day-today.cal-cell-makeup .fc-daygrid-day-frame) {
-  box-shadow: inset 3px 0 0 #f79009, inset 0 0 0 2px #2f6fed;
+  box-shadow: inset 3px 0 0 var(--warning), inset 0 0 0 2px var(--brand);
 }
 
 .leave-calendar-field :deep(.fc-day-other .fc-daygrid-day-frame) {
@@ -660,23 +660,23 @@ onBeforeUnmount(() => {
 }
 
 .leave-calendar-field :deep(.fc-daygrid-day-events) {
-  margin-top: 2px;
-  padding: 0 3px 4px;
+  margin-top: var(--app-space-2);
+  padding: 0 var(--app-space-3) var(--app-space-4);
 }
 
 .leave-calendar-field :deep(.fc-daygrid-event) {
-  margin: 1px 2px !important;
+  margin: 1px var(--app-space-2) !important;
 }
 
 .leave-calendar-field :deep(.fc-event) {
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   font-weight: 600;
   line-height: 1.35;
-  border-radius: 4px;
-  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  padding: var(--app-space-2) var(--app-space-6);
   border-width: 0;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--shadow-xs);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -684,7 +684,7 @@ onBeforeUnmount(() => {
 
 .leave-calendar-field :deep(.fc-event:hover) {
   filter: brightness(1.06);
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-md);
 }
 
 .leave-calendar-field :deep(.fc-daygrid-event-dot) {
@@ -692,10 +692,10 @@ onBeforeUnmount(() => {
 }
 
 .leave-calendar-field :deep(.fc-daygrid-more-link) {
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   font-weight: 600;
-  color: var(--color-text-2, #4e5969);
-  margin: 2px 4px;
+  color: var(--text-secondary);
+  margin: var(--app-space-2) var(--app-space-4);
 }
 </style>
 
@@ -704,13 +704,13 @@ onBeforeUnmount(() => {
   position: fixed;
   z-index: 4000;
   max-width: 320px;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: var(--app-space-10) var(--app-space-12);
+  border-radius: var(--radius-md);
   background: rgba(29, 33, 41, 0.94);
   color: #fff;
-  font-size: 13px;
+  font-size: var(--app-font-sm);
   line-height: 1.5;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-pop);
   pointer-events: none;
   white-space: pre-wrap;
   word-break: break-word;

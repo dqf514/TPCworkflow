@@ -41,7 +41,7 @@ function onClick() {
   padding: 0;
   border: none;
   background: none;
-  color: rgb(var(--primary-6, 22 93 255));
+  color: var(--brand-text);
   font: inherit;
   font-size: inherit;
   line-height: inherit;

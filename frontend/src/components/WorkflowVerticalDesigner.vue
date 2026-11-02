@@ -32,6 +32,7 @@
       :branches="editorBranches"
       :form-schema="formSchema"
       :target-node-ids="allNodeIds"
+      :target-node-labels="nodeLabelMap"
       :visual-mode="true"
       :embed-container="fullscreen ? rootRef : null"
       @close="panelOpen = false"
@@ -47,6 +48,7 @@ import { useI18n } from 'vue-i18n'
 import FlowChainEditor from '@/components/workflow/FlowChainEditor.vue'
 import WorkflowNodeConfigDrawer from '@/components/workflow/WorkflowNodeConfigDrawer.vue'
 import { provideFlowDesignerPopup } from '@/composables/useFlowDesignerPopup'
+import { useWorkflowAssignee } from '@/composables/useWorkflowAssignee'
 import {
   defaultNodeConfig,
   type ConditionBranch,
@@ -67,6 +69,7 @@ import {
 } from '@/utils/workflowFlowGraph'
 
 const { t } = useI18n()
+const { nodeDisplayTitle } = useWorkflowAssignee()
 
 const props = withDefaults(
   defineProps<{
@@ -103,6 +106,22 @@ const fieldLabelMap = computed(() => {
 })
 
 const allNodeIds = computed(() => collectNodeIds(flowChain.value))
+
+/** 节点 id → 可读标题（供「跳转目标」下拉展示，避免暴露内部 node id） */
+const nodeLabelMap = computed(() => {
+  const map: Record<string, string> = {}
+  const walk = (segments: FlowSegment[]) => {
+    for (const seg of segments) {
+      const type = seg.kind === 'node' ? seg.type : 'condition'
+      map[seg.id] = nodeDisplayTitle(type, seg.config)
+      if (seg.kind === 'condition') {
+        for (const br of seg.branches) walk(br.chain)
+      }
+    }
+  }
+  walk(flowChain.value)
+  return map
+})
 
 let syncing = false
 let emitTimer: ReturnType<typeof setTimeout> | null = null
@@ -314,15 +333,15 @@ defineExpose({ resize, exportGraph })
   flex-direction: column;
   width: 100%;
   min-height: v-bind(minHeight);
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .wf-vertical-designer.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 1100;
-  background: #f7f8fa;
-  padding: 12px;
+  background: var(--surface-muted);
+  padding: var(--app-space-12);
   min-height: 100vh !important;
   overflow: hidden;
 }
@@ -340,22 +359,22 @@ defineExpose({ resize, exportGraph })
 .designer-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-space-8);
   flex-shrink: 0;
 }
 
 .toolbar-label {
-  font-size: 12px;
-  color: #86909c;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
 }
 
 .designer-scroll {
   flex: 1;
   min-height: 480px;
   overflow: auto;
-  border: 1px solid #e5e6eb;
-  border-radius: 8px;
-  background: #f2f3f5;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
 }
 
 .designer-scroll::-webkit-scrollbar {
@@ -369,7 +388,7 @@ defineExpose({ resize, exportGraph })
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
-  padding: 16px 20px;
+  padding: var(--app-space-16) var(--app-space-20);
 }
 
 .flow-canvas {

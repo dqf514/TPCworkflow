@@ -7,7 +7,7 @@
       <a-tab-pane key="brand" :title="t('settings.tab_brand')">
         <a-card class="settings-card max-w-2xl" :bordered="false">
           <a-form layout="vertical" :model="form">
-            <a-form-item :label="t('settings.company_name_label')">
+            <a-form-item field="COMPANY_NAME" :label="t('settings.company_name_label')">
               <a-input v-model="form.COMPANY_NAME" :placeholder="t('settings.company_name_ph')" />
             </a-form-item>
 
@@ -36,13 +36,17 @@
                   <a-button type="primary" :loading="logoUploading" @click="pickLogo">
                     {{ t('settings.upload_logo') }}
                   </a-button>
-                  <a-button
-                    v-if="logoPreviewUrl || form.company_logo_url"
-                    :loading="logoRemoving"
-                    @click="removeLogo"
+                  <a-popconfirm
+                    :content="t('settings.logo_remove_confirm')"
+                    @ok="removeLogo"
                   >
-                    {{ t('settings.remove_logo') }}
-                  </a-button>
+                    <a-button
+                      v-if="logoPreviewUrl || form.company_logo_url"
+                      :loading="logoRemoving"
+                    >
+                      {{ t('settings.remove_logo') }}
+                    </a-button>
+                  </a-popconfirm>
                 </a-space>
               </div>
             </a-form-item>
@@ -138,10 +142,10 @@
       <a-tab-pane key="mail" :title="t('settings.tab_mail')">
         <a-card class="settings-card max-w-2xl" :bordered="false">
           <a-form layout="vertical" :model="form">
-            <a-form-item :label="t('settings.mail_smtp')">
+            <a-form-item field="MAIL_SERVER" :label="t('settings.mail_smtp')">
               <a-input v-model="form.MAIL_SERVER" :placeholder="t('settings.mail_smtp_ph')" />
             </a-form-item>
-            <a-form-item :label="t('settings.mail_port')">
+            <a-form-item field="MAIL_PORT" :label="t('settings.mail_port')">
               <a-input v-model="form.MAIL_PORT" :placeholder="t('settings.mail_port_ph')" />
             </a-form-item>
             <a-form-item :label="t('settings.mail_security')">
@@ -168,19 +172,19 @@
                 </div>
               </div>
             </a-form-item>
-            <a-form-item :label="t('settings.mail_username')">
+            <a-form-item field="MAIL_USERNAME" :label="t('settings.mail_username')">
               <a-input v-model="form.MAIL_USERNAME" :placeholder="t('settings.mail_username_ph')" />
             </a-form-item>
-            <a-form-item :label="t('settings.mail_password')">
+            <a-form-item field="MAIL_PASSWORD" :label="t('settings.mail_password')">
               <a-input-password v-model="form.MAIL_PASSWORD" :placeholder="t('settings.mail_password_ph')" />
             </a-form-item>
-            <a-form-item :label="t('settings.mail_sender')">
+            <a-form-item field="MAIL_DEFAULT_SENDER" :label="t('settings.mail_sender')">
               <a-input v-model="form.MAIL_DEFAULT_SENDER" :placeholder="t('settings.mail_sender_ph')" />
               <template #extra>
                 <span class="text-xs text-gray-500">{{ t('settings.mail_sender_hint') }}</span>
               </template>
             </a-form-item>
-            <a-form-item :label="t('settings.public_base_url')">
+            <a-form-item field="PUBLIC_BASE_URL" :label="t('settings.public_base_url')">
               <a-input v-model="form.PUBLIC_BASE_URL" :placeholder="t('settings.public_base_url_ph')" />
               <template #extra>
                 <span class="text-xs text-gray-500">{{ t('settings.public_base_url_hint') }}</span>
@@ -209,7 +213,7 @@
         <a-card class="settings-card max-w-2xl" :bordered="false">
           <p class="text-sm text-gray-500 mb-4">{{ t('settings.attachments_hint') }}</p>
           <a-form layout="vertical" :model="form">
-            <a-form-item :label="t('settings.attachments_extensions')">
+            <a-form-item field="ATTACHMENT_ALLOWED_EXTENSIONS" :label="t('settings.attachments_extensions')">
               <a-textarea
                 v-model="form.ATTACHMENT_ALLOWED_EXTENSIONS"
                 :placeholder="t('settings.attachments_extensions_ph')"
@@ -219,7 +223,7 @@
                 <span class="text-xs text-gray-500">{{ t('settings.attachments_extensions_extra') }}</span>
               </template>
             </a-form-item>
-            <a-form-item :label="t('settings.attachments_max_mb')">
+            <a-form-item field="ATTACHMENT_MAX_SIZE_MB" :label="t('settings.attachments_max_mb')">
               <a-input-number
                 v-model="attachmentMaxMb"
                 :min="1"
@@ -239,7 +243,7 @@
       <a-tab-pane key="sms" :title="t('settings.tab_sms')">
         <a-card class="rounded-xl max-w-2xl">
           <a-form layout="vertical" :model="form">
-            <a-form-item :label="t('settings.sms_gateway')"><a-input v-model="form.SMS_GATEWAY_URL" /></a-form-item>
+            <a-form-item field="SMS_GATEWAY_URL" :label="t('settings.sms_gateway')"><a-input v-model="form.SMS_GATEWAY_URL" /></a-form-item>
             <a-button type="primary" :loading="saving" @click="save">{{ t('common.save') }}</a-button>
           </a-form>
         </a-card>
@@ -248,10 +252,10 @@
       <a-tab-pane key="azure" :title="t('settings.tab_azure')">
         <a-card class="settings-card max-w-2xl" :bordered="false">
           <a-form layout="vertical" :model="form">
-            <a-form-item label="Tenant ID"><a-input v-model="form.AZURE_TENANT_ID" /></a-form-item>
-            <a-form-item label="Client ID"><a-input v-model="form.AZURE_CLIENT_ID" /></a-form-item>
-            <a-form-item label="Client Secret"><a-input-password v-model="form.AZURE_CLIENT_SECRET" /></a-form-item>
-            <a-form-item label="Redirect URI"><a-input v-model="form.AZURE_REDIRECT_URI" /></a-form-item>
+            <a-form-item field="AZURE_TENANT_ID" label="Tenant ID"><a-input v-model="form.AZURE_TENANT_ID" /></a-form-item>
+            <a-form-item field="AZURE_CLIENT_ID" label="Client ID"><a-input v-model="form.AZURE_CLIENT_ID" /></a-form-item>
+            <a-form-item field="AZURE_CLIENT_SECRET" label="Client Secret"><a-input-password v-model="form.AZURE_CLIENT_SECRET" /></a-form-item>
+            <a-form-item field="AZURE_REDIRECT_URI" label="Redirect URI"><a-input v-model="form.AZURE_REDIRECT_URI" /></a-form-item>
             <a-button type="primary" :loading="saving" @click="save">{{ t('common.save') }}</a-button>
           </a-form>
         </a-card>
@@ -292,18 +296,18 @@
       @ok="saveSector"
     >
       <a-form :model="sectorEdit" layout="vertical">
-        <a-form-item :label="t('settings.col_code')" required><a-input v-model="sectorEdit.code" :disabled="!!sectorEdit.id" /></a-form-item>
-        <a-form-item :label="t('settings.col_name')" required><a-input v-model="sectorEdit.name" /></a-form-item>
-        <a-form-item :label="t('settings.col_sort')"><a-input-number v-model="sectorEdit.sort_order" /></a-form-item>
+        <a-form-item field="code" :label="t('settings.col_code')" required><a-input v-model="sectorEdit.code" :disabled="!!sectorEdit.id" /></a-form-item>
+        <a-form-item field="name" :label="t('settings.col_name')" required><a-input v-model="sectorEdit.name" /></a-form-item>
+        <a-form-item field="sort_order" :label="t('settings.col_sort')"><a-input-number v-model="sectorEdit.sort_order" /></a-form-item>
       </a-form>
     </a-modal>
 
     <a-modal v-model:visible="scopedModal" :title="t('settings.scoped_modal_title')" @ok="saveScoped" :width="560">
       <a-form layout="vertical" :model="scopedEdit">
-        <a-form-item :label="t('settings.col_user')" required>
+        <a-form-item field="user_id" :label="t('settings.col_user')" required>
           <a-select v-model="scopedEdit.user_id" :options="userOpts" allow-search :disabled="!!scopedEdit.id" />
         </a-form-item>
-        <a-form-item :label="t('settings.managed_sectors')">
+        <a-form-item field="sector_ids" :label="t('settings.managed_sectors')">
           <a-checkbox-group v-model="scopedEdit.sector_ids">
             <a-checkbox v-for="s in sectors" :key="s.id" :value="s.id">{{ s.name }}</a-checkbox>
           </a-checkbox-group>
@@ -647,8 +651,13 @@ async function saveSector() {
 }
 
 async function removeSector(id: number) {
-  await api.delete(`/admin/business-sectors/${id}`)
-  await loadSectors()
+  try {
+    await api.delete(`/admin/business-sectors/${id}`)
+    await loadSectors()
+    Message.success(t('common.success'))
+  } catch (e) {
+    Message.error(e instanceof Error ? e.message : t('settings.remove_failed'))
+  }
 }
 
 async function saveGlobalAdmins() {
@@ -697,8 +706,13 @@ async function saveScoped() {
 }
 
 async function removeScoped(userId: number) {
-  await api.delete(`/admin/scoped-admins/${userId}`)
-  await loadScoped()
+  try {
+    await api.delete(`/admin/scoped-admins/${userId}`)
+    await loadScoped()
+    Message.success(t('common.success'))
+  } catch (e) {
+    Message.error(e instanceof Error ? e.message : t('settings.remove_failed'))
+  }
 }
 
 function syncTabFromRoute() {
@@ -743,7 +757,7 @@ onMounted(() => {
 }
 
 .settings-card :deep(.arco-form-item-label) {
-  font-size: 13.5px;
+  font-size: var(--app-font-13);
   font-weight: 500;
   color: var(--text);
 }
@@ -784,20 +798,20 @@ onMounted(() => {
 
 .logo-hint-title {
   margin: 0 0 0.25rem;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   font-weight: 600;
   color: var(--text);
 }
 
 .logo-hint-text {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
 }
 
 .logo-ratio-hint {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   line-height: 1.6;
   color: var(--text-secondary);
 }
@@ -828,13 +842,35 @@ onMounted(() => {
   display: block;
   font-weight: 600;
   color: var(--text);
-  font-size: 0.9375rem;
+  font-size: var(--app-font-md);
 }
 
 .mail-security-hint {
   display: block;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   color: var(--text-tertiary);
   margin-top: 0.15rem;
+}
+
+/* 窄屏适配：表单控件与表格不撑破视口 */
+@media (max-width: 768px) {
+  .settings-card :deep(.arco-form-item),
+  .settings-card :deep(.arco-form-item-content),
+  .settings-card :deep(.arco-input-wrapper),
+  .settings-card :deep(.arco-select-view-single),
+  .settings-card :deep(.arco-select-view-multiple) {
+    max-width: 100%;
+  }
+
+  .logo-preview-wrap {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.75rem;
+  }
+
+  .mail-security-item {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
 }
 </style>

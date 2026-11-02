@@ -46,28 +46,28 @@
       @ok="save"
       @cancel="modalVisible = false"
     >
-      <a-form layout="vertical">
+      <a-form :model="edit" layout="vertical">
         <a-row :gutter="12">
           <a-col :span="8">
-            <a-form-item :label="t('settings.opt_code')" required>
+            <a-form-item field="code" :label="t('settings.opt_code')" required>
               <a-input v-model="edit.code" :placeholder="t('settings.rec_code_ph')" :disabled="!!edit.id" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item :label="t('settings.opt_name')" required>
+            <a-form-item field="name" :label="t('settings.opt_name')" required>
               <a-input v-model="edit.name" :placeholder="t('settings.rec_name_ph')" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
-            <a-form-item :label="t('settings.opt_enabled')">
+            <a-form-item field="is_active" :label="t('settings.opt_enabled')">
               <a-switch v-model="edit.is_active" />
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item :label="t('settings.opt_description')">
+        <a-form-item field="description" :label="t('settings.opt_description')">
           <a-input v-model="edit.description" />
         </a-form-item>
-        <a-form-item :label="t('settings.rec_col_scope')" required>
+        <a-form-item field="data_scope" :label="t('settings.rec_col_scope')" required>
           <a-radio-group v-model="edit.data_scope" type="button">
             <a-radio value="company">{{ t('settings.rec_scope_company') }}</a-radio>
             <a-radio value="personal">{{ t('settings.rec_scope_personal') }}</a-radio>
@@ -364,15 +364,15 @@ onMounted(load)
 <style scoped>
 .col-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-8);
   align-items: center;
 }
 
 .col-row-head {
-  font-size: 12px;
-  color: #86909c;
-  margin-bottom: 4px;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--app-space-4);
 }
 
 .col-head-label {
@@ -397,36 +397,36 @@ onMounted(load)
 }
 
 .hint-text {
-  font-size: 12px;
-  color: #86909c;
-  margin: 0 0 8px;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
+  margin: 0 0 var(--app-space-8);
 }
 
 .mt-1 {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 }
 
 .rec-table-wrap {
   overflow-x: auto;
-  margin-bottom: 12px;
+  margin-bottom: var(--app-space-12);
   max-height: 360px;
 }
 
 .rec-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--app-font-sm);
 }
 
 .rec-table th,
 .rec-table td {
-  border: 1px solid var(--border, #e5e6eb);
-  padding: 6px 8px;
+  border: 1px solid var(--border, #e8e7e2);
+  padding: var(--app-space-6) var(--app-space-8);
   white-space: nowrap;
 }
 
 .rec-table th {
-  background: var(--surface-muted, #f7f8fa);
+  background: var(--surface-muted, #f2f2ef);
   font-weight: 600;
 }
 </style>

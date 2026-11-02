@@ -30,11 +30,15 @@
             @sorter-change="onMineSorterChange"
           >
             <template #display-no-prefix="{ record }">
+              <!-- 未读状态：圆点只是视觉辅助，同时给出可见文字，避免颜色成为唯一状态载体 -->
               <span
                 v-if="record.has_unread_update"
-                class="instances-unread-dot"
+                class="instances-unread-badge"
                 :title="t('workflow.update_badge')"
-              />
+              >
+                <span class="instances-unread-dot" aria-hidden="true" />
+                <span class="instances-unread-text">{{ t('workflow.update_badge') }}</span>
+              </span>
             </template>
             <template #flow-extra="{ record }">
               <a-tag v-if="record.is_latest_update" color="arcoblue" size="small">
@@ -198,7 +202,7 @@ async function loadMine() {
       params: { mine: 1, ...mineSort.sortQueryParams() },
     })
     if (res.data.ok) mineRows.value = res.data.data
-    void badges.refresh(true)
+    void badges.refresh()
   } finally {
     loadingMine.value = false
   }
@@ -214,7 +218,7 @@ async function loadParticipated() {
       participatedRows.value = res.data.data
       participatedLoaded.value = true
     } else {
-      Message.error(res.data.message || '加载失败')
+      Message.error(res.data.message || t('common.load_failed'))
     }
   } catch (e) {
     Message.error(e instanceof Error ? e.message : '加载失败')
@@ -250,7 +254,7 @@ async function withdraw(record: InstanceRow) {
       Message.success(res.data.message || t('workflow.withdraw_ok'))
       await loadMine()
     } else {
-      Message.error(res.data.message || '撤回失败')
+      Message.error(res.data.message || t('common.withdraw_failed'))
     }
   } catch (e) {
     Message.error(e instanceof Error ? e.message : '撤回失败')
@@ -283,11 +287,11 @@ onActivated(() => {
 .tab-title-with-badge {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--app-space-2);
 }
 
 .instances-tabs :deep(.arco-tabs-content) {
-  padding-top: 12px;
+  padding-top: var(--app-space-12);
 }
 
 .instances-panel {
@@ -309,6 +313,13 @@ onActivated(() => {
   background: rgba(80, 52, 255, 0.04);
 }
 
+.instances-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--app-space-4);
+  flex-shrink: 0;
+}
+
 .instances-unread-dot {
   flex-shrink: 0;
   width: 8px;
@@ -317,15 +328,34 @@ onActivated(() => {
   background: var(--danger);
 }
 
+.instances-unread-text {
+  font-size: var(--app-font-xs);
+  line-height: 1;
+  color: var(--danger);
+  white-space: nowrap;
+}
+
 .instances-mobile-card--unread {
   border-color: rgba(245, 63, 63, 0.35) !important;
   background: rgba(80, 52, 255, 0.03);
 }
 
 .instances-mobile-meta {
-  margin-top: 4px;
-  font-size: 13px;
+  margin-top: var(--app-space-4);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
   line-height: 1.45;
+}
+
+/* 窄屏适配：未读标记允许换行，避免挤压单号 */
+@media (max-width: 768px) {
+  .instances-unread-badge {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .instances-panel {
+    padding: 0.15rem 0;
+  }
 }
 </style>

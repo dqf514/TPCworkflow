@@ -47,25 +47,25 @@
       :width="480"
       @ok="save"
     >
-      <a-form layout="vertical">
-        <a-form-item :label="t('settings.rate_code')" required>
+      <a-form :model="edit" layout="vertical">
+        <a-form-item field="currency_code" :label="t('settings.rate_code')" required>
           <a-input
             v-model="edit.currency_code"
             :placeholder="t('settings.rate_code_ph')"
             :disabled="!!edit.id"
           />
         </a-form-item>
-        <a-form-item :label="t('settings.rate_name')" required>
+        <a-form-item field="currency_name" :label="t('settings.rate_name')" required>
           <a-input v-model="edit.currency_name" :placeholder="t('settings.rate_name_ph')" />
         </a-form-item>
-        <a-form-item :label="t('settings.rate_value')" required>
+        <a-form-item field="rate_to_cny" :label="t('settings.rate_value')" required>
           <a-input-number v-model="edit.rate_to_cny" :min="0.000001" :precision="6" class="w-full" />
           <template #extra>{{ t('settings.rate_value_extra') }}</template>
         </a-form-item>
-        <a-form-item :label="t('settings.rate_remark')">
+        <a-form-item field="remark" :label="t('settings.rate_remark')">
           <a-input v-model="edit.remark" />
         </a-form-item>
-        <a-form-item :label="t('settings.rate_enabled')">
+        <a-form-item field="is_active" :label="t('settings.rate_enabled')">
           <a-switch v-model="edit.is_active" />
         </a-form-item>
       </a-form>

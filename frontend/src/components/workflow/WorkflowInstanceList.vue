@@ -1,7 +1,7 @@
 <template>
   <div class="wf-instance-list">
     <div v-if="isDesktop && columnSettingsKey" class="wf-il-toolbar">
-      <a-popover trigger="click" position="br" :content-style="{ padding: '12px 14px' }">
+      <a-popover trigger="click" position="br" :content-style="{ padding: 'var(--app-space-12) var(--app-space-14)' }">
         <a-button size="mini" type="text" class="wf-il-col-btn">
           <template #icon><icon-settings /></template>
           {{ t('workflow.columns') }}
@@ -255,7 +255,7 @@
             <slot name="actions" :record="record" />
           </div>
         </a-card>
-        <a-empty v-if="!rows.length" />
+        <a-empty v-if="!rows.length" :description="t('workflow.instance_list_empty')" />
       </template>
     </div>
   </div>
@@ -460,13 +460,13 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 .wf-il-toolbar {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 4px;
+  margin-bottom: var(--app-space-4);
 }
 
 .wf-il-col-btn {
   height: 24px;
-  padding: 0 6px;
-  font-size: 12px;
+  padding: 0 var(--app-space-6);
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 
@@ -477,33 +477,33 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 .wf-il-col-panel {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--app-space-6);
   min-width: 172px;
 }
 
 .wf-il-col-title {
-  margin-bottom: 2px;
-  font-size: 12px;
+  margin-bottom: var(--app-space-2);
+  font-size: var(--app-font-xs);
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .wf-il-col-check {
-  font-size: 13px;
+  font-size: var(--app-font-sm);
 }
 
 .wf-il-col-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 4px;
-  padding-top: 8px;
+  gap: var(--app-space-12);
+  margin-top: var(--app-space-4);
+  padding-top: var(--app-space-8);
   border-top: 1px solid var(--divider);
 }
 
 .wf-il-col-hint {
-  font-size: 11px;
+  font-size: var(--app-font-2xs);
   line-height: 1.4;
   color: var(--text-tertiary);
 }
@@ -535,7 +535,7 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 .wf-il-no {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--app-space-6);
   max-width: 100%;
   white-space: nowrap;
 }
@@ -548,7 +548,7 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 .wf-il-flow {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--app-space-6);
   max-width: 100%;
 }
 
@@ -583,8 +583,8 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 .wf-il-mobile-card--skeleton {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: var(--app-space-8);
+  padding: var(--app-space-14);
   pointer-events: none;
 }
 
@@ -615,7 +615,7 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 }
 
 .wf-il-mobile-card :deep(.arco-card-body) {
-  padding: 14px;
+  padding: var(--app-space-14);
 }
 
 .wf-il-mobile-card:last-child {
@@ -626,16 +626,16 @@ function displayStatus(record: WorkflowInstanceListRow): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-6);
 }
 
 .wf-il-mobile-no {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--app-space-6);
   overflow: hidden;
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary, #7a7f85);
   font-family: ui-monospace, 'Consolas', monospace;
   text-overflow: ellipsis;
@@ -648,30 +648,30 @@ function displayStatus(record: WorkflowInstanceListRow): string {
 
 .wf-il-mobile-title {
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--app-font-md);
   color: var(--text, #17191b);
   line-height: 1.35;
 }
 
 .wf-il-mobile-amount {
-  margin-top: 4px;
-  font-size: 14px;
+  margin-top: var(--app-space-4);
+  font-size: var(--app-font-md);
   font-weight: 600;
   color: var(--text, #17191b);
   font-variant-numeric: tabular-nums;
 }
 
 .wf-il-mobile-meta {
-  margin-top: 3px;
-  font-size: 12.5px;
+  margin-top: var(--app-space-3);
+  font-size: var(--app-font-12);
   color: var(--text-secondary, #5b6066);
   line-height: 1.45;
   word-break: break-word;
 }
 
 .wf-il-mobile-actions {
-  margin-top: 12px;
-  padding-top: 10px;
+  margin-top: var(--app-space-12);
+  padding-top: var(--app-space-10);
   border-top: 1px solid var(--divider, #efeeea);
 }
 </style>

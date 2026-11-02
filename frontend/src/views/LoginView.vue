@@ -90,19 +90,23 @@
             class="login-form"
             @submit-success="loginPassword"
           >
-            <a-form-item :label="t('auth.username')" hide-label class="login-field">
+            <!-- hide-label 会把 <label> 整个从 DOM 移除（Arco 2.57 行为），
+                 因此这里补 field 供表单校验/取值使用，并给控件补 aria-label 提供可访问名称 -->
+            <a-form-item field="identifier" :label="t('auth.username')" hide-label class="login-field">
               <a-input
                 v-model="pwdForm.identifier"
                 size="large"
                 :placeholder="t('auth.identifier_placeholder')"
+                :aria-label="t('auth.username')"
                 allow-clear
               />
             </a-form-item>
-            <a-form-item :label="t('auth.password')" hide-label class="login-field">
+            <a-form-item field="password" :label="t('auth.password')" hide-label class="login-field">
               <a-input-password
                 v-model="pwdForm.password"
                 size="large"
                 :placeholder="t('auth.password_placeholder')"
+                :aria-label="t('auth.password')"
               />
             </a-form-item>
             <LoginCaptcha
@@ -123,20 +127,22 @@
           </a-form>
 
           <a-form v-else :model="emailForm" layout="vertical" class="login-form" @submit-success="loginEmail">
-            <a-form-item :label="t('auth.email')" hide-label class="login-field">
+            <a-form-item field="email" :label="t('auth.email')" hide-label class="login-field">
               <a-input
                 v-model="emailForm.email"
                 size="large"
                 :placeholder="t('auth.work_email_placeholder')"
+                :aria-label="t('auth.email')"
                 allow-clear
               />
             </a-form-item>
-            <a-form-item :label="t('auth.email_code')" hide-label class="login-field">
+            <a-form-item field="code" :label="t('auth.email_code')" hide-label class="login-field">
               <div class="login-code-row">
                 <a-input
                   v-model="emailForm.code"
                   size="large"
                   :placeholder="t('auth.code_placeholder')"
+                  :aria-label="t('auth.email_code')"
                   class="login-code-input"
                 />
                 <a-button
@@ -319,7 +325,7 @@ async function loginAzure() {
 onMounted(async () => {
   resetSessionRedirectFlag()
   if (route.query.reason === 'session_expired') {
-    Message.warning('登录已过期，请重新登录')
+    Message.warning(t('login.session_expired'))
   }
   const res = await api.get<
     ApiResponse<{
@@ -403,7 +409,7 @@ onMounted(async () => {
 }
 
 .visual-brand-name {
-  font-size: 0.9375rem;
+  font-size: var(--app-font-md);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: rgba(255, 255, 255, 0.92);
@@ -418,7 +424,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1.1rem;
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -435,7 +441,7 @@ onMounted(async () => {
 .visual-title {
   margin: 0 0 1rem;
   font-size: clamp(2rem, 2.8vw, 2.6rem);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.24;
   letter-spacing: -0.03em;
   color: #fff;
@@ -444,7 +450,7 @@ onMounted(async () => {
 .visual-desc {
   max-width: 24rem;
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--app-font-md);
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.62);
 }
@@ -467,7 +473,7 @@ onMounted(async () => {
 }
 
 .visual-point-num {
-  font-size: 0.6875rem;
+  font-size: var(--app-font-2xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.38);
@@ -483,19 +489,19 @@ onMounted(async () => {
 }
 
 .visual-point-label {
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   color: rgba(255, 255, 255, 0.5);
 }
 
 .visual-point-body strong {
-  font-size: 0.9375rem;
-  font-weight: 550;
+  font-size: var(--app-font-md);
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.94);
 }
 
 .visual-foot {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   color: rgba(255, 255, 255, 0.36);
 }
 
@@ -529,15 +535,15 @@ onMounted(async () => {
 }
 
 .login-mobile-brand-name {
-  font-size: 0.9375rem;
-  font-weight: 650;
+  font-size: var(--app-font-md);
+  font-weight: 600;
   color: var(--text);
 }
 
 .login-heading {
   margin: 0 0 0.5rem;
   font-size: 1.875rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.035em;
   color: var(--text);
   line-height: 1.25;
@@ -545,7 +551,7 @@ onMounted(async () => {
 
 .login-sub {
   margin: 0 0 2rem;
-  font-size: 0.875rem;
+  font-size: var(--app-font-md);
   color: var(--text-secondary);
   line-height: 1.6;
 }
@@ -566,8 +572,8 @@ onMounted(async () => {
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: transparent;
-  font-size: 0.8125rem;
-  font-weight: 550;
+  font-size: var(--app-font-sm);
+  font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
   transition:
@@ -607,7 +613,7 @@ onMounted(async () => {
 .login-field :deep(.arco-input-wrapper.arco-input-focus),
 .login-field :deep(.arco-input-password.arco-input-focus) {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(80, 52, 255, 0.14);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent);
 }
 
 .login-code-row {
@@ -632,7 +638,7 @@ onMounted(async () => {
   margin-top: 0.35rem;
   border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
-  font-size: 0.9375rem !important;
+  font-size: var(--app-font-md) !important;
 }
 
 .login-divider {
@@ -641,7 +647,7 @@ onMounted(async () => {
   gap: 1rem;
   margin: 1.35rem 0;
   color: var(--text-tertiary);
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
 }
 
 .login-divider::before,
@@ -673,7 +679,7 @@ onMounted(async () => {
   border-radius: var(--radius-md);
   background: var(--danger-soft);
   color: var(--danger);
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   line-height: 1.5;
   text-align: center;
 }

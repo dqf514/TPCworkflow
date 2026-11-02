@@ -257,19 +257,19 @@ function beforeRemove(file: FileItem) {
 
 .att-empty {
   color: var(--text-tertiary, #9699a6);
-  font-size: 0.875rem;
+  font-size: var(--app-font-md);
 }
 
 .att-count {
   display: inline-block;
-  margin-top: 4px;
-  font-size: 0.8125rem;
+  margin-top: var(--app-space-4);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary, #676879);
 }
 
 .att-hint {
-  margin: 4px 0 0;
-  font-size: 0.75rem;
+  margin: var(--app-space-4) 0 0;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary, #9699a6);
   line-height: 1.4;
   word-break: break-word;
@@ -282,7 +282,7 @@ function beforeRemove(file: FileItem) {
 .att-list {
   margin: 0;
   padding-left: 1.1rem;
-  font-size: 0.875rem;
+  font-size: var(--app-font-md);
 }
 
 .att-list a {

@@ -150,18 +150,18 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-10);
 }
 
 .wf-flow-title {
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   font-weight: 600;
   color: var(--text);
 }
 
 .wf-flow-duration {
-  font-size: 0.6875rem;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-start;
   margin: 0;
-  padding: 2px 0 4px;
+  padding: var(--app-space-2) 0 var(--app-space-4);
   overflow-x: auto;
   list-style: none;
   scrollbar-width: thin;
@@ -184,8 +184,8 @@ onBeforeUnmount(() => {
   max-width: 180px;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 0 6px;
+  gap: var(--app-space-6);
+  padding: 0 var(--app-space-6);
   text-align: center;
 }
 
@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   background: var(--surface);
   color: var(--text-tertiary);
-  font-size: 10.5px;
+  font-size: var(--app-font-10);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   transition:
@@ -234,20 +234,20 @@ onBeforeUnmount(() => {
   border-color: var(--success);
   background: var(--success);
   color: var(--brand-contrast);
-  font-size: 12px;
+  font-size: var(--app-font-xs);
 }
 
 .wf-step.is-current .wf-step-marker {
   border-color: var(--brand);
   background: var(--brand);
   color: var(--brand-contrast);
-  box-shadow: 0 0 0 4px var(--brand-soft);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 12%, transparent);
 }
 
 .wf-step-label {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 0.71875rem;
+  font-size: var(--app-font-2xs);
   line-height: 1.4;
   color: var(--text-tertiary);
   word-break: break-word;
@@ -261,15 +261,15 @@ onBeforeUnmount(() => {
 
 .wf-step.is-current .wf-step-label {
   font-weight: 600;
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .wf-step-tag {
-  padding: 0 5px;
+  padding: 0 var(--app-space-4);
   border-radius: var(--radius-pill);
   background: var(--brand-soft);
-  color: var(--brand);
-  font-size: 9.5px;
+  color: var(--brand-text);
+  font-size: var(--app-font-9);
   font-weight: 600;
   line-height: 1.6;
   white-space: nowrap;
@@ -277,8 +277,8 @@ onBeforeUnmount(() => {
 
 .wf-flow-empty {
   margin: 0;
-  padding: 4px 0;
-  font-size: 0.75rem;
+  padding: var(--app-space-4) 0;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 

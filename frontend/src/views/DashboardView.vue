@@ -72,7 +72,10 @@
             </button>
           </li>
         </ul>
-        <a-empty v-else class="dash-empty" />
+        <p v-else-if="todoFailed" class="dash-error" role="alert">
+          {{ t('workflow.todo_load_failed') }}
+        </p>
+        <a-empty v-else class="dash-empty" :description="t('workflow.no_todos')" />
 
         <footer v-if="todoRows.length" class="dash-panel-foot">
           <router-link :to="{ name: 'tasks' }" class="dash-link">
@@ -113,6 +116,9 @@
               <icon-right class="dash-quick-arrow" />
             </button>
           </div>
+          <p v-else-if="catalogFailed" class="dash-error" role="alert">
+            申请入口加载失败，请稍后重试
+          </p>
           <p v-else-if="!loading" class="dash-quick-empty">{{ t('apply.catalog_empty') }}</p>
         </section>
 
@@ -161,7 +167,10 @@
           </button>
         </li>
       </ul>
-      <a-empty v-else class="dash-empty" />
+      <p v-else-if="mineFailed" class="dash-error" role="alert">
+        {{ t('workflow.mine_load_failed') }}
+      </p>
+      <a-empty v-else class="dash-empty" :description="t('workflow.no_instances')" />
     </section>
   </PageChrome>
 </template>
@@ -186,6 +195,7 @@ import ProcessIcon from '@/components/apply/ProcessIcon.vue'
 import StatusPill from '@/components/workflow/StatusPill.vue'
 import { formatInstanceListStatus } from '@/composables/useWorkflowLabels'
 import { formatDateTime } from '@/utils/dateTime'
+import { formatMoney } from '@/utils/currency'
 import type { WorkflowInstanceListRow } from '@/types/workflowInstanceList'
 import type { TaskListPageResult, WorkflowTaskListRow } from '@/types/workflowTaskList'
 
@@ -212,6 +222,10 @@ const todoTotal = ref(0)
 const mineRows = ref<WorkflowInstanceListRow[]>([])
 const quickItems = ref<CatalogItem[]>([])
 const loading = ref(true)
+/** 各数据块的失败标记：接口异常时展示错误态，而不是伪装成「没有数据」 */
+const todoFailed = ref(false)
+const mineFailed = ref(false)
+const catalogFailed = ref(false)
 
 const welcomeLine = computed(() => {
   const name = auth.user?.display_name || ''
@@ -308,17 +322,21 @@ function openProcess(item: CatalogItem) {
 }
 
 function formatAmount(row: WorkflowInstanceListRow) {
-  const n = Number(row.total_amount)
+  const raw = row.total_amount
+  // 后端对无金额的单据明确返回 null，此时不能显示成 ¥0.00
+  if (raw === null || raw === undefined || raw === '') return ''
+  const n = Number(raw)
   if (!Number.isFinite(n)) return ''
   const currency = row.amount_currency || 'CNY'
-  return `${currency === 'CNY' ? '¥' : `${currency} `}${n.toLocaleString('zh-CN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`
+  // 货币符号统一走 @/utils/currency：人民币 ￥(U+FFE5)，日元 ¥(U+00A5)
+  return formatMoney(n, currency)
 }
 
 async function loadDashboard() {
   loading.value = true
+  todoFailed.value = false
+  mineFailed.value = false
+  catalogFailed.value = false
   try {
     const [todoRes, mineRes, catalogRes] = await Promise.allSettled([
       api.get<ApiResponse<TaskListPageResult>>('/workflow/tasks/todo', {
@@ -330,19 +348,26 @@ async function loadDashboard() {
       api.get<ApiResponse<CatalogGroup[]>>('/forms/applications-catalog'),
     ])
 
+    // rejected 分支必须显式处理：否则接口全挂时页面会显示成「没有待办」
     if (todoRes.status === 'fulfilled' && todoRes.value.data.ok) {
       todoRows.value = todoRes.value.data.data.items
       todoTotal.value = todoRes.value.data.data.total
+    } else {
+      todoFailed.value = true
     }
     if (mineRes.status === 'fulfilled' && mineRes.value.data.ok) {
       mineRows.value = mineRes.value.data.data
+    } else {
+      mineFailed.value = true
     }
     if (catalogRes.status === 'fulfilled' && catalogRes.value.data.ok) {
       quickItems.value = catalogRes.value.data.data
         .flatMap((g) => g.items)
         .slice(0, 4)
+    } else {
+      catalogFailed.value = true
     }
-    void badges.refresh(true)
+    void badges.refresh()
   } finally {
     loading.value = false
   }
@@ -355,8 +380,8 @@ onMounted(loadDashboard)
 .dash-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: var(--app-space-10);
+  margin-bottom: var(--app-space-14);
 }
 
 @media (min-width: 900px) {
@@ -368,8 +393,8 @@ onMounted(loadDashboard)
 .dash-metric {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 14px 16px 15px;
+  gap: var(--app-space-6);
+  padding: var(--app-space-14) var(--app-space-16) 15px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -389,11 +414,11 @@ onMounted(loadDashboard)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .dash-metric-label {
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   font-weight: 500;
   color: var(--text-secondary);
 }
@@ -407,12 +432,12 @@ onMounted(loadDashboard)
   border-radius: var(--radius-md);
   background: var(--surface-muted);
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: var(--app-font-md);
 }
 
 .dash-metric--brand .dash-metric-icon {
   background: var(--brand-soft);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .dash-metric--warning .dash-metric-icon {
@@ -422,14 +447,14 @@ onMounted(loadDashboard)
 
 .dash-metric-value {
   font-size: 1.75rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.03em;
   color: var(--text);
 }
 
 .dash-metric--brand .dash-metric-value {
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .dash-metric--warning .dash-metric-value {
@@ -439,8 +464,8 @@ onMounted(loadDashboard)
 .dash-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: var(--app-space-14);
+  margin-bottom: var(--app-space-14);
 }
 
 @media (min-width: 1024px) {
@@ -452,7 +477,7 @@ onMounted(loadDashboard)
 .dash-side {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--app-space-14);
   min-width: 0;
 }
 
@@ -468,21 +493,21 @@ onMounted(loadDashboard)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px 12px;
+  gap: var(--app-space-12);
+  padding: var(--app-space-14) var(--app-space-16) var(--app-space-12);
   border-bottom: 1px solid var(--divider);
 }
 
 .dash-panel-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-space-8);
   min-width: 0;
 }
 
 .dash-panel-title h2 {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--app-font-md);
   font-weight: 600;
   color: var(--text);
 }
@@ -493,11 +518,11 @@ onMounted(loadDashboard)
   justify-content: center;
   min-width: 20px;
   height: 20px;
-  padding: 0 6px;
+  padding: 0 var(--app-space-6);
   border-radius: var(--radius-pill);
   background: var(--brand-soft);
-  color: var(--brand);
-  font-size: 11px;
+  color: var(--brand-text);
+  font-size: var(--app-font-2xs);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -505,8 +530,8 @@ onMounted(loadDashboard)
 .dash-link {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  font-size: 0.75rem;
+  gap: var(--app-space-2);
+  font-size: var(--app-font-xs);
   font-weight: 500;
   color: var(--text-tertiary);
   text-decoration: none;
@@ -515,7 +540,7 @@ onMounted(loadDashboard)
 }
 
 .dash-link:hover {
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .dash-metric--skeleton {
@@ -525,13 +550,13 @@ onMounted(loadDashboard)
 .dash-sk-label {
   width: 64px;
   height: 12px;
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 }
 
 .dash-sk-value {
   width: 84px;
   height: 26px;
-  margin-top: 6px;
+  margin-top: var(--app-space-6);
 }
 
 .dash-todo-skeleton {
@@ -542,8 +567,8 @@ onMounted(loadDashboard)
 .dash-sk-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 13px 16px;
+  gap: var(--app-space-12);
+  padding: 13px var(--app-space-16);
 }
 
 .dash-sk-row + .dash-sk-row {
@@ -562,7 +587,7 @@ onMounted(loadDashboard)
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--app-space-6);
 }
 
 .dash-sk-line {
@@ -604,7 +629,16 @@ onMounted(loadDashboard)
 }
 
 .dash-empty {
-  padding: 24px 0;
+  padding: var(--app-space-24) 0;
+}
+
+/* 接口失败时的错误态（与空态区分开） */
+.dash-error {
+  margin: 0;
+  padding: var(--app-space-20) var(--app-space-16);
+  color: var(--danger);
+  font-size: var(--app-font-sm);
+  text-align: center;
 }
 
 .dash-todo-list,
@@ -622,9 +656,9 @@ onMounted(loadDashboard)
 .dash-todo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--app-space-12);
   width: 100%;
-  padding: 12px 16px;
+  padding: var(--app-space-12) var(--app-space-16);
   border: none;
   background: transparent;
   text-align: left;
@@ -650,13 +684,13 @@ onMounted(loadDashboard)
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--app-space-3);
 }
 
 .dash-todo-title {
   overflow: hidden;
-  font-size: 0.875rem;
-  font-weight: 550;
+  font-size: var(--app-font-md);
+  font-weight: 500;
   color: var(--text);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -666,13 +700,13 @@ onMounted(loadDashboard)
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  font-size: 0.75rem;
+  gap: var(--app-space-8);
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 
 .dash-todo-no {
-  padding: 1px 6px;
+  padding: 1px var(--app-space-6);
   border-radius: var(--radius-sm);
   background: var(--surface-muted);
   color: var(--text-secondary);
@@ -684,11 +718,11 @@ onMounted(loadDashboard)
 .dash-quick-arrow {
   flex-shrink: 0;
   color: var(--text-disabled);
-  font-size: 12px;
+  font-size: var(--app-font-xs);
 }
 
 .dash-panel-foot {
-  padding: 10px 16px;
+  padding: var(--app-space-10) var(--app-space-16);
   border-top: 1px solid var(--divider);
   text-align: right;
 }
@@ -696,16 +730,16 @@ onMounted(loadDashboard)
 .dash-quick {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 12px;
+  gap: var(--app-space-8);
+  padding: var(--app-space-12);
 }
 
 .dash-quick-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--app-space-10);
   min-width: 0;
-  padding: 10px;
+  padding: var(--app-space-10);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -725,7 +759,7 @@ onMounted(loadDashboard)
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   font-weight: 500;
   color: var(--text);
   text-overflow: ellipsis;
@@ -738,26 +772,26 @@ onMounted(loadDashboard)
 
 .dash-quick-empty {
   margin: 0;
-  padding: 20px 16px;
-  font-size: 0.75rem;
+  padding: var(--app-space-20) var(--app-space-16);
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
   text-align: center;
 }
 
 .dash-membership {
-  padding: 14px 16px;
+  padding: var(--app-space-14) var(--app-space-16);
 }
 
 .dash-membership-title {
-  margin: 0 0 6px;
-  font-size: 0.8125rem;
+  margin: 0 0 var(--app-space-6);
+  font-size: var(--app-font-sm);
   font-weight: 600;
   color: var(--text);
 }
 
 .dash-membership-text {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   color: var(--text-secondary);
   line-height: 1.5;
 }
@@ -765,9 +799,9 @@ onMounted(loadDashboard)
 .dash-recent-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--app-space-14);
   width: 100%;
-  padding: 12px 16px;
+  padding: var(--app-space-12) var(--app-space-16);
   border: none;
   background: transparent;
   text-align: left;
@@ -780,13 +814,13 @@ onMounted(loadDashboard)
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--app-space-3);
 }
 
 .dash-recent-title {
   overflow: hidden;
-  font-size: 0.875rem;
-  font-weight: 550;
+  font-size: var(--app-font-md);
+  font-weight: 500;
   color: var(--text);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -795,15 +829,15 @@ onMounted(loadDashboard)
 .dash-recent-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  font-size: 0.75rem;
+  gap: var(--app-space-10);
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
 
 .dash-recent-amount {
   flex-shrink: 0;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   font-weight: 600;
   color: var(--text);
 }
@@ -814,7 +848,7 @@ onMounted(loadDashboard)
   }
 
   .dash-recent-row {
-    gap: 10px;
+    gap: var(--app-space-10);
   }
 }
 </style>

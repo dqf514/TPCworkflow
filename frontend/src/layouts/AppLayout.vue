@@ -51,13 +51,14 @@
             <icon-sun v-if="isDark" />
             <icon-moon v-else />
           </button>
+          <!-- 语言切换器：补可访问名称（读屏可播报） -->
           <a-select
             v-model="currentLocale"
             :options="localeOptions"
             size="small"
             class="app-locale-select"
+            aria-label="界面语言"
             @change="onLocaleChange"
-            @update:model-value="onLocaleChange"
           />
           <a-dropdown v-if="auth.user" trigger="click">
             <button type="button" class="app-user-chip" aria-label="用户菜单">
@@ -82,7 +83,7 @@
       <a-layout class="app-body">
         <a-layout-sider
           v-if="!isMobile && !isEmbedDesktop"
-          :width="244"
+          :width="siderWidthPx"
           :collapsed-width="72"
           :collapsed="sidebarCollapsed"
           class="app-sider"
@@ -183,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import { IconMenu, IconLeft, IconRight, IconDown, IconSearch, IconSun, IconMoon } from '@arco-design/web-vue/es/icon'
@@ -195,6 +196,7 @@ import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useEmbedDesktop } from '@/composables/useEmbedDesktop'
 import { api, type ApiResponse } from '@/api/client'
 import { resetSessionRedirectFlag } from '@/utils/sessionRedirect'
+import { resetAppScroll } from '@/utils/appScroll'
 import SideMenu from '@/components/SideMenu.vue'
 import MobileTabBar from '@/components/MobileTabBar.vue'
 import ProfileModal from '@/components/ProfileModal.vue'
@@ -274,6 +276,19 @@ const arcoLocale = computed(() => arcoLocaleMap[locale.value] || arcoLocaleMap['
 const sidebarCollapsed = computed(() => {
   if (isMobile.value) return false
   return siderCollapsedManual.value
+})
+
+/**
+ * 侧边栏宽度：唯一真相源是 styles/main.css 里的 --sider-w。
+ * Arco 的 a-layout-sider 宽度是 prop（不是 CSS），所以运行时把令牌读出来用。
+ */
+const siderWidthPx = ref(244)
+onMounted(() => {
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue('--sider-w')
+    .trim()
+  const n = parseInt(raw, 10)
+  if (Number.isFinite(n) && n > 0) siderWidthPx.value = n
 })
 
 function onSiderCollapse(collapsed: boolean) {
@@ -359,7 +374,7 @@ async function loadClientDownloadInfo() {
 
 function openClientDownloadModal() {
   if (!clientDownloadAvailable.value) {
-    Message.warning('客户端安装包暂未发布，请联系管理员')
+    Message.warning(t('client.package_not_published'))
     return
   }
   clientDownloadModalVisible.value = true
@@ -381,7 +396,8 @@ watch(
   () => auth.user?.id,
   (uid) => {
     if (uid) {
-      void badges.refresh(true)
+      // 不再传 force：徽标 store 内部已有 inflight 去重，避免重复请求
+      void badges.refresh()
       void loadClientDownloadInfo()
     } else {
       badges.reset()
@@ -391,17 +407,23 @@ watch(
   { immediate: true },
 )
 
-router.afterEach(() => {
-  if (auth.user) void badges.refresh()
-})
+// 路由切换后刷新待办徽标；afterEach 必须成对注销，否则多次登录会叠加钩子
+let removeAfterEach: (() => void) | null = null
 
 onMounted(() => {
   document.addEventListener('visibilitychange', onVisibilityChange)
   resetSessionRedirectFlag()
+  removeAfterEach = router.afterEach(() => {
+    if (auth.user) void badges.refresh()
+    // 兜底复位内容区滚动位置（路由切换后不应保留上一页的滚动偏移）
+    void nextTick(() => resetAppScroll())
+  })
 })
 
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChange)
+  removeAfterEach?.()
+  removeAfterEach = null
 })
 
 loadLocales()
@@ -459,7 +481,7 @@ branding.load()
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 16px;
+  font-size: var(--app-font-lg);
   cursor: pointer;
   transition:
     background-color var(--dur-fast) var(--ease-out),
@@ -487,7 +509,7 @@ branding.load()
   border-radius: var(--radius-md);
   background: var(--surface-muted);
   color: var(--text-tertiary);
-  font-size: 13px;
+  font-size: var(--app-font-sm);
   cursor: pointer;
   transition:
     background-color var(--dur-fast) var(--ease-out),
@@ -512,12 +534,12 @@ branding.load()
 
 .app-search-kbd {
   flex-shrink: 0;
-  padding: 1px 5px;
+  padding: var(--app-space-2) var(--app-space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
   font-family: ui-monospace, 'Cascadia Code', monospace;
-  font-size: 10px;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
   white-space: nowrap;
 }
@@ -530,8 +552,8 @@ branding.load()
 }
 
 .app-header-title {
-  font-size: 0.9375rem;
-  font-weight: 650;
+  font-size: var(--app-font-md);
+  font-weight: 600;
   color: var(--text);
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -545,7 +567,7 @@ branding.load()
   padding-left: 0.6rem;
   border-left: 1px solid var(--border);
   overflow: hidden;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   font-weight: 500;
   color: var(--text-secondary);
   text-overflow: ellipsis;
@@ -582,12 +604,12 @@ branding.load()
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   font-weight: 500;
 }
 
 .app-user-caret {
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 
@@ -666,8 +688,8 @@ branding.load()
     max-width: 180px;
     padding-left: 0;
     border-left: 0;
-    font-size: 0.9375rem;
-    font-weight: 650;
+    font-size: var(--app-font-md);
+    font-weight: 600;
     color: var(--text);
   }
 
@@ -690,7 +712,8 @@ branding.load()
 }
 
 .app-content.has-mobile-tab .app-content-inner {
-  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  /* 底部标签栏高度统一走令牌，避免与 MobileTabBar 断点不一致 */
+  padding-bottom: var(--mobile-tab-bar-height);
 }
 
 .app-shell--embed {
@@ -760,20 +783,20 @@ branding.load()
 
 .client-download-btn--secondary:hover {
   border-color: var(--brand);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .client-download-btn-size {
-  margin-top: 2px;
-  font-size: 0.75rem;
+  margin-top: var(--app-space-2);
+  font-size: var(--app-font-xs);
   font-weight: 400;
   opacity: 0.85;
 }
 
 .client-download-hint {
   margin: 0.75rem 0 0;
-  font-size: 0.8125rem;
-  color: var(--text-muted);
+  font-size: var(--app-font-sm);
+  color: var(--text-tertiary);
   line-height: 1.5;
 }
 </style>

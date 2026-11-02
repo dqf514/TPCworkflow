@@ -1,6 +1,6 @@
 <template>
   <div class="record-set-picker-panel">
-    <a-form-item :label="t('designer.pick_record_set')">
+    <a-form-item field="recordSetCode" :label="t('designer.pick_record_set')">
       <a-select
         v-model="recordSetCode"
         :options="setOpts"
@@ -9,7 +9,11 @@
         allow-clear
       />
     </a-form-item>
-    <a-form-item v-if="columnOpts.length" :label="t('designer.record_set_label_field')">
+    <a-form-item
+      v-if="columnOpts.length"
+      field="labelField"
+      :label="t('designer.record_set_label_field')"
+    >
       <a-select
         v-model="labelField"
         :options="columnOpts"
@@ -20,7 +24,7 @@
         <span class="hint-text">{{ t('designer.record_set_label_field_hint') }}</span>
       </template>
     </a-form-item>
-    <a-form-item :label="t('designer.record_set_scope')">
+    <a-form-item field="showCompanyRecords" :label="t('designer.record_set_scope')">
       <a-checkbox v-model="showCompanyRecords" :disabled="companyScopeLocked">
         {{ t('designer.record_set_show_company') }}
       </a-checkbox>
@@ -139,8 +143,8 @@ onMounted(async () => {
 
 <style scoped>
 .hint-text {
-  font-size: 12px;
-  color: #86909c;
+  font-size: var(--app-font-xs);
+  color: var(--text-tertiary);
   margin: 0;
 }
 </style>

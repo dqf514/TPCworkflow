@@ -6,7 +6,7 @@
     <div class="leave-calendar-page app-card">
       <div class="toolbar">
         <a-form :model="filters" layout="inline" class="toolbar-form">
-          <a-form-item v-if="companyOpts.length > 1" :label="t('leave_calendar.company')">
+          <a-form-item v-if="companyOpts.length > 1" field="companyId" :label="t('leave_calendar.company')">
             <a-select
               v-model="filters.companyId"
               :options="companyOpts"
@@ -17,7 +17,7 @@
           <a-form-item v-else-if="companyOpts.length === 1" :label="t('leave_calendar.company')">
             <span class="company-static">{{ companyOpts[0].label }}</span>
           </a-form-item>
-          <a-form-item :label="t('leave_calendar.department')">
+          <a-form-item field="departmentId" :label="t('leave_calendar.department')">
             <a-select
               v-model="filters.departmentId"
               :options="deptOpts"
@@ -27,7 +27,7 @@
               style="width: 200px"
             />
           </a-form-item>
-          <a-form-item>
+          <a-form-item field="includeRunning">
             <a-checkbox v-model="filters.includeRunning">
               {{ t('leave_calendar.include_running') }}
             </a-checkbox>
@@ -48,10 +48,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PageChrome from '@/components/layout/PageChrome.vue'
-import LeaveCalendarField from '@/components/form/LeaveCalendarField.vue'
+const LeaveCalendarField = defineAsyncComponent(() => import('@/components/form/LeaveCalendarField.vue'))
 import { useAuthStore } from '@/stores/auth'
 import { loadCompanyDeptOptions } from '@/composables/useOrgDeptOptions'
 
@@ -107,19 +107,19 @@ onMounted(async () => {
 
 <style scoped>
 .leave-calendar-page {
-  padding: 16px 18px 20px;
+  padding: var(--app-space-16) var(--app-space-18) var(--app-space-20);
 }
 
 .toolbar {
-  margin-bottom: 12px;
+  margin-bottom: var(--app-space-12);
 }
 
 .toolbar-form {
-  row-gap: 8px;
+  row-gap: var(--app-space-8);
 }
 
 .company-static {
-  color: var(--color-text-1, #1d2129);
+  color: var(--text);
   font-weight: 500;
 }
 </style>

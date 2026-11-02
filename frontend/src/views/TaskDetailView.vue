@@ -9,7 +9,7 @@
     <div v-if="task && !loading" class="task-page-header no-print">
       <InstanceContextHeader
         v-if="applyOrg"
-        :title="task.instance?.definition_name || '审批'"
+        :title="task.instance?.definition_name || t('workflow.approval_task_title')"
         :meta="taskContextMeta"
         class="task-page-header-ctx"
       />
@@ -37,7 +37,7 @@
           :title="addSignBannerTitle"
         />
 
-        <a-card title="表单内容" class="rounded-xl mb-4" v-if="formSchema">
+        <a-card :title="t('workflow.form_content')" class="rounded-xl mb-4" v-if="formSchema">
           <FormRenderer
             :schema="formSchema"
             v-model="formEditValues"
@@ -70,12 +70,22 @@
           </div>
         </a-card>
 
-        <a-card v-if="timeline.length" title="审批记录" class="rounded-xl mb-4">
+        <a-card v-if="timeline.length" :title="t('workflow.approval_records')" class="rounded-xl mb-4">
           <ApprovalTimeline :items="timeline" :show-actor="false" />
         </a-card>
 
-        <a-modal v-model:visible="showTransfer" title="转交" @ok="doTransfer">
-          <a-select v-model="transferUserId" :options="userOpts" placeholder="选择用户" />
+        <a-modal
+          v-model:visible="showTransfer"
+          :title="t('workflow.transfer')"
+          :ok-loading="transferring"
+          @ok="doTransfer"
+        >
+          <a-select
+            v-model="transferUserId"
+            :options="userOpts"
+            :placeholder="t('workflow.select_user_ph')"
+            :aria-label="t('workflow.transfer_user_aria')"
+          />
         </a-modal>
 
         <a-modal
@@ -114,7 +124,7 @@
             <a-radio value="before">{{ t('workflow.add_sign_mode_before') }}</a-radio>
             <a-radio value="after">{{ t('workflow.add_sign_mode_after') }}</a-radio>
           </a-radio-group>
-          <a-form-item :label="t('workflow.add_sign_users')">
+          <a-form-item field="addSignUserIds" :label="t('workflow.add_sign_users')">
             <a-select
               v-model="addSignUserIds"
               :options="addSignUserOpts"
@@ -204,6 +214,7 @@ import type { ProcessGraph } from '@/utils/workflowFlowGraph'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkflowBadgesStore } from '@/stores/workflowBadges'
 import { useEmbedDesktop } from '@/composables/useEmbedDesktop'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { setPageHeaderTitle } from '@/composables/usePageHeader'
 import { validateNodeFieldRequirements } from '@/utils/nodeFieldRequirements'
 
@@ -262,8 +273,10 @@ const router = useRouter()
 const auth = useAuthStore()
 const badges = useWorkflowBadgesStore()
 const { isEmbedDesktop, notifyClient } = useEmbedDesktop()
-const { isMobile, isDesktop, width } = useBreakpoint()
-const hasMobileTabBar = computed(() => width.value < 768)
+const { isMobile, isDesktop } = useBreakpoint()
+// 底部标签栏在 <1024px 时存在（与 useBreakpoint / MobileTabBar 的断点一致），
+// 固定操作栏必须抬到标签栏之上，否则在 768–1023px 平板上会盖住标签栏
+const hasMobileTabBar = computed(() => isMobile.value)
 const formDevice = computed(() => (isMobile.value ? 'mobile' : 'desktop'))
 const { t } = useI18n()
 const task = ref<TaskDetail | null>(null)
@@ -384,6 +397,7 @@ async function confirmCommentModal() {
 const signatureData = ref('')
 const showTransfer = ref(false)
 const transferUserId = ref<number>()
+const transferring = ref(false)
 const userOpts = ref<{ label: string; value: number }[]>([])
 const formEditValues = reactive<Record<string, unknown>>({})
 const originalFormSnapshot = ref<Record<string, unknown>>({})
@@ -422,6 +436,19 @@ const hasNodeFieldRules = computed(() => {
   return maps.some((m) => Object.entries(m).some(([k, v]) => v && perms[k] === 'edit'))
 })
 const formReadonly = computed(() => !hasEditableFields.value)
+
+/**
+ * 只提交本节点被授予「可编辑」的字段。
+ * 服务端会对显式只读的字段直接报错，前端若把整张表单回传会整单失败。
+ */
+const editableFormPayload = computed(() => {
+  const perms = fieldPermissions.value || {}
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(formEditValues)) {
+    if (perms[k] === 'edit') out[k] = v
+  }
+  return out
+})
 
 const applyOrg = computed(() => task.value?.apply_org || task.value?.instance)
 
@@ -555,7 +582,7 @@ async function buildActionMeta(): Promise<Record<string, unknown>> {
 }
 
 function afterTaskHandled() {
-  void badges.refresh(true)
+  void badges.refresh()
   if (isEmbedDesktop.value && task.value) {
     notifyClient({ type: 'task_completed', taskId: task.value.id })
     return
@@ -587,13 +614,13 @@ async function complete(action: string, extraMeta?: Record<string, unknown>) {
       action_meta,
     }
     if ((hasEditableFields.value || hasNodeFieldRules.value) && action === 'approve') {
-      body.form = { ...formEditValues }
+      body.form = { ...editableFormPayload.value }
     }
     await api.post(`/workflow/tasks/${task.value.id}/complete`, body)
     Message.success(t('common.success'))
     afterTaskHandled()
   } catch (e) {
-    Message.error(e instanceof Error ? e.message : '失败')
+    Message.error(e instanceof Error ? e.message : t('common.failed'))
   } finally {
     acting.value = false
   }
@@ -619,7 +646,7 @@ async function submitAddSign() {
       showAddSignModal.value = false
       afterTaskHandled()
     } catch (e) {
-      Message.error(e instanceof Error ? e.message : '失败')
+      Message.error(e instanceof Error ? e.message : t('common.failed'))
     } finally {
       acting.value = false
     }
@@ -633,13 +660,25 @@ async function submitAddSign() {
 }
 
 async function doTransfer() {
-  if (!task.value || !transferUserId.value) return
-  await api.post(`/workflow/tasks/${task.value.id}/complete`, {
-    action: 'transfer',
-    action_meta: { target_user_id: transferUserId.value },
-  })
-  Message.success(t('common.success'))
-  afterTaskHandled()
+  if (!task.value) return
+  if (!transferUserId.value) {
+    Message.warning(t('workflow.transfer_select_user_ph'))
+    return
+  }
+  transferring.value = true
+  try {
+    await api.post(`/workflow/tasks/${task.value.id}/complete`, {
+      action: 'transfer',
+      action_meta: { target_user_id: transferUserId.value },
+    })
+    Message.success(t('common.success'))
+    showTransfer.value = false
+    afterTaskHandled()
+  } catch (e) {
+    Message.error(e instanceof Error ? e.message : t('workflow.transfer_failed'))
+  } finally {
+    transferring.value = false
+  }
 }
 
 onMounted(async () => {
@@ -663,8 +702,8 @@ onMounted(async () => {
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px 16px;
-  margin-bottom: 16px;
+  gap: var(--app-space-10) var(--app-space-16);
+  margin-bottom: var(--app-space-16);
 }
 
 .task-page-header-ctx {
@@ -677,15 +716,15 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .task-node-chip {
-  padding: 2px 9px;
+  padding: var(--app-space-2) 9px;
   border-radius: var(--radius-pill);
   background: var(--surface-muted);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--app-font-xs);
   white-space: nowrap;
 }
 
@@ -695,18 +734,18 @@ onMounted(async () => {
 }
 
 .task-detail-page :deep(.arco-card-header) {
-  padding: 13px 18px;
+  padding: 13px var(--app-space-18);
   border-bottom: 1px solid var(--border);
 }
 
 .task-detail-page :deep(.arco-card-header-title) {
-  font-size: 15px;
+  font-size: var(--app-font-md);
   font-weight: 600;
   color: var(--text);
 }
 
 .task-detail-page :deep(.arco-card-body) {
-  padding: 16px 18px;
+  padding: var(--app-space-16) var(--app-space-18);
 }
 
 @media (max-width: 767px) {
@@ -721,10 +760,10 @@ onMounted(async () => {
   right: 0;
   bottom: 0;
   z-index: 55;
-  padding: 12px;
-  background: var(--color-bg-1, #fff);
-  border-top: 1px solid var(--border, #e5e6eb);
-  box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.06);
+  padding: var(--app-space-md);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
 }
 
 .task-footer-actions--mobile.task-footer-actions--above-tab {
@@ -735,7 +774,7 @@ onMounted(async () => {
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
-  gap: 8px;
+  gap: var(--app-space-8);
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
@@ -745,17 +784,17 @@ onMounted(async () => {
   flex: 1 1 0;
   min-width: 0;
   min-height: 44px;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding-left: var(--app-space-8);
+  padding-right: var(--app-space-8);
 }
 
 .task-footer-actions--desktop {
   position: static;
   z-index: auto;
-  padding: 16px 0 0;
-  margin-top: 24px;
+  padding: var(--app-space-16) 0 0;
+  margin-top: var(--app-space-24);
   background: transparent;
-  border-top: 1px solid var(--border, #e5e6eb);
+  border-top: 1px solid var(--border, #e8e7e2);
   box-shadow: none;
 }
 
@@ -770,8 +809,8 @@ onMounted(async () => {
   flex: 0 0 auto;
   width: auto;
   min-height: auto;
-  padding-left: 15px;
-  padding-right: 15px;
+  padding-left: var(--app-space-16);
+  padding-right: var(--app-space-16);
 }
 
 .task-action-btn--close {

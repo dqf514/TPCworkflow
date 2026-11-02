@@ -15,7 +15,7 @@
     </p>
 
     <a-form layout="vertical" :model="form">
-      <a-form-item label="导出方案" required>
+      <a-form-item field="profileId" label="导出方案" required>
         <a-select
           v-model="form.profileId"
           :options="profileOpts"
@@ -29,6 +29,7 @@
         <a-form-item
           v-for="field in activeProfile.options"
           :key="field.key"
+          :field="`options.${field.key}`"
           :label="field.label"
           :required="field.required && field.type !== 'switch'"
         >
@@ -51,10 +52,13 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import { api, type ApiResponse } from '@/api/client'
 import { downloadBlob, parseContentDispositionFilename } from '@/utils/downloadBlob'
 import { formatDateTime } from '@/utils/dateTime'
+
+const { t } = useI18n()
 
 export interface FinanceExportOptionField {
   key: string
@@ -135,15 +139,15 @@ watch(visible, (v) => {
 
 async function handleSubmit() {
   if (!props.sectorId) {
-    Message.warning('请先选择业务板块')
+    Message.warning(t('finance.select_sector_ph'))
     return false
   }
   if (!props.instanceIds?.length) {
-    Message.warning('请先勾选需要导出的流程')
+    Message.warning(t('finance.select_flows_ph'))
     return false
   }
   if (!form.profileId) {
-    Message.warning('请选择导出方案')
+    Message.warning(t('finance.select_profile_ph'))
     return false
   }
   const profile = activeProfile.value
@@ -152,7 +156,7 @@ async function handleSubmit() {
       if (!field.required || field.type === 'switch') continue
       const val = form.options[field.key]
       if (val == null || String(val).trim() === '') {
-        Message.warning(`请填写${field.label}`)
+        Message.warning(t('finance.fill_field_required', { label: field.label }))
         return false
       }
     }
@@ -188,11 +192,11 @@ async function handleSubmit() {
     const fallback = `凭证导入_${profileName}_${formatDateTime(new Date().toISOString()).replace(/[:\s]/g, '')}.xlsx`
     const fname = parseContentDispositionFilename(res.headers['content-disposition']) || fallback
     downloadBlob(blob, fname)
-    Message.success('财务凭证已导出')
+    Message.success(t('finance.export_success'))
     visible.value = false
     return true
   } catch (err) {
-    Message.error(err instanceof Error ? err.message : '导出失败')
+    Message.error(err instanceof Error ? err.message : t('finance.export_failed'))
     return false
   } finally {
     submitting.value = false
@@ -206,21 +210,21 @@ function handleCancel() {
 
 <style scoped>
 .finance-export-desc {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 var(--app-space-12);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .profile-hint {
-  margin: -4px 0 12px;
-  font-size: 12px;
+  margin: calc(var(--app-space-4) * -1) 0 var(--app-space-12);
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 
 .field-hint {
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: var(--app-space-4);
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
 }
 </style>

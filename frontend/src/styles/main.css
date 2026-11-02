@@ -15,6 +15,8 @@
   --brand-softer: #f8f6ff;
   --brand-border: #d9d2ff;
   --brand-contrast: #ffffff;
+  /* 正文/链接用的品牌色：与 --brand 分开调，保证暗色下对比度 ≥ 4.5:1 */
+  --brand-text: #5034ff;
 
   /* —— 画布与表面（暖中性）—— */
   --bg: #f6f6f3;
@@ -47,15 +49,50 @@
   --info-soft: #eaf2fd;
 
   /* —— 企业审批密度 —— */
-  --app-font-base: 15px;
-  --app-font-sm: 13.5px;
-  --app-font-xs: 12.5px;
+  /* 数值令牌是唯一真相源，下面的语义别名只是历史调用点的兼容层 */
+  --app-font-9: 9.5px;
+  --app-font-10: 10.5px;
+  --app-font-11: 11px;
+  --app-font-12: 12.5px;
+  --app-font-13: 13.5px;
+  --app-font-15: 15px;
+  --app-font-16: 16px;
+  --app-font-18: 18px;
+  --app-font-20: 20px;
+  --app-font-22: 22px;
+  --app-font-base: var(--app-font-15);
+  --app-font-sm: var(--app-font-13);
+  --app-font-xs: var(--app-font-12);
+  /* 字号阶梯：全站字号一律引用这几档，禁止再出现裸 px / rem 双写 */
+  --app-font-2xs: var(--app-font-11);
+  --app-font-md: var(--app-font-15);
+  --app-font-lg: var(--app-font-16);
+  --app-font-xl: var(--app-font-20);
   --app-line-height: 1.55;
   --app-control-h: 34px;
   --app-control-h-sm: 28px;
-  --app-space-form-item: 10px;
-  --app-space-section: 16px;
-  --app-space-card: 16px 18px;
+  /* 间距阶梯：数值令牌是唯一真相源，下面的语义别名只是历史调用点的兼容层 */
+  --app-space-2: 2px;
+  --app-space-3: 3px;
+  --app-space-4: 4px;
+  --app-space-6: 6px;
+  --app-space-8: 8px;
+  --app-space-10: 10px;
+  --app-space-12: 12px;
+  --app-space-14: 14px;
+  --app-space-16: 16px;
+  --app-space-18: 18px;
+  --app-space-20: 20px;
+  --app-space-24: 24px;
+  /* 语义别名 */
+  --app-space-xs: var(--app-space-4);
+  --app-space-sm: var(--app-space-8);
+  --app-space-md: var(--app-space-12);
+  --app-space-lg: var(--app-space-16);
+  --app-space-xl: var(--app-space-24);
+  --app-space-form-item: var(--app-space-10);
+  --app-space-section: var(--app-space-16);
+  --app-space-card: var(--app-space-16) var(--app-space-18);
   --app-nav-item-h: 40px;
   --app-nav-font: 14px;
   --app-nav-icon: 17px;
@@ -88,33 +125,15 @@
   --mobile-tab-bar-height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
   --task-footer-height: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 
-  /* —— Arco 色阶对齐 —— */
-  --primary-1: 242, 239, 255;
-  --primary-2: 228, 221, 255;
-  --primary-3: 202, 186, 255;
-  --primary-4: 172, 149, 255;
-  --primary-5: 130, 102, 255;
-  --primary-6: 80, 52, 255;
-  --primary-7: 67, 40, 230;
-  --primary-8: 58, 34, 212;
-  --primary-9: 47, 27, 176;
-  --primary-10: 36, 20, 135;
-
-  --gray-1: 247, 247, 245;
-  --gray-2: 242, 242, 239;
-  --gray-3: 232, 232, 228;
-  --gray-4: 221, 221, 216;
-  --gray-5: 200, 200, 195;
-  --gray-6: 168, 170, 166;
-  --gray-7: 130, 134, 130;
-  --gray-8: 92, 97, 99;
-  --gray-9: 58, 62, 64;
-  --gray-10: 23, 25, 27;
+  /* —— Arco 语义色覆盖 ——
+     注意：Arco 把同名变量声明在 body / body[arco-theme='dark'] 上，
+     body 自身的声明优先于从 :root 继承的值，所以主色/灰阶不能放在 :root，
+     必须放到 body 作用域（见文件下方 body 规则）才能真正覆盖 Arco。 */
 
   --color-primary: #5034ff;
   --color-text-1: #17191b;
   --color-text-2: #5b6066;
-  --color-text-3: #7a7f85;
+  --color-text-3: var(--text-tertiary);
   --color-text-4: #a6a9ad;
   --color-bg-1: #ffffff;
   --color-bg-2: #ffffff;
@@ -146,7 +165,9 @@
   --brand-soft: #272040;
   --brand-softer: #211b34;
   --brand-border: #3b3358;
-  --brand-contrast: #ffffff;
+  /* 暗色下品牌底色偏亮（#8a76ff），白字对比度不足 4.5:1，改用深色前景 */
+  --brand-contrast: #141517;
+  --brand-text: #a99bff;
 
   --bg: #131416;
   --surface: #1b1d20;
@@ -212,11 +233,86 @@ body {
     color var(--dur-base) var(--ease-out);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5 {
+/* —— Arco 色阶覆盖（品牌紫）——
+   Arco 把 --primary-1..10 / --gray-1..10 声明在 body 上，body 自身的声明
+   优先于从 :root 继承的值，因此这些覆盖必须写在同一作用域才生效。
+   这里用 `html body` 提高一级优先级压过 Arco 的 `body`；
+   暗色模式下 Arco 用 `body[arco-theme='dark']` 声明（优先级更高），
+   所以主色再单独声明一份 `html body[arco-theme='dark']`。
+   灰阶在暗色下保留 Arco 自己的深色值（不覆盖）。 */
+html body {
+  --primary-1: 242, 239, 255;
+  --primary-2: 228, 221, 255;
+  --primary-3: 202, 186, 255;
+  --primary-4: 172, 149, 255;
+  --primary-5: 130, 102, 255;
+  --primary-6: 80, 52, 255;
+  --primary-7: 67, 40, 230;
+  --primary-8: 58, 34, 212;
+  --primary-9: 47, 27, 176;
+  --primary-10: 36, 20, 135;
+
+  --gray-1: 247, 247, 245;
+  --gray-2: 242, 242, 239;
+  --gray-3: 232, 232, 228;
+  --gray-4: 221, 221, 216;
+  --gray-5: 200, 200, 195;
+  --gray-6: 168, 170, 166;
+  --gray-7: 130, 134, 130;
+  --gray-8: 92, 97, 99;
+  --gray-9: 58, 62, 64;
+  --gray-10: 23, 25, 27;
+}
+
+html body[arco-theme='dark'] {
+  --primary-1: 242, 239, 255;
+  --primary-2: 228, 221, 255;
+  --primary-3: 202, 186, 255;
+  --primary-4: 172, 149, 255;
+  --primary-5: 130, 102, 255;
+  --primary-6: 80, 52, 255;
+  --primary-7: 67, 40, 230;
+  --primary-8: 58, 34, 212;
+  --primary-9: 47, 27, 176;
+  --primary-10: 36, 20, 135;
+}
+
+/* Arco 的 arcoblue（默认蓝）与品牌紫不一致：全站 13 处 <a-tag color="arcoblue">
+   会渲染成蓝底蓝字。这里把 arcoblue 色阶整体映射到品牌紫色阶，
+   一处改动即可让所有 arcoblue 标签回到品牌色。 */
+html body {
+  --arcoblue-1: 242, 239, 255;
+  --arcoblue-2: 228, 221, 255;
+  --arcoblue-3: 202, 186, 255;
+  --arcoblue-4: 172, 149, 255;
+  --arcoblue-5: 130, 102, 255;
+  --arcoblue-6: 80, 52, 255;
+  --arcoblue-7: 67, 40, 230;
+  --arcoblue-8: 58, 34, 212;
+  --arcoblue-9: 47, 27, 176;
+  --arcoblue-10: 36, 20, 135;
+}
+
+html body[arco-theme='dark'] {
+  --arcoblue-1: 242, 239, 255;
+  --arcoblue-2: 228, 221, 255;
+  --arcoblue-3: 202, 186, 255;
+  --arcoblue-4: 172, 149, 255;
+  --arcoblue-5: 130, 102, 255;
+  --arcoblue-6: 80, 52, 255;
+  --arcoblue-7: 67, 40, 230;
+  --arcoblue-8: 58, 34, 212;
+  --arcoblue-9: 47, 27, 176;
+  --arcoblue-10: 36, 20, 135;
+}
+
+/* 负字距只对西文生效：汉字本身是等宽方块字，负字距会把中文标题挤在一起。
+   页面语言由 i18n 插件写在 <html lang> 上，切换到英文时才启用。 */
+:lang(en) h1,
+:lang(en) h2,
+:lang(en) h3,
+:lang(en) h4,
+:lang(en) h5 {
   letter-spacing: -0.01em;
 }
 
@@ -226,7 +322,7 @@ h5 {
 }
 
 [data-theme='dark'] ::selection {
-  color: #fff;
+  color: var(--text);
 }
 
 :where(a, button, [role='button'], .arco-btn, .arco-tabs-tab):focus-visible {
@@ -375,14 +471,14 @@ h5 {
 
 .arco-btn-outline:not(.arco-btn-disabled):hover {
   border-color: var(--brand);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .arco-link,
 .arco-menu-selected,
 .arco-tabs-tab-active,
 .arco-radio-checked .arco-radio-icon {
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .arco-input-wrapper,
@@ -411,7 +507,23 @@ h5 {
 .arco-textarea-focus,
 .arco-picker-focused {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(80, 52, 255, 0.16);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+
+/*
+ * 表格标题（caption）：为读屏保留语义，但对视觉隐藏。
+ * Arco 的 a-table 不支持 caption 插槽，运行时由 utils/a11yDom.ts 插入。
+ */
+.a11y-table-caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .arco-input::placeholder,
@@ -449,7 +561,7 @@ h5 {
 
 .arco-table-td.arco-table-col-fixed-right,
 .arco-table-th.arco-table-col-fixed-right {
-  box-shadow: -8px 0 12px -12px rgba(23, 25, 27, 0.18);
+  box-shadow: -8px 0 12px -12px color-mix(in srgb, var(--text) 18%, transparent);
 }
 
 .arco-table-tr:hover .arco-table-td {
@@ -483,7 +595,7 @@ h5 {
 
 .arco-modal-header {
   border-bottom: 1px solid var(--divider);
-  padding-bottom: 14px;
+  padding-bottom: var(--app-space-md);
 }
 
 .arco-dropdown,
@@ -501,7 +613,7 @@ h5 {
 
 .arco-pagination {
   justify-content: flex-end;
-  gap: 4px;
+  gap: var(--app-space-xs);
 }
 
 .arco-pagination-item {
@@ -524,7 +636,7 @@ h5 {
 
 .arco-tooltip-content {
   border-radius: var(--radius-sm);
-  font-size: 12.5px;
+  font-size: var(--app-font-xs);
 }
 
 /* —— 侧栏导航密度 —— */
@@ -537,14 +649,14 @@ h5 {
   line-height: var(--app-nav-item-h);
   font-size: var(--app-nav-font);
   font-weight: 500;
-  margin-bottom: 2px;
+  margin-bottom: var(--app-space-2);
   border-radius: var(--radius-md);
 }
 
 .app-sider .arco-menu-item .arco-menu-icon,
 .app-nav-drawer .arco-menu-item .arco-menu-icon {
   font-size: var(--app-nav-icon);
-  margin-right: 10px;
+  margin-right: var(--app-space-10);
 }
 
 .app-sider .arco-menu-inline-header .arco-icon,
@@ -560,7 +672,7 @@ h5 {
 .app-sider .arco-menu-item.arco-menu-selected,
 .app-nav-drawer .arco-menu-item.arco-menu-selected {
   background-color: var(--brand-soft);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .page-shell {
@@ -595,13 +707,13 @@ h5 {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 16px 18px;
+    padding: var(--app-space-card);
     box-shadow: var(--shadow-xs);
   }
 
   .stat-card-accent {
     background: var(--brand-softer);
-    border-color: #e6e0ff;
+    border-color: var(--brand-border);
   }
 }
 

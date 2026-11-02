@@ -305,8 +305,8 @@ onMounted(loadCatalog)
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--app-space-12);
+  margin-bottom: var(--app-space-16);
 }
 
 .catalog-search {
@@ -327,8 +327,8 @@ onMounted(loadCatalog)
 .process-card--skeleton {
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 22px 14px 18px;
+  gap: var(--app-space-10);
+  padding: 22px var(--app-space-14) var(--app-space-18);
 }
 
 .catalog-sk-icon {
@@ -348,8 +348,8 @@ onMounted(loadCatalog)
 }
 
 .process-row--skeleton {
-  gap: 10px;
-  padding: 12px 14px;
+  gap: var(--app-space-10);
+  padding: var(--app-space-12) var(--app-space-14);
 }
 
 .catalog-sk-icon--sm {
@@ -363,7 +363,7 @@ onMounted(loadCatalog)
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--app-space-6);
 }
 
 .catalog-sk-lines .catalog-sk-line {
@@ -377,9 +377,9 @@ onMounted(loadCatalog)
 .catalog-shortcuts {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 22px;
-  padding: 12px 14px;
+  gap: var(--app-space-10);
+  margin-bottom: var(--app-space-24);
+  padding: var(--app-space-12) var(--app-space-14);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -388,13 +388,13 @@ onMounted(loadCatalog)
 .catalog-shortcut-block {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: var(--app-space-14);
 }
 
 .catalog-shortcut-label {
   flex-shrink: 0;
-  padding-top: 5px;
-  font-size: 0.75rem;
+  padding-top: var(--app-space-4);
+  font-size: var(--app-font-xs);
   font-weight: 500;
   color: var(--text-tertiary);
 }
@@ -402,20 +402,20 @@ onMounted(loadCatalog)
 .catalog-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--app-space-6);
   min-width: 0;
 }
 
 .catalog-chip {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--app-space-8);
   max-width: 220px;
-  padding: 4px 10px 4px 4px;
+  padding: var(--app-space-4) var(--app-space-10) var(--app-space-4) var(--app-space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   background: var(--surface);
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   font-weight: 500;
   color: var(--text);
   cursor: pointer;
@@ -436,19 +436,19 @@ onMounted(loadCatalog)
 }
 
 .sector-block {
-  margin-bottom: 26px;
+  margin-bottom: var(--app-space-24);
 }
 
 .sector-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-12);
 }
 
 .sector-title {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--app-font-md);
   font-weight: 600;
   color: var(--text);
 }
@@ -459,11 +459,11 @@ onMounted(loadCatalog)
   justify-content: center;
   min-width: 18px;
   height: 18px;
-  padding: 0 5px;
+  padding: 0 var(--app-space-4);
   border-radius: var(--radius-pill);
   background: var(--surface-muted);
   color: var(--text-tertiary);
-  font-size: 10.5px;
+  font-size: var(--app-font-10);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -477,7 +477,7 @@ onMounted(loadCatalog)
 .process-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+  gap: var(--app-space-10);
 }
 
 .process-card {
@@ -505,9 +505,9 @@ onMounted(loadCatalog)
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
-  gap: 7px;
+  gap: var(--app-space-8);
   min-height: 134px;
-  padding: 18px 14px 14px;
+  padding: var(--app-space-18) var(--app-space-14) var(--app-space-14);
   border: none;
   border-radius: var(--radius-lg);
   background: transparent;
@@ -516,8 +516,8 @@ onMounted(loadCatalog)
 }
 
 .process-card-name {
-  font-size: 0.8125rem;
-  font-weight: 550;
+  font-size: var(--app-font-sm);
+  font-weight: 500;
   color: var(--text);
   line-height: 1.35;
 }
@@ -525,7 +525,7 @@ onMounted(loadCatalog)
 .process-card-desc {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 0.6875rem;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
   line-height: 1.35;
   -webkit-line-clamp: 2;
@@ -546,7 +546,7 @@ onMounted(loadCatalog)
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-disabled);
-  font-size: 14px;
+  font-size: var(--app-font-md);
   cursor: pointer;
   opacity: 0;
   transition:
@@ -573,7 +573,7 @@ onMounted(loadCatalog)
 .process-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--app-space-6);
 }
 
 .process-row {
@@ -598,8 +598,8 @@ onMounted(loadCatalog)
   flex: 1;
   min-width: 0;
   align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
+  gap: var(--app-space-12);
+  padding: 11px var(--app-space-12);
   border: none;
   border-radius: var(--radius-lg);
   background: transparent;
@@ -612,18 +612,18 @@ onMounted(loadCatalog)
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--app-space-2);
 }
 
 .process-row-name {
-  font-size: 0.875rem;
-  font-weight: 550;
+  font-size: var(--app-font-md);
+  font-weight: 500;
   color: var(--text);
 }
 
 .process-row-desc {
   overflow: hidden;
-  font-size: 0.75rem;
+  font-size: var(--app-font-xs);
   color: var(--text-tertiary);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -632,12 +632,12 @@ onMounted(loadCatalog)
 .process-row-arrow {
   flex-shrink: 0;
   color: var(--text-disabled);
-  font-size: 12px;
+  font-size: var(--app-font-xs);
 }
 
 .process-star--row {
   position: static;
-  margin-right: 8px;
+  margin-right: var(--app-space-8);
   opacity: 0;
 }
 
@@ -654,7 +654,7 @@ onMounted(loadCatalog)
 
   .catalog-shortcut-block {
     flex-direction: column;
-    gap: 6px;
+    gap: var(--app-space-6);
   }
 
   .catalog-shortcut-label {

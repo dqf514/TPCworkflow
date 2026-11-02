@@ -30,13 +30,13 @@ const emit = defineEmits<{ add: [type: string] }>()
   align-items: center;
   flex-shrink: 0;
   width: auto;
-  padding: 0 2px;
+  padding: 0 var(--app-space-2);
 }
 
 .flow-connector.dir-vertical {
   flex-direction: column;
   width: auto;
-  padding: 2px 0;
+  padding: var(--app-space-2) 0;
   height: auto;
 }
 

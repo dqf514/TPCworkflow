@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Message } from '@arco-design/web-vue'
 import { IconUpload } from '@arco-design/web-vue/es/icon'
 import type { RequestOption } from '@arco-design/web-vue'
@@ -85,6 +86,8 @@ import {
   resolveDetailRecognitionConfig,
 } from '@/composables/useReceiptRecognition'
 import { formatReceiptDuplicateMessage, isReceiptDuplicate } from '@/composables/useReceiptDuplicate'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -293,7 +296,7 @@ function confirmFill() {
   emit('fill-row', patch)
   pendingResult.value = null
   pendingFile.value = null
-  Message.success('已自动填入本行')
+  Message.success(t('common.auto_filled_row'))
 }
 
 function dismissResult() {
@@ -326,7 +329,7 @@ function removeFile(file: AttachmentFileItem) {
 .detail-inline-att--block .dia-toolbar {
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
+  gap: var(--app-space-8);
 }
 
 .detail-inline-att--block :deep(.arco-upload) {
@@ -351,27 +354,27 @@ function removeFile(file: AttachmentFileItem) {
 }
 
 .dia-empty {
-  color: var(--color-text-3, #86909c);
-  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+  font-size: var(--app-font-sm);
 }
 
 .dia-toolbar {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--app-space-6);
   flex-wrap: wrap;
 }
 
 .dia-hint {
-  margin: 4px 0 0;
-  font-size: 0.6875rem;
-  color: var(--color-text-3, #86909c);
+  margin: var(--app-space-4) 0 0;
+  font-size: var(--app-font-2xs);
+  color: var(--text-tertiary);
   line-height: 1.4;
   word-break: break-word;
 }
 
 .dia-files {
-  margin: 4px 0 0;
+  margin: var(--app-space-4) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -379,8 +382,8 @@ function removeFile(file: AttachmentFileItem) {
 .dia-file-item {
   display: flex;
   align-items: center;
-  gap: 2px;
-  font-size: 0.75rem;
+  gap: var(--app-space-2);
+  font-size: var(--app-font-xs);
   line-height: 1.3;
 }
 
@@ -392,10 +395,10 @@ function removeFile(file: AttachmentFileItem) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: rgb(var(--primary-6));
+  color: var(--brand-text);
 }
 
 .dia-alert {
-  margin-top: 4px;
+  margin-top: var(--app-space-4);
 }
 </style>

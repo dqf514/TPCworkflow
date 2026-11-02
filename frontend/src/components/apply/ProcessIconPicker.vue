@@ -29,7 +29,7 @@ const emit = defineEmits<{ 'update:modelValue': [string] }>()
 .icon-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-  gap: 8px;
+  gap: var(--app-space-8);
   max-height: 280px;
   overflow-y: auto;
 }
@@ -38,27 +38,27 @@ const emit = defineEmits<{ 'update:modelValue': [string] }>()
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 4px;
-  border: 1px solid var(--border, #e5e6eb);
-  border-radius: 10px;
-  background: #fff;
+  gap: var(--app-space-xs);
+  padding: var(--app-space-sm) var(--app-space-xs);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .icon-picker-item:hover {
-  border-color: var(--brand, #5034ff);
+  border-color: var(--brand);
 }
 
 .icon-picker-item.active {
-  border-color: var(--brand, #5034ff);
-  box-shadow: 0 0 0 2px rgba(80, 52, 255, 0.15);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 15%, transparent);
 }
 
 .icon-picker-label {
-  font-size: 0.6875rem;
-  color: var(--text-secondary, #676879);
+  font-size: var(--app-font-2xs);
+  color: var(--text-secondary);
   text-align: center;
   line-height: 1.2;
 }

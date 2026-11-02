@@ -16,19 +16,22 @@
           <span class="approval-timeline-time">{{ formatPrintDateTime(item.created_at) }}</span>
         </div>
         <p v-if="item.comment" class="approval-timeline-comment">{{ item.comment }}</p>
-        <p v-else-if="!showActor" class="approval-timeline-comment is-empty">无</p>
+        <p v-else-if="!showActor" class="approval-timeline-comment is-empty">{{ t('workflow.no_comment') }}</p>
         <img
           v-if="signSrc(item)"
           :src="signSrc(item)!"
-          alt="手写签名"
+          :alt="t('workflow.signature')"
           class="approval-timeline-sign"
         />
       </div>
     </li>
   </ol>
+  <!-- 空态：没有审批轨迹时给出明确提示，避免读屏与视觉都「什么都没有」 -->
+  <p v-else class="approval-timeline-empty" role="status">{{ t('workflow.timeline_empty') }}</p>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { formatPrintDateTime, signatureImageSrc, timelineActionLabel } from '@/utils/printFormat'
 
 export interface ApprovalTimelineItem {
@@ -54,6 +57,8 @@ withDefaults(
 
 type Tone = 'success' | 'danger' | 'warning' | 'info' | 'neutral'
 
+const { t } = useI18n()
+
 function actionTone(action: string): Tone {
   const a = (action || '').toLowerCase()
   if (['approved', 'agree', 'complete', 'completed'].includes(a)) return 'success'
@@ -69,6 +74,14 @@ function signSrc(item: ApprovalTimelineItem) {
 </script>
 
 <style scoped>
+.approval-timeline-empty {
+  margin: 0;
+  padding: var(--app-space-16) 0;
+  color: var(--text-tertiary);
+  font-size: var(--app-font-sm);
+  text-align: center;
+}
+
 .approval-timeline {
   margin: 0;
   padding: 0;
@@ -78,8 +91,8 @@ function signSrc(item: ApprovalTimelineItem) {
 .approval-timeline-item {
   position: relative;
   display: flex;
-  gap: 12px;
-  padding-bottom: 14px;
+  gap: var(--app-space-12);
+  padding-bottom: var(--app-space-14);
 }
 
 .approval-timeline-item:last-child {
@@ -102,7 +115,7 @@ function signSrc(item: ApprovalTimelineItem) {
   flex-shrink: 0;
   width: 8px;
   height: 8px;
-  margin-top: 5px;
+  margin-top: var(--app-space-4);
   border-radius: 50%;
   background: var(--text-disabled);
   box-shadow: 0 0 0 3px var(--surface);
@@ -133,8 +146,8 @@ function signSrc(item: ApprovalTimelineItem) {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 8px;
-  font-size: 0.8125rem;
+  gap: var(--app-space-4) var(--app-space-8);
+  font-size: var(--app-font-sm);
   line-height: 1.5;
 }
 
@@ -149,17 +162,17 @@ function signSrc(item: ApprovalTimelineItem) {
 
 .approval-timeline-time {
   margin-left: auto;
-  font-size: 0.6875rem;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
 
 .approval-timeline-comment {
-  margin: 5px 0 0;
-  padding: 6px 10px;
+  margin: var(--app-space-4) 0 0;
+  padding: var(--app-space-6) var(--app-space-10);
   border-radius: var(--radius-sm);
   background: var(--surface-muted);
-  font-size: 0.8125rem;
+  font-size: var(--app-font-sm);
   line-height: 1.55;
   color: var(--text-secondary);
   word-break: break-word;
@@ -175,12 +188,12 @@ function signSrc(item: ApprovalTimelineItem) {
   display: block;
   max-width: 110px;
   max-height: 40px;
-  margin-top: 6px;
+  margin-top: var(--app-space-6);
   object-fit: contain;
 }
 
 .approval-timeline--compact .approval-timeline-item {
-  padding-bottom: 10px;
+  padding-bottom: var(--app-space-10);
 }
 
 .approval-timeline--compact .approval-timeline-head {
@@ -188,6 +201,6 @@ function signSrc(item: ApprovalTimelineItem) {
 }
 
 .approval-timeline--compact .approval-timeline-time {
-  font-size: 0.65625rem;
+  font-size: var(--app-font-2xs);
 }
 </style>

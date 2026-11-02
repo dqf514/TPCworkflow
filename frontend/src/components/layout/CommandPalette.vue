@@ -2,7 +2,14 @@
   <Teleport to="body">
     <Transition name="cmdk-fade">
       <div v-if="visible" class="cmdk-mask" @mousedown.self="close">
-        <div class="cmdk" role="dialog" aria-modal="true" :aria-label="t('palette.trigger')">
+        <div
+          ref="paletteEl"
+          class="cmdk"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="t('palette.trigger')"
+          @keydown="onPaletteKeydown"
+        >
           <div class="cmdk-input-row">
             <icon-search class="cmdk-search-icon" />
             <input
@@ -10,6 +17,12 @@
               v-model="query"
               type="text"
               class="cmdk-input"
+              role="combobox"
+              aria-expanded="true"
+              aria-autocomplete="list"
+              aria-controls="cmdk-listbox"
+              :aria-activedescendant="activeDescendantId"
+              :aria-label="t('palette.placeholder')"
               :placeholder="t('palette.placeholder')"
               autocomplete="off"
               spellcheck="false"
@@ -22,13 +35,16 @@
           </div>
 
           <div ref="listEl" class="cmdk-list">
-            <template v-if="filtered.length">
+            <div id="cmdk-listbox" role="listbox" :aria-label="t('palette.trigger')">
               <button
                 v-for="(item, index) in filtered"
+                :id="optionId(index)"
                 :key="item.key"
                 type="button"
+                role="option"
                 class="cmdk-item"
                 :class="{ 'is-active': index === active }"
+                :aria-selected="index === active"
                 @mouseenter="active = index"
                 @click="run(item)"
               >
@@ -36,8 +52,10 @@
                 <span class="cmdk-item-label">{{ item.label }}</span>
                 <span class="cmdk-item-group">{{ item.group }}</span>
               </button>
-            </template>
-            <div v-else class="cmdk-empty">{{ t('palette.empty') }}</div>
+            </div>
+            <div v-if="!filtered.length" class="cmdk-empty" role="status">
+              {{ t('palette.empty') }}
+            </div>
           </div>
 
           <div class="cmdk-foot">{{ t('palette.hint') }}</div>
@@ -92,6 +110,16 @@ const query = ref('')
 const active = ref(0)
 const inputEl = ref<HTMLInputElement | null>(null)
 const listEl = ref<HTMLElement | null>(null)
+const paletteEl = ref<HTMLElement | null>(null)
+
+/** 选项 id，供 input 的 aria-activedescendant 引用 */
+function optionId(index: number) {
+  return `cmdk-option-${index}`
+}
+
+const activeDescendantId = computed(() =>
+  filtered.value.length && active.value >= 0 ? optionId(active.value) : undefined,
+)
 
 const items = computed<PaletteItem[]>(() => {
   const list: PaletteItem[] = primaryItems.value.map((item) => ({
@@ -181,12 +209,56 @@ watch(filtered, () => {
 })
 
 watch(visible, async (open) => {
-  if (!open) return
+  if (!open) {
+    releaseBackgroundInert()
+    return
+  }
   query.value = ''
   active.value = 0
+  // 背景内容设为 inert，键盘与读屏都不会跑到遮罩后面的元素上
+  applyBackgroundInert()
   await nextTick()
   inputEl.value?.focus()
 })
+
+/** 打开时把应用根节点设为 inert（命令面板被 Teleport 到 body，不受影响） */
+function applyBackgroundInert() {
+  const app = document.getElementById('app')
+  if (app) app.setAttribute('inert', '')
+}
+
+function releaseBackgroundInert() {
+  const app = document.getElementById('app')
+  if (app) app.removeAttribute('inert')
+}
+
+/** 焦点陷阱：Tab / Shift+Tab 在命令面板内循环 */
+function onPaletteKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Tab') return
+  const root = paletteEl.value
+  if (!root) return
+  const focusables = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((el) => el.offsetParent !== null || el === document.activeElement)
+  if (!focusables.length) {
+    event.preventDefault()
+    return
+  }
+  const first = focusables[0]
+  const last = focusables[focusables.length - 1]
+  const current = document.activeElement as HTMLElement | null
+  if (event.shiftKey) {
+    if (current === first || !root.contains(current)) {
+      event.preventDefault()
+      last.focus()
+    }
+  } else if (current === last || !root.contains(current)) {
+    event.preventDefault()
+    first.focus()
+  }
+}
 
 function move(delta: number) {
   if (!filtered.value.length) return
@@ -215,7 +287,10 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown)
+  releaseBackgroundInert()
+})
 </script>
 
 <style scoped>
@@ -226,7 +301,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 12vh 16px 16px;
+  padding: 12vh var(--app-space-16) var(--app-space-16);
   background: rgb(15 17 19 / 46%);
   backdrop-filter: blur(3px);
 }
@@ -246,14 +321,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .cmdk-input-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 13px 16px;
+  gap: var(--app-space-10);
+  padding: 13px var(--app-space-16);
   border-bottom: 1px solid var(--border);
 }
 
 .cmdk-search-icon {
   flex-shrink: 0;
-  font-size: 17px;
+  font-size: var(--app-font-16);
   color: var(--text-tertiary);
 }
 
@@ -263,7 +338,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   border: none;
   outline: none;
   background: transparent;
-  font-size: 15px;
+  font-size: var(--app-font-md);
   color: var(--text);
 }
 
@@ -272,11 +347,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 
 .cmdk-kbd {
-  padding: 1px 6px;
+  padding: 1px var(--app-space-6);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-muted);
-  font-size: 10.5px;
+  font-size: var(--app-font-10);
   font-family: ui-monospace, 'Cascadia Code', monospace;
   color: var(--text-tertiary);
 }
@@ -285,38 +360,38 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 6px;
+  padding: var(--app-space-6);
 }
 
 .cmdk-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--app-space-10);
   width: 100%;
-  padding: 9px 11px;
+  padding: var(--app-space-8) var(--app-space-12);
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
   text-align: left;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--app-font-md);
   cursor: pointer;
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 .cmdk-item.is-active {
   background: var(--brand-soft);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .cmdk-item-icon {
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: var(--app-font-lg);
   color: var(--text-tertiary);
 }
 
 .cmdk-item.is-active .cmdk-item-icon {
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .cmdk-item-label {
@@ -329,21 +404,21 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 .cmdk-item-group {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: var(--app-font-2xs);
   color: var(--text-tertiary);
 }
 
 .cmdk-empty {
-  padding: 28px 16px;
+  padding: 28px var(--app-space-16);
   text-align: center;
-  font-size: 13px;
+  font-size: var(--app-font-sm);
   color: var(--text-tertiary);
 }
 
 .cmdk-foot {
-  padding: 8px 16px;
+  padding: var(--app-space-8) var(--app-space-16);
   border-top: 1px solid var(--border);
-  font-size: 11.5px;
+  font-size: var(--app-font-10);
   color: var(--text-tertiary);
 }
 

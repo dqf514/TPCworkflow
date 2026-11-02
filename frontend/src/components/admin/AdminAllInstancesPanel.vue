@@ -56,8 +56,8 @@
         {{ t('settings.instances_delete_confirm', { no: deleteTarget?.display_no || '—' }) }}
       </p>
       <p class="instances-delete-hint">{{ t('settings.instances_delete_code_hint') }}</p>
-      <a-form layout="vertical">
-        <a-form-item :label="t('settings.instances_delete_code_label')">
+      <a-form :model="{ deleteCode }" layout="vertical">
+        <a-form-item field="deleteCode" :label="t('settings.instances_delete_code_label')">
           <a-input-group>
             <a-input
               v-model="deleteCode"
@@ -296,18 +296,18 @@ onUnmounted(() => {
 
 <style scoped>
 .settings-card :deep(.arco-card-body) {
-  padding-top: 12px;
+  padding-top: var(--app-space-12);
 }
 
 .instances-delete-warn {
-  margin: 0 0 8px;
-  color: var(--color-danger-6, #f53f3f);
+  margin: 0 0 var(--app-space-8);
+  color: var(--danger);
   font-weight: 600;
 }
 
 .instances-delete-hint {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 var(--app-space-12);
+  font-size: var(--app-font-sm);
   color: var(--text-secondary);
 }
 </style>
