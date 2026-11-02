@@ -1,5 +1,8 @@
 // 与 backend/scripts/seed_i18n_studio_org.py 中 designer 命名空间保持同步（兜底）
 export const designerZh: Record<string, string> = {
+  'designer.delete_field_confirm': '确认删除字段「{name}」？该操作不可撤销。',
+  'designer.delete_section_confirm': '确认删除分区「{name}」？分区内的字段将一并移除。',
+  'designer.delete_column_confirm': '确认删除明细列「{name}」？该操作不可撤销。',
   'designer.field.smart_receipt': '智能票据',
   'designer.smart_receipt_props': '智能识别配置',
   'designer.smart_receipt_hint': '上传图片或 PDF，自动识别国内外发票、收据、小票等，并映射填入表单字段',
@@ -76,6 +79,7 @@ export const designerZh: Record<string, string> = {
   'designer.formula_ref_detail': '明细列汇总',
   'designer.formula_no_refs': '请先添加可引用的数字、金额或单金额字段',
   'designer.palette_drag_hint': '可拖到中间分区',
+  'designer.drag_handle_hint': '拖动排序',
   'designer.related_link_scope': '可关联范围',
   'designer.related_forms': '可关联的申请单',
   'designer.related_forms_ph': '多选其他已发布表单',
@@ -195,6 +199,7 @@ export const designerEn: Record<string, string> = {
   'designer.empty_section': 'Click to select this section, then add controls from the left',
   'designer.empty_section_active': 'Click a control on the left or drag it here',
   'designer.palette_drag_hint': 'Drag to a section',
+  'designer.drag_handle_hint': 'Drag to reorder',
   'designer.related_link_scope': 'Linkable scope',
   'designer.related_forms': 'Linkable request forms',
   'designer.related_forms_ph': 'Select published forms',

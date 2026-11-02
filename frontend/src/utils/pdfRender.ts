@@ -1,6 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { api } from '@/api/client'
+import { encodeUrlPath } from './pdfUrl'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
 
@@ -18,27 +19,6 @@ function pdfDocumentOptions(data: ArrayBuffer | Uint8Array) {
 }
 
 const cache = new Map<string, Promise<string[]>>()
-
-/** 规范化 URL 路径中的中文等非 ASCII 字符，避免 Chrome 请求失败 */
-function encodeUrlPath(url: string): string {
-  if (!url) return url
-  try {
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      const u = new URL(url)
-      u.pathname = u.pathname
-        .split('/')
-        .map((seg) => (seg ? encodeURIComponent(decodeURIComponent(seg)) : seg))
-        .join('/')
-      return u.toString()
-    }
-    return url
-      .split('/')
-      .map((seg) => (seg ? encodeURIComponent(decodeURIComponent(seg)) : seg))
-      .join('/')
-  } catch {
-    return url
-  }
-}
 
 /** 经 axios 带登录态下载 PDF，避免 pdf.js Worker 在 Chrome 中无法携带 Cookie */
 async function loadPdfBytes(url: string): Promise<ArrayBuffer> {
@@ -89,5 +69,3 @@ export function renderPdfToImages(url: string, scale = 1.8): Promise<string[]> {
   task.catch(() => cache.delete(key))
   return task
 }
-
-export { encodeUrlPath }

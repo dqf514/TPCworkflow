@@ -3,6 +3,7 @@
  * 配合 body.wf-print-active 与 styles/print.css 仅输出打印稿 DOM。
  */
 import { Message } from '@arco-design/web-vue'
+import { applyPrintPageStyle, readPrintPageSetup } from '@/utils/printPageSetup'
 
 const BODY_CLASS = 'wf-print-active'
 const PRINT_VIEW_CLASS = 'wf-print-view'
@@ -45,7 +46,7 @@ function dismissTransientUiBeforePrint(): void {
     .forEach((el) => el.remove())
 }
 
-export function printElement(_element: HTMLElement, docTitle = ' '): void {
+export function printElement(element: HTMLElement, docTitle = ' '): void {
   const prevTitle = document.title
   const safe = (docTitle || ' ').replace(/</g, '')
   if (safe.trim()) document.title = safe
@@ -53,6 +54,8 @@ export function printElement(_element: HTMLElement, docTitle = ' '): void {
   focusPrintRoot()
   dismissTransientUiBeforePrint()
   beginPrintSession()
+  // 纸张尺寸/方向/页边距由打印容器上的 CSS 变量决定，这里注入真实的 @page 规则
+  applyPrintPageStyle(readPrintPageSetup(element))
 
   const cleanup = () => {
     endPrintSession()

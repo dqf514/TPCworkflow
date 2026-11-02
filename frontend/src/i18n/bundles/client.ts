@@ -4,6 +4,8 @@ export const clientZh: Record<string, string> = {
 
   'auth.download_client': '下载 Windows 客户端',
 
+  'login.session_expired': '登录已过期，请重新登录',
+
   'client.download_title': '下载 Windows 客户端',
 
   'client.download_desc': '推荐下载安装包，双击即可使用；首次运行会自动安装到用户目录，后续支持自动更新。',
@@ -31,6 +33,8 @@ export const clientZh: Record<string, string> = {
 export const clientEn: Record<string, string> = {
 
   'auth.download_client': 'Download Windows client',
+
+  'login.session_expired': 'Your session has expired. Please sign in again.',
 
   'client.download_title': 'Download Windows client',
 

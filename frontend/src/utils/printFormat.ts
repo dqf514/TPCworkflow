@@ -1,6 +1,8 @@
 /** 打印用格式化（随当前语言切换标签与格式） */
 
 import { formatDateTime } from '@/utils/dateTime'
+import { amountToChineseUpper as amountToChineseUpperRaw } from '@/utils/amountChineseUpper'
+import { currencySymbol as resolveCurrencySymbol } from '@/utils/currency'
 import type { ProcessGraph } from '@/utils/workflowFlowGraph'
 import {
   isPrintLocaleEn,
@@ -9,20 +11,6 @@ import {
   printNumberLocale,
   printT,
 } from '@/utils/printI18n'
-
-const CN_DIGITS = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖']
-const CN_UNITS = ['', '拾', '佰', '仟']
-const CN_BIG = ['', '万', '亿']
-
-const CURRENCY_SYMBOL: Record<string, string> = {
-  CNY: '￥',
-  RMB: '￥',
-  USD: 'US$',
-  EUR: '€',
-  GBP: '£',
-  HKD: 'HK$',
-  JPY: '￥',
-}
 
 const CURRENCY_NAME_KEY: Record<string, string> = {
   CNY: 'print.currency_cny',
@@ -112,62 +100,10 @@ export function timelineOperationText(item: {
   return timelineActionLabel(item.action)
 }
 
-/** 金额中文大写（元角分，仅中文环境使用） */
+/** 金额中文大写（元角分，仅中文环境使用）；算法实现见 @/utils/amountChineseUpper */
 export function amountToChineseUpper(amount: number): string {
   if (isPrintLocaleEn()) return ''
-  if (amount == null || Number.isNaN(amount)) return ''
-  const fixed = Math.round(amount * 100) / 100
-  const [intPart, decPart] = fixed.toFixed(2).split('.')
-  const intStr = convertIntegerPart(parseInt(intPart, 10))
-  const jiao = parseInt(decPart[0], 10)
-  const fen = parseInt(decPart[1], 10)
-  let tail = '元'
-  if (jiao === 0 && fen === 0) tail += '整'
-  else {
-    if (jiao) tail += `${CN_DIGITS[jiao]}角`
-    if (fen) tail += `${CN_DIGITS[fen]}分`
-    else if (jiao) tail += '整'
-  }
-  if (!intStr) return `零${tail}`
-  return `${intStr}${tail}`
-}
-
-function convertIntegerPart(n: number): string {
-  if (n === 0) return ''
-  const s = String(n)
-  const groups: string[] = []
-  for (let i = s.length; i > 0; i -= 4) {
-    groups.unshift(s.slice(Math.max(0, i - 4), i))
-  }
-  return groups
-    .map((g, gi) => {
-      const part = convertUnder10000(parseInt(g, 10))
-      if (!part) return ''
-      return part + CN_BIG[groups.length - 1 - gi]
-    })
-    .join('')
-}
-
-function convertUnder10000(n: number): string {
-  if (n === 0) return ''
-  let s = ''
-  const str = String(n).padStart(4, '0')
-  let zero = false
-  for (let i = 0; i < 4; i++) {
-    const d = parseInt(str[i], 10)
-    const unit = CN_UNITS[3 - i]
-    if (d === 0) {
-      zero = true
-      continue
-    }
-    if (zero) {
-      s += '零'
-      zero = false
-    }
-    if (d === 1 && unit === '拾' && !s) s += '拾'
-    else s += CN_DIGITS[d] + unit
-  }
-  return s.replace(/零+$/g, '')
+  return amountToChineseUpperRaw(amount)
 }
 
 function formatAmountNumber(n: number): string {
@@ -175,8 +111,9 @@ function formatAmountNumber(n: number): string {
   return n.toLocaleString(printNumberLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function currencySymbol(code: string): string {
-  return CURRENCY_SYMBOL[code] || `${code} `
+/** 币种符号：已知币种返回符号，未知币种回退成「代码 」 */
+export function currencySymbol(code: string): string {
+  return resolveCurrencySymbol(code)
 }
 
 function currencyDisplayName(code: string): string {
@@ -197,7 +134,7 @@ export function formatMoneyPrint(raw: unknown, includeUppercase = true): string 
   const useUpper = includeUppercase && !isPrintLocaleEn()
   if (typeof raw === 'number') {
     const upper = useUpper ? amountToChineseUpper(raw) : ''
-    return `￥${formatAmountNumber(raw)}${moneyUpperSuffix('CNY', upper)}`
+    return `${currencySymbol('CNY')}${formatAmountNumber(raw)}${moneyUpperSuffix('CNY', upper)}`
   }
   if (typeof raw === 'object' && !Array.isArray(raw)) {
     const o = raw as Record<string, unknown>
@@ -242,7 +179,7 @@ export function formatPlainAmountPrint(raw: unknown, precision = 2): string {
     minimumFractionDigits: precision,
     maximumFractionDigits: precision,
   })
-  return `￥${formatted}`
+  return `${currencySymbol('CNY')}${formatted}`
 }
 
 export function formatPlainValue(v: unknown): string {

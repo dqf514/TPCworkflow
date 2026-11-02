@@ -4,8 +4,10 @@
 export function formatDateTime(value?: string | null): string {
   if (!value) return '—'
   const s = String(value).trim()
+  // 带时区标识（Z 或 ±HH:MM / ±HHMM）的时间必须转成本地时间，不能直接截取字符串
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(s)
   const matched = s.match(/^(\d{4})[-/](\d{2})[-/](\d{2})[ T](\d{2}):(\d{2})/)
-  if (matched) {
+  if (matched && !hasTimezone) {
     return `${matched[1]}-${matched[2]}-${matched[3]} ${matched[4]}:${matched[5]}`
   }
   const normalized = s.includes('T') ? s : s.replace(' ', 'T')

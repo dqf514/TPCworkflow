@@ -143,9 +143,14 @@ function nodeById(graph: ProcessGraph, id: string) {
   return (graph.nodes || []).find((n) => String(n.id) === id)
 }
 
+/**
+ * 取节点唯一的下一个节点。
+ * 后继多于一个说明存在并行/多路分支，不能静默取第一条，返回 null 交由调用方按「链路分叉」处理。
+ */
 function pickSingleNext(out: Map<string, string[]>, id: string): string | null {
   const list = out.get(id) || []
-  return list.length === 1 ? list[0] : list[0] || null
+  if (list.length === 1) return list[0]
+  return null
 }
 
 function isEndNodeId(graph: ProcessGraph, id: string): boolean {
@@ -153,7 +158,7 @@ function isEndNodeId(graph: ProcessGraph, id: string): boolean {
   return !!n && String(n.type) === 'end'
 }
 
-/** 从 branch 起点沿单链走到 merge 前（不含 merge/end 节点） */
+/** 从 branch 起点沿单链走到 merge 前（不含 merge/end 节点；条件节点作为链路一环收进链里） */
 function walkBranchChain(
   graph: ProcessGraph,
   startId: string,
@@ -168,8 +173,9 @@ function walkBranchChain(
     const n = nodeById(graph, cur)
     if (!n) break
     if (String(n.type) === 'end') break
-    if (String(n.type) === 'condition') break
     chain.push(cur)
+    // 嵌套条件是链路的一环，但不再展开它的分支内部
+    if (String(n.type) === 'condition') break
     const nx = pickSingleNext(out, cur)
     if (!nx || nx === mergeId || isEndNodeId(graph, nx)) break
     cur = nx
@@ -177,23 +183,57 @@ function walkBranchChain(
   return chain
 }
 
+/**
+ * 取得节点之后的汇合候选。
+ * 条件节点的后继保存在 branches[].target 里（没有出边），需要展开各分支链的尾部才能得到。
+ */
+function mergeCandidatesOf(
+  graph: ProcessGraph,
+  id: string,
+  out: Map<string, string[]>,
+  depth = 0,
+): string[] {
+  if (depth > 10) return []
+  const node = nodeById(graph, id)
+  if (node && String(node.type) === 'condition') {
+    const branches = (node.branches as ConditionBranch[]) || []
+    const res: string[] = []
+    for (const br of branches) {
+      const tid = String(br.target || '')
+      if (!tid) continue
+      const walked = walkBranchChain(graph, tid, '', out)
+      const last = walked[walked.length - 1] || tid
+      for (const c of mergeCandidatesOf(graph, last, out, depth + 1)) {
+        if (!res.includes(c)) res.push(c)
+      }
+    }
+    if (res.length) return res
+  }
+  return out.get(id) || []
+}
+
+/**
+ * 找出条件之后的汇合点：所有分支的尾部必须指向同一个后继节点。
+ * 各分支尾部不一致时没有真正的汇合点，返回 null。
+ */
 function findMergeAfterCondition(
   graph: ProcessGraph,
   condId: string,
   branchTargets: string[],
   out: Map<string, string[]>,
 ): string | null {
-  const tails: string[] = []
+  const perBranch: string[][] = []
   for (const tid of branchTargets) {
     if (!tid) continue
     const walked = walkBranchChain(graph, tid, '', out)
     const last = walked[walked.length - 1] || tid
-    const nxt = pickSingleNext(out, last)
-    if (nxt) tails.push(nxt)
+    const cands = mergeCandidatesOf(graph, last, out)
+    if (cands.length) perBranch.push(cands)
   }
-  if (!tails.length) return null
-  const first = tails[0]
-  return tails.every((t) => t === first) ? first : first
+  if (!perBranch.length) return null
+  // 只有所有分支收敛到同一点才是真正的汇合点
+  const common = perBranch[0].filter((c) => perBranch.every((arr) => arr.includes(c)))
+  return common.length ? common[0] : null
 }
 
 /** 分支链内不应包含结束节点（结束为汇合点，属于主链） */
@@ -327,22 +367,30 @@ function addEdge(ctx: ExportCtx, source: string, target: string) {
   if (!exists) ctx.edges.push({ source, target })
 }
 
-function exportSegmentChain(ctx: ExportCtx, segments: FlowSegment[]): string | null {
-  let prev: string | null = null
-  for (const seg of segments) {
-    if (isStepNode(seg)) {
-      ctx.nodes.push({
-        id: seg.id,
-        type: seg.type,
-        x: 400,
-        y: ctx.y,
-        config: seg.config,
-      })
+/**
+ * 段落导出结果：
+ * - entryId：该段落的入口节点（作为上游分支的 target）
+ * - exitIds：该段落的出口节点（需要连向后续节点）
+ */
+interface SegmentExport {
+  entryId: string
+  exitIds: string[]
+}
+
+/**
+ * 导出单个段落（步骤节点或条件块）。
+ * 条件块本身是分支链的入口，出口为各分支链的尾部节点。
+ */
+function exportSegment(ctx: ExportCtx, seg: FlowSegment): SegmentExport {
+  if (isStepNode(seg)) {
+    if (!ctx.nodes.find((n) => n.id === seg.id)) {
+      ctx.nodes.push({ id: seg.id, type: seg.type, x: 400, y: ctx.y, config: seg.config })
       ctx.y += 120
-      if (prev) addEdge(ctx, prev, seg.id)
-      prev = seg.id
-      continue
     }
+    return { entryId: seg.id, exitIds: [seg.id] }
+  }
+
+  if (!ctx.nodes.find((n) => n.id === seg.id)) {
     ctx.nodes.push({
       id: seg.id,
       type: 'condition',
@@ -352,128 +400,64 @@ function exportSegmentChain(ctx: ExportCtx, segments: FlowSegment[]): string | n
       branches: [],
     })
     ctx.y += 80
-    if (prev) addEdge(ctx, prev, seg.id)
-    const branchTargets: string[] = []
-    const branchesOut: ConditionBranch[] = []
-    const sorted = [...seg.branches].sort((a, b) => a.priority - b.priority)
-    for (const br of sorted) {
-      const firstId = exportSegmentChain(ctx, br.chain)
-      branchTargets.push(firstId || '')
-      branchesOut.push({
-        expr: br.expr,
-        target: firstId || '',
-        label: br.label,
-        priority: br.priority,
-      })
-    }
-    const condNode = ctx.nodes.find((n) => n.id === seg.id)
-    if (condNode) condNode.branches = branchesOut
-    prev = seg.id
-    ;(seg as FlowConditionBlock & { _branchTails?: string[] })._branchTails = branchTargets.map(
-      (tid) => {
-        if (!tid) return ''
-        let tail = tid
-        let guard = 0
-        while (guard++ < 50) {
-          const outs = ctx.edges.filter((e) => e.source === tail)
-          if (outs.length !== 1) break
-          tail = String(outs[0].target)
-        }
-        return tail
-      },
-    )
   }
-  return prev
+
+  const branchesOut: ConditionBranch[] = []
+  const exitIds: string[] = []
+  const sorted = [...seg.branches].sort((a, b) => a.priority - b.priority)
+  for (const br of sorted) {
+    // 分支链同样递归导出：嵌套条件的入口 id 就是嵌套条件节点本身
+    const chainExport = exportChain(ctx, br.chain, true)
+    branchesOut.push({
+      expr: br.expr,
+      target: chainExport.entryId || '',
+      label: br.label,
+      priority: br.priority,
+    })
+    exitIds.push(...chainExport.exitIds)
+  }
+  const condNode = ctx.nodes.find((n) => n.id === seg.id)
+  if (condNode) condNode.branches = branchesOut
+  // 所有分支都没有节点时以条件节点自身作为出口，避免主链断开
+  return { entryId: seg.id, exitIds: exitIds.length ? exitIds : [seg.id] }
+}
+
+/**
+ * 导出一串线性段落，返回整串的入口与出口节点。
+ * @param inBranch 是否处于分支链内（分支链内不允许出现结束节点）
+ */
+function exportChain(
+  ctx: ExportCtx,
+  segments: FlowSegment[],
+  inBranch = false,
+): SegmentExport {
+  const segExports: SegmentExport[] = []
+  for (const seg of segments) {
+    // 分支链内不应包含结束节点（结束为汇合点，属于主链）
+    if (inBranch && isStepNode(seg) && seg.type === 'end') continue
+    const r = exportSegment(ctx, seg)
+    if (!r.entryId) continue
+    segExports.push(r)
+  }
+
+  let entryId = ''
+  let exitIds: string[] = []
+  for (let i = 0; i < segExports.length; i++) {
+    const cur = segExports[i]
+    if (!entryId) entryId = cur.entryId
+    if (i > 0) {
+      // 上一段的出口连向本段入口（条件块的分支尾部即在此汇合）
+      for (const e of segExports[i - 1].exitIds) addEdge(ctx, e, cur.entryId)
+    }
+    exitIds = cur.exitIds
+  }
+  return { entryId, exitIds }
 }
 
 /** 垂直流程树 → process_graph，并同步 condition.branches[].target */
 export function flowChainToGraph(chain: FlowChain): ProcessGraph {
   const ctx: ExportCtx = { nodes: [], edges: [], y: 80 }
-  const mainIds: string[] = []
-  let prevMain: string | null = null
-
-  for (let i = 0; i < chain.length; i++) {
-    const seg = chain[i]
-    const nextSeg = chain[i + 1]
-    const mergeTargetId =
-      nextSeg && isStepNode(nextSeg)
-        ? nextSeg.id
-        : nextSeg && isConditionBlock(nextSeg)
-          ? nextSeg.id
-          : null
-
-    if (isStepNode(seg)) {
-      ctx.nodes.push({ id: seg.id, type: seg.type, x: 400, y: ctx.y, config: seg.config })
-      ctx.y += 120
-      mainIds.push(seg.id)
-      if (prevMain) addEdge(ctx, prevMain, seg.id)
-      prevMain = seg.id
-      continue
-    }
-
-    ctx.nodes.push({
-      id: seg.id,
-      type: 'condition',
-      x: 400,
-      y: ctx.y,
-      config: seg.config,
-      branches: [],
-    })
-    ctx.y += 80
-    if (prevMain) addEdge(ctx, prevMain, seg.id)
-    mainIds.push(seg.id)
-
-    const branchesOut: ConditionBranch[] = []
-    const sorted = [...seg.branches].sort((a, b) => a.priority - b.priority)
-    for (const br of sorted) {
-      let subPrev: string | null = null
-      let firstId = ''
-      for (const sub of br.chain) {
-        if (isStepNode(sub)) {
-          if (sub.type === 'end') {
-            continue
-          }
-          if (!ctx.nodes.find((n) => n.id === sub.id)) {
-            ctx.nodes.push({
-              id: sub.id,
-              type: sub.type,
-              x: 400,
-              y: ctx.y,
-              config: sub.config,
-            })
-            ctx.y += 120
-          }
-          if (!firstId) firstId = sub.id
-          if (subPrev) addEdge(ctx, subPrev, sub.id)
-          subPrev = sub.id
-        } else {
-          const nested = flowChainToGraph([sub])
-          for (const n of nested.nodes) {
-            if (!ctx.nodes.find((x) => x.id === n.id)) ctx.nodes.push(n)
-          }
-          for (const e of nested.edges) addEdge(ctx, String(e.source), String(e.target))
-          const nestedStart = nested.nodes.find((n) => n.type === 'start')?.id
-          const nestedEnd = [...nested.nodes].reverse().find((n) => n.type !== 'start')?.id
-          if (nestedStart && !firstId) firstId = String(nestedStart)
-          if (subPrev && nestedStart) addEdge(ctx, subPrev, String(nestedStart))
-          if (nestedEnd) subPrev = String(nestedEnd)
-        }
-      }
-      branchesOut.push({
-        expr: br.expr,
-        target: firstId,
-        label: br.label,
-        priority: br.priority,
-      })
-      const tail = subPrev || firstId
-      if (tail && mergeTargetId) addEdge(ctx, tail, mergeTargetId)
-    }
-    const condNode = ctx.nodes.find((n) => n.id === seg.id)
-    if (condNode) condNode.branches = branchesOut
-    prevMain = seg.id
-    if (mergeTargetId && !sorted.length) addEdge(ctx, seg.id, mergeTargetId)
-  }
-
+  exportChain(ctx, chain)
   return { nodes: ctx.nodes, edges: ctx.edges }
 }
 

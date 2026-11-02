@@ -12,6 +12,7 @@ import {
   collectDeptIdsFromModel,
   resolveDepartmentLabels,
 } from '@/composables/useOrgDeptOptions'
+import { rowSignature, stableKeys } from '@/utils/stableKey'
 
 export type BuildPrintSectionsOptions = {
   companyId?: number
@@ -19,6 +20,8 @@ export type BuildPrintSectionsOptions = {
 }
 
 export interface PrintFieldRow {
+  /** 来源字段 key：用于生成稳定的渲染 key */
+  key?: string
   label: string
   value: string
   fullWidth?: boolean
@@ -31,18 +34,24 @@ export interface PrintDetailColumn {
 }
 
 export interface PrintDetailTable {
+  /** 稳定标识（字段 id）：渲染时作为 :key，避免用下标导致重排错位 */
+  id: string
   title: string
   columns: PrintDetailColumn[]
   rows: Record<string, string>[]
+  /** 与 rows 一一对应的稳定 key */
+  rowKeys?: string[]
   summaryRows?: PrintFieldRow[]
   moneyColumnKeys?: string[]
 }
 
 export interface PrintSectionBlock {
+  /** 稳定标识（分区 id）：渲染时作为 :key */
+  id: string
   title: string
   rows: PrintFieldRow[]
   details: PrintDetailTable[]
-  textBlocks: { label: string; content: string }[]
+  textBlocks: { id: string; label: string; content: string }[]
 }
 
 function labelForOption(val: unknown, opts: FieldOptionItem[]): string {
@@ -134,10 +143,13 @@ async function buildLeaveCalendarPrintTable(
     { key: 'no', label: printT('print.leave_cal_no') },
   ]
   const titled = `${title}（${from} ${printT('print.date_range_sep')} ${to}）`
+  const tableId = field.id || field.key || 'leave_calendar'
   const emptyTable = (): PrintDetailTable => ({
+    id: tableId,
     title: titled,
     columns,
     rows: [{ user: printT('print.leave_cal_empty'), type: '', period: '', form: '', no: '' }],
+    rowKeys: ['empty'],
   })
 
   try {
@@ -170,16 +182,19 @@ async function buildLeaveCalendarPrintTable(
     })
     const rows = res.data.ok ? res.data.data?.events || [] : []
     if (!rows.length) return emptyTable()
+    const outRows = rows.map((row) => ({
+      user: String(row.user_name || row.title || '—'),
+      type: String(row.leave_type_label || row.leave_type || '—'),
+      period: formatLeaveEventPeriod(row.start, row.end),
+      form: String(row.form_name || row.form_key || '—'),
+      no: String(row.display_no || '—'),
+    }))
     return {
+      id: tableId,
       title: titled,
       columns,
-      rows: rows.map((row) => ({
-        user: String(row.user_name || row.title || '—'),
-        type: String(row.leave_type_label || row.leave_type || '—'),
-        period: formatLeaveEventPeriod(row.start, row.end),
-        form: String(row.form_name || row.form_key || '—'),
-        no: String(row.display_no || '—'),
-      })),
+      rows: outRows,
+      rowKeys: stableKeys(outRows, (r) => rowSignature(r, columns.map((c) => c.key))),
     }
   } catch {
     return emptyTable()
@@ -305,6 +320,7 @@ export async function buildPrintSections(
   for (const sec of schema.sections || []) {
     if (!shouldDisplaySection(sec, schema, model, linkageCtx)) continue
     const block: PrintSectionBlock = {
+      id: sec.id || sec.title || 'section',
       title: sec.title || printT('print.section_default'),
       rows: [],
       details: [],
@@ -326,11 +342,19 @@ export async function buildPrintSections(
       }
 
       if (field.type === 'section_title') {
-        block.rows.push({ label: field.label, value: '', fullWidth: true })
+        block.rows.push({ key: field.key || field.id, label: field.label, value: '', fullWidth: true })
         continue
       }
 
-      if (field.type === 'text_block') continue
+      if (field.type === 'text_block') {
+        // 说明文字：正文来自字段属性 props.content（表单上看到的整段文字）
+        // 表单上不显示标题，因此这里也不额外输出 label，避免打印件多出表单没有的内容
+        const content = String(field.props?.content ?? '').trim()
+        if (content) {
+          block.textBlocks.push({ id: field.id || field.key || 'text', label: '', content })
+        }
+        continue
+      }
 
       if (field.type === 'detail') {
         const cols = ((field.props?.columns as FormFieldDef[]) || []).filter(
@@ -338,6 +362,7 @@ export async function buildPrintSections(
         )
         const rawRows = Array.isArray(model[field.key!]) ? (model[field.key!] as Record<string, unknown>[]) : []
         const table: PrintDetailTable = {
+          id: field.id || field.key || 'detail',
           title: field.label || printT('print.detail_default'),
           columns: cols.map((c) => ({ key: c.key, label: c.label || c.key })),
           rows: [],
@@ -357,6 +382,9 @@ export async function buildPrintSections(
           }
           table.rows.push(out)
         }
+        table.rowKeys = stableKeys(table.rows, (r) =>
+          rowSignature(r, table.columns.map((c) => c.key)),
+        )
         if (field.props?.showSummary !== false) {
           const summary: PrintFieldRow[] = []
           for (const col of cols) {
@@ -367,6 +395,7 @@ export async function buildPrintSections(
               }
               if (total) {
                 summary.push({
+                  key: col.key,
                   label: printT('print.detail_total', { label: col.label }),
                   value:
                     col.type === 'money'
@@ -393,6 +422,7 @@ export async function buildPrintSections(
         deptMap,
       )
       block.rows.push({
+        key: field.key,
         label: field.label || field.key,
         value,
         fullWidth: isPrintFullWidthField(field, gridCols),

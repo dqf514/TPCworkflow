@@ -1,5 +1,9 @@
 /** 通用打印模板文案（与 locale 同步） */
 export const printZh: Record<string, string> = {
+  'print.template_cloned': '已克隆',
+  'print.template_saved': '已保存',
+  'print.template_deleted': '已删除',
+  'print.upload_success': '上传成功',
   'print.org': '组织',
   'print.approval_no': '审批编号',
   'print.applicant': '申请人',
@@ -7,6 +11,7 @@ export const printZh: Record<string, string> = {
   'print.submitted_at': '提交时间',
   'print.status': '当前状态',
   'print.description': '说明',
+  'print.no_data': '暂无数据',
   'print.no_detail': '暂无明细',
   'print.approval_flow': '审批流程',
   'print.approval_node': '审批节点',
@@ -89,9 +94,17 @@ export const printZh: Record<string, string> = {
   'print.leave_cal_form': '表单',
   'print.leave_cal_no': '单号',
   'print.leave_cal_empty': '该时段暂无日历事项',
+  'print.particulars_title': '明细',
+  'print.total_label': '合计',
+  'print.logo_alt': '公司标识',
+  'print.seal_alt': '印章',
 }
 
 export const printEn: Record<string, string> = {
+  'print.template_cloned': 'Cloned',
+  'print.template_saved': 'Saved',
+  'print.template_deleted': 'Deleted',
+  'print.upload_success': 'Uploaded',
   'print.org': 'Organization',
   'print.approval_no': 'Approval No.',
   'print.applicant': 'Applicant',
@@ -99,6 +112,7 @@ export const printEn: Record<string, string> = {
   'print.submitted_at': 'Submitted',
   'print.status': 'Status',
   'print.description': 'Description',
+  'print.no_data': 'No data',
   'print.no_detail': 'No line items',
   'print.approval_flow': 'Approval workflow',
   'print.approval_node': 'Step',
@@ -173,7 +187,7 @@ export const printEn: Record<string, string> = {
   'print.currency_gbp': 'GBP',
   'print.currency_hkd': 'HKD',
   'print.currency_jpy': 'JPY',
-  'print.money_converted': '≈ ¥{amount}',
+  'print.money_converted': '≈ CNY {amount}',
   'print.money_in_cny': ' ({upper} CNY)',
   'print.money_in_currency': ' ({upper} {currency})',
   'print.leave_calendar': 'Calendar events',
@@ -183,4 +197,8 @@ export const printEn: Record<string, string> = {
   'print.leave_cal_form': 'Form',
   'print.leave_cal_no': 'No.',
   'print.leave_cal_empty': 'No calendar events in this period',
+  'print.particulars_title': 'PARTICULARS',
+  'print.total_label': 'Total',
+  'print.logo_alt': 'Company logo',
+  'print.seal_alt': 'Seal',
 }
