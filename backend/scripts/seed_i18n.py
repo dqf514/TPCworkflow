@@ -21,10 +21,27 @@ def _force_seed_sync() -> bool:
     return os.environ.get('I18N_FORCE_SEED_SYNC', '').strip().lower() in ('1', 'true', 'yes', 'on')
 
 
+def _dedupe_by_key(items) -> list[tuple[str, str, str]]:
+    """按 (namespace, msg_key) 去重，保留首次出现的值。
+
+    种子文件里若同一 key 出现两次，直接入库会撞 (namespace, msg_key, locale) 唯一约束，
+    让全新库执行 upgrade_db.py 直接失败。
+    """
+    seen: set[tuple[str, str]] = set()
+    out: list[tuple[str, str, str]] = []
+    for namespace, msg_key, msg_value in items:
+        key = (namespace, msg_key)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append((namespace, msg_key, msg_value))
+    return out
+
+
 def _merged_seed_messages() -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
     existing = {(ns, k) for ns, k, _ in SEED_MESSAGES}
     extra_zh, extra_en = collect_all_extra(existing)
-    return SEED_MESSAGES + extra_zh, SEED_MESSAGES_EN + extra_en
+    return _dedupe_by_key(SEED_MESSAGES + extra_zh), _dedupe_by_key(SEED_MESSAGES_EN + extra_en)
 
 
 def seed_all_locales(*, force_sync: bool | None = None) -> int:

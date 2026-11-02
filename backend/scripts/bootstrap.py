@@ -234,7 +234,21 @@ def _ensure_locales() -> None:
             ),
         )
         db.session.add(I18nBundleMeta(locale=code, version=1))
+    # 同一 (namespace, msg_key) 在种子文件里出现两次、或词典已由 seed_all_locales 先写入时，
+    # 都会撞 (namespace, msg_key, locale) 唯一约束。这里按键去重 + 跳过已存在项，
+    # 保证全新库执行 upgrade_db.py 不中断。
+    existing = {
+        (ns, k)
+        for ns, k in I18nMessage.query.with_entities(
+            I18nMessage.namespace, I18nMessage.msg_key
+        ).filter_by(locale='zh-CN')
+    }
+    seen: set[tuple[str, str]] = set()
     for namespace, msg_key, msg_value in SEED_MESSAGES:
+        key = (namespace, msg_key)
+        if key in seen or key in existing:
+            continue
+        seen.add(key)
         db.session.add(
             I18nMessage(
                 namespace=namespace,

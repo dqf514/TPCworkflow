@@ -22,12 +22,22 @@ def t(key: str, locale: str | None = None, **kwargs) -> str:
         text = _lookup(namespace, msg_key, get_default_locale())
     if text is None:
         return key
+    text = _unescape_at(text)
     if kwargs:
         try:
             return text.format(**kwargs)
         except (KeyError, ValueError):
             return text
     return text
+
+
+def _unescape_at(text: str) -> str:
+    """把 vue-i18n 的字面量转义 ``{'@'}`` 还原成 ``@``。
+
+    前端的消息文案里裸写 ``@`` 会被 vue-i18n 当成「引用其他词条」的前缀导致编译失败，
+    因此前端统一写成 ``{'@'}``。后端渲染同一批文案时要还原成普通字符。
+    """
+    return text.replace("{'@'}", "@").replace('{"@"}', "@")
 
 
 def _lookup(namespace: str, msg_key: str, locale: str) -> str | None:

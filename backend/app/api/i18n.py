@@ -29,6 +29,9 @@ DEFAULT_NAMESPACES = (
     'flowDesign',
     'wfSettings',
     'settings',
+    'print',
+    'profile',
+    'finance',
 )
 
 

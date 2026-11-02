@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from scripts.seed_i18n_en_us import SEED_MESSAGES_EN
 from scripts.seed_i18n_zh_cn import SEED_MESSAGES
+from scripts.i18n_bundle_loader import bundle_print
 
 
 def build_seed_catalog() -> dict[tuple[str, str], dict[str, str]]:
@@ -20,6 +21,14 @@ def build_seed_catalog() -> dict[tuple[str, str], dict[str, str]]:
         if not ns or not key:
             continue
         entry = catalog.setdefault((ns, key), {'zh_seed': '', 'en_seed': ''})
+        entry['en_seed'] = msg_value or ''
+    # 打印文案来自前端 bundle（frontend/src/i18n/bundles/print.ts），同步进目录便于后台补全
+    print_zh, print_en = bundle_print()
+    for namespace, msg_key, msg_value in print_zh:
+        entry = catalog.setdefault((namespace, msg_key), {'zh_seed': '', 'en_seed': ''})
+        entry['zh_seed'] = msg_value or ''
+    for namespace, msg_key, msg_value in print_en:
+        entry = catalog.setdefault((namespace, msg_key), {'zh_seed': '', 'en_seed': ''})
         entry['en_seed'] = msg_value or ''
     return catalog
 

@@ -345,6 +345,62 @@ def _migrate_department_unique_constraint() -> None:
         print(f'已移除旧部门唯一约束: {", ".join(dropped)}')
 
 
+def _mask_notification_bodies() -> int:
+    """清理历史通知日志中的明文验证码 / 审批 token（安全修复）。"""
+    from app.models import NotificationLog
+    from app.utils.mask import mask_sensitive_text
+
+    rows = NotificationLog.query.with_entities(
+        NotificationLog.id, NotificationLog.body, NotificationLog.error_message
+    ).all()
+    changed = 0
+    for rid, body, err in rows:
+        new_body = mask_sensitive_text(body)
+        new_err = mask_sensitive_text(err)
+        if new_body == body and new_err == err:
+            continue
+        NotificationLog.query.filter_by(id=rid).update(
+            {'body': new_body, 'error_message': new_err},
+            synchronize_session=False,
+        )
+        changed += 1
+    if changed:
+        db.session.commit()
+    return changed
+
+
+def _repair_unsafe_i18n_values() -> int:
+    """修复会被 vue-i18n 编译失败的文案：正文里的裸 `@` 会被当成「引用其他词条」。
+
+    例如 `建议 127.0.0.1 或 @internal:8080/v1` 会让整条消息编译报错，
+    表现为控制台 "Invalid linked format"、属性面板文案空白。
+    这里统一改写成 vue-i18n 的字面量写法 `{'@'}`（前端与后端渲染时都会还原成 `@`）。
+    """
+    import re
+
+    from app.models import I18nMessage
+
+    pattern = re.compile(r"(?<!\{')@(?!:)")
+
+    rows = I18nMessage.query.with_entities(
+        I18nMessage.id, I18nMessage.msg_value
+    ).all()
+    changed = 0
+    for mid, value in rows:
+        if not value or '@' not in value:
+            continue
+        new_value = pattern.sub("{'@'}", value)
+        if new_value == value:
+            continue
+        I18nMessage.query.filter_by(id=mid).update(
+            {'msg_value': new_value}, synchronize_session=False
+        )
+        changed += 1
+    if changed:
+        db.session.commit()
+    return changed
+
+
 def upgrade_all() -> None:
     app = create_app()
     with app.app_context():
@@ -353,8 +409,11 @@ def upgrade_all() -> None:
         _migrate_department_unique_constraint()
         job_moved = _migrate_user_job_title_to_memberships()
         purged = _purge_orphan_inactive_departments()
-        added = seed_all_locales()
+        # 先 bootstrap（建立 locale / 词典），再补缺种子；两者都是幂等的
         ensure_bootstrap()
+        added = seed_all_locales()
+        i18n_fixed = _repair_unsafe_i18n_values()
+        masked = _mask_notification_bodies()
         receipt_backfill = 0
         if 'receipt_usage_records' in inspect(db.engine).get_table_names():
             from app.services.receipt_duplicate_service import backfill_receipt_usage_from_approved
@@ -369,6 +428,8 @@ def upgrade_all() -> None:
             f'数据库已升级，词典补缺/空值 {added} 条（不覆盖已有译文；'
             f'强制同步种子请设 I18N_FORCE_SEED_SYNC=1），'
             f'迁移全公司职位 {job_moved} 条，清理停用部门 {purged} 个，'
+            f'通知日志脱敏 {masked} 条，'
+            f'修复不安全 i18n 文案 {i18n_fixed} 条，'
             f'票据防重复登记 {receipt_backfill} 条已通过申请，'
             f'内置打印模板 {print_tpl_added} 个',
         )

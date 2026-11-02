@@ -17,12 +17,25 @@ if str(ROOT) not in sys.path:
 from app import create_app
 from app.extensions import db
 from app.models import Company, Department, FormDefinition, User, WorkflowDefinition, WorkflowInstance
+from app.models.option_set import (
+    OptionSet,
+    OptionSetColumn,
+    OptionSetRecord,
+    SET_TYPE_RECORD,
+    SCOPE_MIXED,
+)
 from app.services.company_branding import get_primary_company
 from app.services.form_schema import FIELD_TYPES, validate_form_data, validate_schema
 from scripts.bootstrap import ensure_bootstrap
 from scripts.upgrade_db import _ensure_columns, _migrate_department_unique_constraint
 
 E2E_FORM_KEY = f'e2e_all_fields_{int(time.time())}'
+
+# 控件配置表（record_set）字段在 schema 校验时必须绑定一个已存在的配置表编码，
+# 否则 validate_schema 会直接判定「未选择控件配置表」。这里固定建一个最小可用的。
+E2E_RECORD_SET_CODE = 'e2e_record_set'
+E2E_RECORD_SET_COLUMN = 'name'
+E2E_RECORD_SET_ROW_CODE = 'e2e_row_1'
 
 LAYOUT_ONLY = frozenset({'divider', 'text_block', 'section_title'})
 
@@ -87,6 +100,8 @@ def _field_def(ftype: str, idx: int) -> dict:
         field['span'] = {'desktop': 24, 'mobile': 24}
         field['props'] = {'multiple': False, 'placeholder': '选择关联申请'}
         field['required'] = False
+    if ftype == 'record_set':
+        field['props'] = {'recordSetCode': E2E_RECORD_SET_CODE}
     return field
 
 
@@ -147,6 +162,7 @@ def build_sample_form_data(admin_id: int, dept_id: int | None) -> dict:
         'detail': [{'item_name': '测试项', 'amount': money}],
         'serial_no': 'SN-E2E-001',
         'formula': '100',
+        'record_set': {E2E_RECORD_SET_COLUMN: 'E2E 记录'},
     }
     data: dict = {}
     for i, ftype in enumerate(FIELD_TYPES):
@@ -187,6 +203,49 @@ def simple_workflow(admin_id: int) -> dict:
     }
 
 
+def _ensure_record_set() -> None:
+    """建一个最小的控件配置表（幂等），供 record_set 字段引用。"""
+    opt = OptionSet.query.filter_by(code=E2E_RECORD_SET_CODE).first()
+    if not opt:
+        opt = OptionSet(
+            code=E2E_RECORD_SET_CODE,
+            name='E2E 控件配置表',
+            set_type=SET_TYPE_RECORD,
+            data_scope=SCOPE_MIXED,
+            is_active=True,
+        )
+        db.session.add(opt)
+        db.session.flush()
+    if not OptionSetColumn.query.filter_by(
+        option_set_id=opt.id, field_key=E2E_RECORD_SET_COLUMN
+    ).first():
+        db.session.add(
+            OptionSetColumn(
+                option_set_id=opt.id,
+                field_key=E2E_RECORD_SET_COLUMN,
+                label='名称',
+                sort_order=0,
+                span=24,
+            )
+        )
+    if not OptionSetRecord.query.filter_by(
+        option_set_id=opt.id,
+        row_code=E2E_RECORD_SET_ROW_CODE,
+        owner_user_id=None,
+    ).first():
+        db.session.add(
+            OptionSetRecord(
+                option_set_id=opt.id,
+                owner_user_id=None,
+                row_code=E2E_RECORD_SET_ROW_CODE,
+                data_json=json.dumps({E2E_RECORD_SET_COLUMN: 'E2E 记录'}, ensure_ascii=False),
+                sort_order=0,
+                is_active=True,
+            )
+        )
+    db.session.commit()
+
+
 def _login(client) -> None:
     with client.session_transaction() as sess:
         sess['login_captcha'] = {
@@ -221,6 +280,7 @@ def run() -> None:
         _ensure_columns()
         _migrate_department_unique_constraint()
         ensure_bootstrap()
+        _ensure_record_set()
 
         client = app.test_client()
         _login(client)
@@ -273,6 +333,8 @@ def run() -> None:
         )
         inst = _assert_ok(r, '发起流程')
         instance_id = inst['id']
+        # 实例详情/撤回等接口按 public uuid 访问（避免用自增 id 枚举别人的单据）
+        instance_ref = inst.get('public_uuid') or instance_id
 
         r = client.get('/api/v1/workflow/tasks/todo')
         todo_page = _assert_ok(r, '待办列表')
@@ -287,7 +349,7 @@ def run() -> None:
         )
         _assert_ok(r, '审批通过')
 
-        r = client.get(f'/api/v1/workflow/instances/{instance_id}')
+        r = client.get(f'/api/v1/workflow/instances/{instance_ref}')
         detail = _assert_ok(r, '流程详情')
         status = detail.get('status')
         assert status in ('approved', 'completed', 'finished'), f'流程未完结，状态={status}'

@@ -86,6 +86,21 @@ def bundle_menu_nav() -> tuple[list[tuple[str, str, str]], list[tuple[str, str, 
     return load_bundle_pair('menuNav.ts', 'menuNavZh', 'menuNavEn')
 
 
+def bundle_print() -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
+    """打印相关文案（frontend/src/i18n/bundles/print.ts）"""
+    return load_bundle_pair('print.ts', 'printZh', 'printEn')
+
+
+def bundle_profile() -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
+    """个人中心文案（frontend/src/i18n/bundles/profile.ts）"""
+    return load_bundle_pair('profile.ts', 'profileZh', 'profileEn')
+
+
+def bundle_finance() -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
+    """财务凭证导出文案（frontend/src/i18n/bundles/finance.ts）"""
+    return load_bundle_pair('finance.ts', 'financeZh', 'financeEn')
+
+
 def bundle_workflow_apply_extra() -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
     zh_all, en_all = load_bundle_pair('workflowApply.ts', 'workflowApplyZh', 'workflowApplyEn')
     zh = [r for r in zh_all if r[0] == 'unsaved']
@@ -170,6 +185,12 @@ def collect_all_extra(existing_zh: set[tuple[str, str]]) -> tuple[list[tuple[str
     merge(alzh, alen)
     uzh, uen = bundle_workflow_apply_extra()
     merge(uzh, uen)
+    pzh, pen = bundle_print()
+    merge(pzh, pen)
+    profzh, profen = bundle_profile()
+    merge(profzh, profen)
+    finzh, finen = bundle_finance()
+    merge(finzh, finen)
     szh, sen = bundle_settings_extra(existing_zh | seen)
     merge(szh, sen)
     stzh, sten = bundle_studio_extra(existing_zh | seen)
