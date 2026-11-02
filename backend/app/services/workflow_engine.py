@@ -119,6 +119,9 @@ class WorkflowEngine:
             raise ValueError('无权处理该任务')
 
         inst = task.instance
+        # 实例已结束（被驳回 / 已撤回 / 已通过）时不允许再处理遗留待办
+        if inst.status in ('approved', 'rejected', 'cancelled'):
+            raise ValueError('该申请已结束，无法继续处理')
         definition = inst.definition
         graph = parse_graph(definition.process_graph)
         settings = merge_settings(definition.settings)
@@ -153,8 +156,29 @@ class WorkflowEngine:
             )
 
         if form_update and action == 'approve':
+            # 只接受本节点被授予「可编辑」的字段，防止越权改表单
+            from app.services.node_field_requirements import filter_editable_fields
+
+            node_for_perm = find_node(graph, task.node_id) or {}
+            allowed_update = filter_editable_fields(
+                node_for_perm.get('config') or {}, form_update,
+            )
             merged = dict(original_form)
-            merged.update(form_update)
+            merged.update(allowed_update)
+            # 日期区间的「自动天数」是服务端派生值：区间被本节点改动后，
+            # 天数字段即使不可编辑也要跟着重算，否则表单里会留下过期的天数。
+            try:
+                from app.services.date_range_value import apply_date_range_auto_days
+                from app.services.form_schema import resolve_definition_schema
+
+                apply_date_range_auto_days(
+                    resolve_definition_schema(definition),
+                    merged,
+                    inst.company_id,
+                    inst.initiator_id,
+                )
+            except Exception:
+                pass
             variables['form'] = merged
             inst.variables = json.dumps(variables, ensure_ascii=False)
 
@@ -243,6 +267,9 @@ class WorkflowEngine:
             inst.status = 'rejected' if action == 'reject' else action
             inst.finished_at = datetime.now()
             inst.current_node_ids = json.dumps([])
+            # 驳回后必须作废本实例上的其余待办（含前加签挂起的父任务），
+            # 否则其他审批人仍能在待办里看到并「同意」一张已被驳回的表单。
+            self._cancel_open_tasks(inst)
             db.session.commit()
             notify_instance_result_if_finished(current_app._get_current_object(), inst)
             return inst
@@ -360,9 +387,7 @@ class WorkflowEngine:
             inst.status = 'rejected'
             inst.finished_at = datetime.now()
             inst.current_node_ids = json.dumps([])
-            for t in inst.tasks.filter_by(status='pending').all():
-                t.status = 'cancelled'
-                t.completed_at = datetime.now()
+            self._cancel_open_tasks(inst)
             db.session.commit()
             notify_instance_result_if_finished(current_app._get_current_object(), inst)
             return inst
@@ -386,6 +411,20 @@ class WorkflowEngine:
         notify_instance_result_if_finished(app, inst)
         notify_task_ids(app, notify_ids)
         return inst
+
+    def _cancel_open_tasks(self, inst: WorkflowInstance) -> int:
+        """作废实例上所有未完结的待办（pending / on_hold）。
+
+        on_hold 是前加签时挂起的父任务，同样属于「还等着人处理」，
+        实例结束（驳回 / 撤回）后必须一起作废，否则会出现永远点不动的僵尸待办。
+        """
+        now = datetime.now()
+        count = 0
+        for t in inst.tasks.filter(TaskInstance.status.in_(('pending', 'on_hold'))).all():
+            t.status = 'cancelled'
+            t.completed_at = now
+            count += 1
+        return count
 
     def _continue_after_task_approved(
         self,
@@ -428,6 +467,26 @@ class WorkflowEngine:
             notify_ids.extend(self._advance(inst, graph, next_ids, definition))
         return notify_ids
 
+    def _record_expected_approvers(self, inst: WorkflowInstance, node_id: str, count: int) -> None:
+        """把节点「实际需要通过的人数」记进实例变量，供会签判定使用。"""
+        variables = parse_variables(inst.variables)
+        engine_state = dict(variables.get('_engine') or {})
+        node_expected = dict(engine_state.get('node_expected') or {})
+        node_expected[str(node_id)] = int(count)
+        engine_state['node_expected'] = node_expected
+        variables['_engine'] = engine_state
+        inst.variables = json.dumps(variables, ensure_ascii=False)
+
+    def _expected_approver_count(self, inst: WorkflowInstance, node_id: str) -> int:
+        """读取节点实际需要通过的人数；老实例没有记录时返回 0。"""
+        variables = parse_variables(inst.variables)
+        engine_state = variables.get('_engine') or {}
+        node_expected = engine_state.get('node_expected') or {}
+        try:
+            return int(node_expected.get(str(node_id)) or 0)
+        except (TypeError, ValueError):
+            return 0
+
     def _node_approved(self, graph: dict, node: dict | None, inst: WorkflowInstance, node_id: str) -> bool:
         if not node:
             return True
@@ -443,8 +502,11 @@ class WorkflowEngine:
             if rejected:
                 return False
             approved = inst.tasks.filter_by(node_id=node_id, status='approved').count()
-            resolver = AssigneeResolver(inst)
-            needed = len(resolver.resolve(node.get('config') or {}))
+            needed = self._expected_approver_count(inst, node_id)
+            if needed <= 0:
+                # 老实例没有记录人数，退回按解析器估算（保持旧行为）
+                resolver = AssigneeResolver(inst)
+                needed = len(resolver.resolve(node.get('config') or {}))
             return approved >= needed and needed > 0
         return True
 
@@ -534,6 +596,12 @@ class WorkflowEngine:
 
                 if not assignees:
                     raise ValueError(f'节点 {nid} 未解析到审批人，请在流程设置中配置异常处理')
+
+                # 记录本节点实际需要通过的人数（会签判定用）。
+                # 不能用 AssigneeResolver.resolve() 的原始结果：离职过滤、
+                # 部门经理跳过策略、重复审批人自动同意都会让它偏大，
+                # 导致「会签永远凑不齐人数」，实例卡死在审批中。
+                self._record_expected_approvers(inst, nid, len(assignees))
 
                 pending_assignees = []
                 for uid in assignees:
@@ -774,7 +842,7 @@ class WorkflowEngine:
             raise ValueError('当前状态不可撤回')
 
         now = datetime.now()
-        for task in instance.tasks.filter_by(status='pending').all():
+        for task in instance.tasks.filter(TaskInstance.status.in_(('pending', 'on_hold'))).all():
             task.status = 'cancelled'
             task.completed_at = now
 
